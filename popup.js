@@ -104,8 +104,13 @@ class SnippetManager {
         let filtered = this.snippets;
 
         // Filtrar por tipo
-        if (this.currentFilter !== 'all') {
+        if (this.currentFilter !== 'all' && this.currentFilter !== 'favorites') {
             filtered = filtered.filter(snippet => snippet.type === this.currentFilter);
+        }
+
+        // Filtrar por favoritos
+        if (this.currentFilter === 'favorites') {
+            filtered = filtered.filter(snippet => snippet.isFavorite === true);
         }
 
         // Filtrar por busca
@@ -125,9 +130,11 @@ class SnippetManager {
         const tags = snippet.tags ? snippet.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
         const date = new Date(snippet.createdAt).toLocaleDateString('pt-BR');
         const displayTitle = snippet.title.trim() || 'Sem título';
+        const favoriteIcon = snippet.isFavorite ? '⭐' : '☆';
+        const favoriteClass = snippet.isFavorite ? 'btn-favorite-active' : 'btn-favorite';
         
         return `
-            <div class="snippet-item" data-id="${snippet.id}" draggable="true">
+            <div class="snippet-item ${snippet.isFavorite ? 'favorite-snippet' : ''}" data-id="${snippet.id}" draggable="true">
                 <div class="drag-handle">⋮⋮</div>
                 <div class="snippet-header">
                     <h3 class="snippet-title">${this.escapeHtml(displayTitle)}</h3>
@@ -136,6 +143,7 @@ class SnippetManager {
                 <div class="snippet-content">${this.escapeHtml(snippet.content)}</div>
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
+                    <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${snippet.isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">${favoriteIcon} ${snippet.isFavorite ? 'Favorito' : 'Favoritar'}</button>
                     <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">✏️ Editar</button>
                     <button class="btn btn-small btn-secondary copy-btn" data-id="${snippet.id}">📋 Copiar</button>
                     <button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">🗑️ Excluir</button>
@@ -147,6 +155,15 @@ class SnippetManager {
     }
 
     attachSnippetListeners() {
+        // Botões de favorito
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = e.target.dataset.id;
+                this.toggleFavorite(id);
+            });
+        });
+
         // Botões de editar
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -319,6 +336,7 @@ class SnippetManager {
             type: snippetData.type,
             content: snippetData.content,
             tags: snippetData.tags ? snippetData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
+            isFavorite: false,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -341,6 +359,19 @@ class SnippetManager {
             };
             await this.saveSnippets();
             this.renderSnippets();
+        }
+    }
+
+    async toggleFavorite(id) {
+        const index = this.snippets.findIndex(s => s.id === id);
+        if (index !== -1) {
+            this.snippets[index].isFavorite = !this.snippets[index].isFavorite;
+            this.snippets[index].updatedAt = new Date().toISOString();
+            await this.saveSnippets();
+            this.renderSnippets();
+            
+            const favoriteStatus = this.snippets[index].isFavorite ? 'favoritado' : 'removido dos favoritos';
+            this.showNotification(`Snippet ${favoriteStatus}!`);
         }
     }
 

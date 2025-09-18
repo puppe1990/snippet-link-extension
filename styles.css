@@ -98,6 +98,28 @@ body {
     background: #da190b;
 }
 
+.btn-favorite {
+    background: #ffc107;
+    color: #333;
+    border: none;
+}
+
+.btn-favorite:hover {
+    background: #e0a800;
+    transform: scale(1.05);
+}
+
+.btn-favorite-active {
+    background: #ff6b35;
+    color: white;
+    border: none;
+}
+
+.btn-favorite-active:hover {
+    background: #e55a2b;
+    transform: scale(1.05);
+}
+
 .btn-small {
     padding: 4px 8px;
     font-size: 10px;
@@ -183,6 +205,26 @@ body {
 .snippet-item:hover {
     border-color: #667eea;
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.favorite-snippet {
+    border-color: #ffc107;
+    background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+    position: relative;
+}
+
+.favorite-snippet::before {
+    content: '⭐';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 16px;
+    opacity: 0.7;
+}
+
+.favorite-snippet:hover {
+    border-color: #ff6b35;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
 }
 
 /* Drag and Drop Styles */
