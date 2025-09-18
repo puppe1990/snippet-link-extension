@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="extension-container w-96 max-h-96 overflow-hidden" style="width: 384px; min-height: 400px; display: block;">
+    <div class="extension-container w-96 overflow-hidden" style="width: 384px; height: 500px; display: block;">
         <!-- Modern Header -->
         <div class="modern-header text-white p-6">
             <div class="header-content">
@@ -62,18 +62,18 @@
         </div>
 
         <!-- Modern Loading State -->
-        <div id="loadingState" class="p-8 text-center text-gray-500">
+        <div id="loadingState" class="p-8 text-center text-gray-500" style="display: block;">
             <div class="loading-spinner mx-auto mb-4"></div>
             <p class="text-sm font-medium">Carregando links...</p>
         </div>
 
         <!-- Modern Links List -->
-        <div id="linksList" class="max-h-64 overflow-y-auto p-6 hidden">
+        <div id="linksList" class="links-container p-6" style="display: none;">
             <!-- Links will be dynamically inserted here -->
         </div>
 
         <!-- Modern Empty State -->
-        <div id="emptyState" class="empty-state hidden">
+        <div id="emptyState" class="empty-state" style="display: none;">
             <div class="empty-state-icon">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>

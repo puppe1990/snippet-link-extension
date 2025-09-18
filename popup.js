@@ -10,27 +10,26 @@ class LinkManager {
     async init() {
         try {
             console.log('Initializing LinkManager...');
+            
+            // Show loading state initially
+            const loadingState = document.getElementById('loadingState');
+            if (loadingState) {
+                loadingState.style.display = 'block';
+            }
+            
             await this.loadLinks();
             this.bindEvents();
             this.renderLinks();
-            
-            // Add a test link if no links exist
-            if (this.links.length === 0) {
-                console.log('No links found, adding test link...');
-                const testLink = {
-                    id: Date.now().toString(),
-                    url: 'https://example.com',
-                    date: new Date().toISOString()
-                };
-                this.links.push(testLink);
-                await this.saveLinks();
-                this.renderLinks();
-            }
-            
             console.log('LinkManager initialized successfully');
         } catch (error) {
             console.error('Error initializing LinkManager:', error);
             this.showNotification('Erro ao inicializar aplicação', 'error');
+            
+            // Hide loading state on error
+            const loadingState = document.getElementById('loadingState');
+            if (loadingState) {
+                loadingState.style.display = 'none';
+            }
         }
     }
 
@@ -89,9 +88,19 @@ class LinkManager {
     async loadLinks() {
         try {
             console.log('Loading links from storage...');
+            
+            // Check if chrome.storage is available
+            if (typeof chrome === 'undefined' || !chrome.storage) {
+                console.warn('Chrome storage API not available, using localStorage fallback');
+                const stored = localStorage.getItem('snippet-links');
+                this.links = stored ? JSON.parse(stored) : [];
+                console.log('Loaded links from localStorage:', this.links);
+                return;
+            }
+            
             const result = await chrome.storage.local.get(['links']);
             this.links = result.links || [];
-            console.log('Loaded links:', this.links);
+            console.log('Loaded links from chrome.storage:', this.links);
         } catch (error) {
             console.error('Error loading links:', error);
             this.links = [];
@@ -100,7 +109,15 @@ class LinkManager {
 
     async saveLinks() {
         try {
+            if (typeof chrome === 'undefined' || !chrome.storage) {
+                console.warn('Chrome storage API not available, using localStorage fallback');
+                localStorage.setItem('snippet-links', JSON.stringify(this.links));
+                console.log('Saved links to localStorage');
+                return;
+            }
+            
             await chrome.storage.local.set({ links: this.links });
+            console.log('Saved links to chrome.storage');
         } catch (error) {
             console.error('Error saving links:', error);
         }
@@ -274,6 +291,7 @@ class LinkManager {
     // UI methods
     renderLinks() {
         console.log('Rendering links, count:', this.links.length);
+        console.log('Links array:', this.links);
         
         const linksList = document.getElementById('linksList');
         const emptyState = document.getElementById('emptyState');
@@ -285,30 +303,48 @@ class LinkManager {
             loadingState: !!loadingState
         });
 
-        // Hide loading state
+        // Always hide loading state when rendering
         if (loadingState) {
-            loadingState.classList.add('hidden');
+            loadingState.style.display = 'none';
         }
 
-        if (this.links.length === 0) {
+        // Hide all states first
+        if (linksList) linksList.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
+
+        if (!this.links || this.links.length === 0) {
             console.log('No links found, showing empty state');
-            if (linksList) linksList.classList.add('hidden');
-            if (emptyState) emptyState.classList.remove('hidden');
+            if (emptyState) {
+                emptyState.style.display = 'block';
+            }
             return;
         }
 
         console.log('Links found, showing list');
-        if (emptyState) emptyState.classList.add('hidden');
         if (linksList) {
-            linksList.classList.remove('hidden');
-            
             const sortedLinks = this.sortLinks([...this.links]);
-            const linksHTML = sortedLinks.map(link => this.createLinkHTML(link)).join('');
-            console.log('Generated HTML:', linksHTML);
+            console.log('Sorted links count:', sortedLinks.length);
+            console.log('Sorted links:', sortedLinks);
+            
+            const linksHTML = sortedLinks.map((link, index) => {
+                console.log(`Creating HTML for link ${index}:`, link);
+                return this.createLinkHTML(link);
+            }).join('');
+            
+            console.log('Generated HTML length:', linksHTML.length);
+            console.log('Links HTML preview:', linksHTML.substring(0, 500));
+            
             linksList.innerHTML = linksHTML;
+            linksList.style.display = 'block';
+            
+            // Additional debugging
+            console.log('linksList children count after insert:', linksList.children.length);
+            console.log('linksList scrollHeight:', linksList.scrollHeight);
 
             // Bind events for dynamically created elements
             this.bindLinkEvents();
+        } else {
+            console.error('linksList element not found!');
         }
     }
 
@@ -316,7 +352,7 @@ class LinkManager {
         const date = new Date(link.date).toLocaleDateString('pt-BR');
         const displayTitle = link.url.length > 60 ? link.url.substring(0, 60) + '...' : link.url;
         return `
-            <div class="link-card">
+            <div class="link-card" data-link-id="${link.id}">
                 <div class="flex items-start justify-between">
                     <div class="flex-1 min-w-0">
                         <div class="link-url" title="${this.escapeHtml(link.url)}">${this.escapeHtml(displayTitle)}</div>
@@ -324,8 +360,9 @@ class LinkManager {
                     </div>
                     <div class="flex items-center space-x-2 ml-3">
                         <button 
-                            onclick="linkManager.openLink('${link.url}')" 
                             class="action-btn btn-open"
+                            data-action="open"
+                            data-url="${this.escapeHtml(link.url)}"
                             title="Abrir link"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,8 +370,9 @@ class LinkManager {
                             </svg>
                         </button>
                         <button 
-                            onclick="linkManager.copyLink('${this.escapeHtml(link.url)}')" 
                             class="action-btn btn-copy"
+                            data-action="copy"
+                            data-url="${this.escapeHtml(link.url)}"
                             title="Copiar link"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,8 +380,9 @@ class LinkManager {
                             </svg>
                         </button>
                         <button 
-                            onclick="linkManager.editLink('${link.id}')" 
                             class="action-btn btn-edit"
+                            data-action="edit"
+                            data-link-id="${link.id}"
                             title="Editar link"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,8 +390,9 @@ class LinkManager {
                             </svg>
                         </button>
                         <button 
-                            onclick="linkManager.deleteLink('${link.id}')" 
                             class="action-btn btn-delete"
+                            data-action="delete"
+                            data-link-id="${link.id}"
                             title="Excluir link"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -366,8 +406,42 @@ class LinkManager {
     }
 
     bindLinkEvents() {
-        // Events are bound via onclick attributes in the HTML
-        // This method can be used for additional event binding if needed
+        const linksList = document.getElementById('linksList');
+        if (!linksList) return;
+
+        // Remove existing event listeners to prevent duplicates
+        linksList.removeEventListener('click', this.handleLinkClick);
+        
+        // Add event delegation for all link actions
+        this.handleLinkClick = (event) => {
+            const button = event.target.closest('button[data-action]');
+            if (!button) return;
+
+            const action = button.getAttribute('data-action');
+            const url = button.getAttribute('data-url');
+            const linkId = button.getAttribute('data-link-id');
+
+            console.log('Button clicked:', { action, url, linkId });
+
+            switch (action) {
+                case 'open':
+                    if (url) this.openLink(url);
+                    break;
+                case 'copy':
+                    if (url) this.copyLink(url);
+                    break;
+                case 'edit':
+                    if (linkId) this.editLink(linkId);
+                    break;
+                case 'delete':
+                    if (linkId) this.deleteLink(linkId);
+                    break;
+                default:
+                    console.warn('Unknown action:', action);
+            }
+        };
+
+        linksList.addEventListener('click', this.handleLinkClick);
     }
 
     sortLinks(links) {
@@ -446,10 +520,50 @@ class LinkManager {
         div.textContent = text;
         return div.innerHTML;
     }
+
+    // Debug utility function
+    debugListVisibility() {
+        console.log('=== DEBUG LIST VISIBILITY ===');
+        const linksList = document.getElementById('linksList');
+        const emptyState = document.getElementById('emptyState');
+        const loadingState = document.getElementById('loadingState');
+        
+        console.log('Elements found:', {
+            linksList: !!linksList,
+            emptyState: !!emptyState,
+            loadingState: !!loadingState
+        });
+        
+        if (linksList) {
+            const styles = window.getComputedStyle(linksList);
+            console.log('linksList computed styles:', {
+                display: styles.display,
+                visibility: styles.visibility,
+                opacity: styles.opacity,
+                height: styles.height,
+                width: styles.width,
+                overflow: styles.overflow,
+                position: styles.position,
+                zIndex: styles.zIndex
+            });
+            console.log('linksList innerHTML:', linksList.innerHTML.substring(0, 300));
+        }
+        
+        console.log('Current links:', this.links);
+        console.log('=== END DEBUG ===');
+    }
+
+    // Force render utility
+    forceRender() {
+        console.log('Force rendering...');
+        this.renderLinks();
+    }
 }
 
 // Initialize the Link Manager when the popup loads
 let linkManager;
 document.addEventListener('DOMContentLoaded', () => {
     linkManager = new LinkManager();
+    // Make linkManager globally accessible for onclick handlers
+    window.linkManager = linkManager;
 });
