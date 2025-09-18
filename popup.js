@@ -108,11 +108,12 @@ class SnippetManager {
 
         // Filtrar por busca
         if (this.currentSearch) {
-            filtered = filtered.filter(snippet => 
-                snippet.title.toLowerCase().includes(this.currentSearch) ||
-                snippet.content.toLowerCase().includes(this.currentSearch) ||
-                (snippet.tags && snippet.tags.some(tag => tag.toLowerCase().includes(this.currentSearch)))
-            );
+            filtered = filtered.filter(snippet => {
+                const title = snippet.title ? snippet.title.toLowerCase() : '';
+                return title.includes(this.currentSearch) ||
+                       snippet.content.toLowerCase().includes(this.currentSearch) ||
+                       (snippet.tags && snippet.tags.some(tag => tag.toLowerCase().includes(this.currentSearch)));
+            });
         }
 
         return filtered;
@@ -121,11 +122,12 @@ class SnippetManager {
     createSnippetHTML(snippet) {
         const tags = snippet.tags ? snippet.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
         const date = new Date(snippet.createdAt).toLocaleDateString('pt-BR');
+        const displayTitle = snippet.title.trim() || 'Sem título';
         
         return `
             <div class="snippet-item" data-id="${snippet.id}">
                 <div class="snippet-header">
-                    <h3 class="snippet-title">${this.escapeHtml(snippet.title)}</h3>
+                    <h3 class="snippet-title">${this.escapeHtml(displayTitle)}</h3>
                     <span class="snippet-type ${snippet.type}">${snippet.type === 'link' ? '🔗 Link' : '📝 Texto'}</span>
                 </div>
                 <div class="snippet-content">${this.escapeHtml(snippet.content)}</div>
@@ -303,8 +305,8 @@ class SnippetManager {
         };
 
         // Validação básica
-        if (!formData.title.trim() || !formData.content.trim()) {
-            this.showNotification('Título e conteúdo são obrigatórios');
+        if (!formData.content.trim()) {
+            this.showNotification('Conteúdo é obrigatório');
             return;
         }
 
