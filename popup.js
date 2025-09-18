@@ -14,7 +14,7 @@ class LinkManager {
             // Show loading state initially
             const loadingState = document.getElementById('loadingState');
             if (loadingState) {
-                loadingState.style.display = 'block';
+                loadingState.classList.remove('hidden');
             }
             
             await this.loadLinks();
@@ -28,7 +28,7 @@ class LinkManager {
             // Hide loading state on error
             const loadingState = document.getElementById('loadingState');
             if (loadingState) {
-                loadingState.style.display = 'none';
+                loadingState.classList.add('hidden');
             }
         }
     }
@@ -305,17 +305,17 @@ class LinkManager {
 
         // Always hide loading state when rendering
         if (loadingState) {
-            loadingState.style.display = 'none';
+            loadingState.classList.add('hidden');
         }
 
         // Hide all states first
-        if (linksList) linksList.style.display = 'none';
-        if (emptyState) emptyState.style.display = 'none';
+        if (linksList) linksList.classList.add('hidden');
+        if (emptyState) emptyState.classList.add('hidden');
 
         if (!this.links || this.links.length === 0) {
             console.log('No links found, showing empty state');
             if (emptyState) {
-                emptyState.style.display = 'block';
+                emptyState.classList.remove('hidden');
             }
             return;
         }
@@ -335,7 +335,7 @@ class LinkManager {
             console.log('Links HTML preview:', linksHTML.substring(0, 500));
             
             linksList.innerHTML = linksHTML;
-            linksList.style.display = 'block';
+            linksList.classList.remove('hidden');
             
             // Additional debugging
             console.log('linksList children count after insert:', linksList.children.length);
