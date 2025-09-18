@@ -1,0 +1,45 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="linkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f8fafc;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- Main background circle -->
+  <circle cx="64" cy="64" r="58" fill="url(#bgGradient)" filter="url(#shadow)"/>
+  <circle cx="64" cy="64" r="58" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.2"/>
+  
+  <!-- Link icon - simplified and modern -->
+  <g transform="translate(64, 64)">
+    <!-- Left link -->
+    <path d="M-16 -6 C-22 -6 -28 -12 -28 -18 C-28 -24 -22 -30 -16 -30 L-8 -30 C-2 -30 4 -24 4 -18 C4 -16 2 -14 0 -14 C-2 -14 -4 -16 -4 -18 C-4 -20 -6 -22 -8 -22 L-16 -22 C-18 -22 -20 -20 -20 -18 C-20 -16 -18 -14 -16 -14 L-12 -14 C-10 -14 -8 -12 -8 -10 C-8 -8 -10 -6 -12 -6 L-16 -6 Z" fill="url(#linkGradient)"/>
+    
+    <!-- Right link -->
+    <path d="M16 6 C22 6 28 12 28 18 C28 24 22 30 16 30 L8 30 C2 30 -4 24 -4 18 C-4 16 -2 14 0 14 C2 14 4 16 4 18 C4 20 6 22 8 22 L16 22 C18 22 20 20 20 18 C20 16 18 14 16 14 L12 14 C10 14 8 12 8 10 C8 8 10 6 12 6 L16 6 Z" fill="url(#linkGradient)"/>
+    
+    <!-- Connecting line -->
+    <line x1="-8" y1="-18" x2="8" y2="18" stroke="url(#linkGradient)" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Add/bookmark symbol -->
+  <g transform="translate(88, 40)">
+    <circle cx="0" cy="0" r="12" fill="#10b981"/>
+    <circle cx="0" cy="0" r="12" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.3"/>
+    <!-- Bookmark icon -->
+    <path d="M-4 -6 L4 -6 L4 6 L0 2 L-4 6 Z" fill="white"/>
+  </g>
+  
+  <!-- Subtle decorative elements -->
+  <circle cx="24" cy="24" r="2" fill="#ffffff" fill-opacity="0.3"/>
+  <circle cx="104" cy="104" r="2" fill="#ffffff" fill-opacity="0.3"/>
+  <circle cx="20" cy="100" r="1.5" fill="#ffffff" fill-opacity="0.2"/>
+</svg>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="extension-container w-96 max-h-96 overflow-hidden" style="width: 384px; min-height: 400px; display: block;">
+        <!-- Modern Header -->
+        <div class="modern-header text-white p-6">
+            <div class="header-content">
+                <div class="flex items-center mb-2">
+                    <div class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold">Link Manager</h1>
+                </div>
+                <p class="text-white text-opacity-80 text-sm">Organize e acesse seus links favoritos</p>
+            </div>
+        </div>
+
+        <!-- Modern Add Link Form -->
+        <div class="p-6 bg-white">
+            <form id="addLinkForm" class="space-y-4">
+                <div>
+                    <label for="linkUrl" class="block text-sm font-medium text-gray-700 mb-2">
+                        Adicionar novo link
+                    </label>
+                    <input 
+                        type="url" 
+                        id="linkUrl" 
+                        placeholder="https://exemplo.com" 
+                        class="modern-input"
+                        required
+                    >
+                </div>
+                <button 
+                    type="submit" 
+                    class="modern-btn btn-primary w-full"
+                >
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Adicionar Link
+                </button>
+            </form>
+        </div>
+
+        <!-- Modern Sort Options -->
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700">Ordenar por:</span>
+                <select id="sortSelect" class="modern-select">
+                    <option value="date">Data</option>
+                    <option value="url">URL</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Modern Loading State -->
+        <div id="loadingState" class="p-8 text-center text-gray-500">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-sm font-medium">Carregando links...</p>
+        </div>
+
+        <!-- Modern Links List -->
+        <div id="linksList" class="max-h-64 overflow-y-auto p-6 hidden">
+            <!-- Links will be dynamically inserted here -->
+        </div>
+
+        <!-- Modern Empty State -->
+        <div id="emptyState" class="empty-state hidden">
+            <div class="empty-state-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Nenhum link salvo</h3>
+            <p class="text-sm text-gray-500">Adicione sua primeira URL usando o formulário acima</p>
+        </div>
+    </div>
+
+    <!-- Modern Edit Modal -->
+    <div id="editModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="flex items-center mb-6">
+                <div class="w-8 h-8 bg-primary-light rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800">Editar Link</h3>
+            </div>
+            <form id="editLinkForm" class="space-y-4">
+                <input type="hidden" id="editLinkId">
+                <div>
+                    <label for="editLinkUrl" class="block text-sm font-medium text-gray-700 mb-2">
+                        URL do link
+                    </label>
+                    <input 
+                        type="url" 
+                        id="editLinkUrl" 
+                        placeholder="https://exemplo.com" 
+                        class="modern-input"
+                        required
+                    >
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button 
+                        type="submit" 
+                        class="modern-btn btn-primary flex-1"
+                    >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Salvar
+                    </button>
+                    <button 
+                        type="button" 
+                        id="cancelEdit" 
+                        class="modern-btn btn-secondary flex-1"
+                    >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
