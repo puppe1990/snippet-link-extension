@@ -137,6 +137,7 @@ class SnippetManager {
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
                     <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">✏️ Editar</button>
+                    <button class="btn btn-small btn-secondary copy-btn" data-id="${snippet.id}">📋 Copiar</button>
                     <button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">🗑️ Excluir</button>
                     ${snippet.type === 'link' ? `<button class="btn btn-small btn-secondary open-btn" data-url="${snippet.content}">🔗 Abrir</button>` : ''}
                 </div>
@@ -152,6 +153,15 @@ class SnippetManager {
                 e.stopPropagation();
                 const id = e.target.dataset.id;
                 this.editSnippet(id);
+            });
+        });
+
+        // Botões de copiar
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = e.target.dataset.id;
+                this.copySnippet(id);
             });
         });
 

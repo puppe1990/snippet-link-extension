@@ -77,6 +77,18 @@ body {
     background: rgba(255, 255, 255, 0.3);
 }
 
+/* Botão de copiar específico */
+.copy-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+}
+
+.copy-btn:hover {
+    background: #138496;
+    transform: scale(1.05);
+}
+
 .btn-danger {
     background: #f44336;
     color: white;
