@@ -1,22 +1,27 @@
 {
   "manifest_version": 3,
-  "name": "Link Manager",
+  "name": "Snippet Link Manager",
   "version": "1.0",
-  "description": "Gerencie seus links favoritos com facilidade",
+  "description": "Gerencia links e textos salvos com funcionalidades de ordenação, edição e exclusão",
   "permissions": [
     "storage",
     "activeTab"
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Link Manager"
+    "default_title": "Snippet Link Manager",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "icons": {
     "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self';"
   }
 }
+

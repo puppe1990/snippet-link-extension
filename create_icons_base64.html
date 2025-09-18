@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gerador de Ícones Base64</title>
+</head>
+<body>
+    <h1>Gerador de Ícones Base64</h1>
+    <p>Abra o console do navegador (F12) para ver os dados base64 dos ícones.</p>
+    
+    <canvas id="canvas16" width="16" height="16" style="border: 1px solid #ccc;"></canvas>
+    <canvas id="canvas32" width="32" height="32" style="border: 1px solid #ccc;"></canvas>
+    <canvas id="canvas48" width="48" height="48" style="border: 1px solid #ccc;"></canvas>
+    <canvas id="canvas128" width="128" height="128" style="border: 1px solid #ccc;"></canvas>
+    
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            // Background circle
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - 2, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Document
+            const docWidth = size * 0.35;
+            const docHeight = size * 0.47;
+            const docX = size * 0.27;
+            const docY = size * 0.2;
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillRect(docX, docY, docWidth, docHeight);
+            
+            // Text lines
+            ctx.fillStyle = '#667eea';
+            const lineHeight = size * 0.08;
+            const lineY = docY + lineHeight;
+            
+            ctx.fillRect(docX + size * 0.05, lineY, size * 0.2, lineHeight * 0.6);
+            ctx.fillRect(docX + size * 0.05, lineY + lineHeight, size * 0.25, lineHeight * 0.6);
+            ctx.fillRect(docX + size * 0.05, lineY + lineHeight * 2, size * 0.15, lineHeight * 0.6);
+            ctx.fillRect(docX + size * 0.05, lineY + lineHeight * 3, size * 0.22, lineHeight * 0.6);
+            
+            // Link icon
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.arc(size * 0.59, size * 0.59, size * 0.06, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = size * 0.015;
+            ctx.beginPath();
+            ctx.moveTo(size * 0.55, size * 0.59);
+            ctx.lineTo(size * 0.63, size * 0.59);
+            ctx.moveTo(size * 0.59, size * 0.55);
+            ctx.lineTo(size * 0.59, size * 0.63);
+            ctx.stroke();
+            
+            return canvas.toDataURL();
+        }
+        
+        // Generate all icons and log base64
+        const icon16 = createIcon('canvas16', 16);
+        const icon32 = createIcon('canvas32', 32);
+        const icon48 = createIcon('canvas48', 48);
+        const icon128 = createIcon('canvas128', 128);
+        
+        console.log('=== DADOS BASE64 DOS ÍCONES ===');
+        console.log('icon16.png:', icon16);
+        console.log('icon32.png:', icon32);
+        console.log('icon48.png:', icon48);
+        console.log('icon128.png:', icon128);
+        
+        // Auto download
+        setTimeout(() => {
+            const link16 = document.createElement('a');
+            link16.download = 'icon16.png';
+            link16.href = icon16;
+            link16.click();
+            
+            setTimeout(() => {
+                const link32 = document.createElement('a');
+                link32.download = 'icon32.png';
+                link32.href = icon32;
+                link32.click();
+            }, 100);
+            
+            setTimeout(() => {
+                const link48 = document.createElement('a');
+                link48.download = 'icon48.png';
+                link48.href = icon48;
+                link48.click();
+            }, 200);
+            
+            setTimeout(() => {
+                const link128 = document.createElement('a');
+                link128.download = 'icon128.png';
+                link128.href = icon128;
+                link128.click();
+            }, 300);
+        }, 1000);
+    </script>
+</body>
+</html>
