@@ -173,11 +173,76 @@ body {
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
 }
 
+/* Drag and Drop Styles */
+.snippet-item[draggable="true"] {
+    cursor: grab;
+}
+
+.snippet-item.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+    z-index: 1000;
+    cursor: grabbing;
+}
+
+.snippet-item.drag-over {
+    border-top: 3px solid #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.drag-handle {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    cursor: grab;
+    opacity: 0.3;
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #666;
+}
+
+.snippet-item:hover .drag-handle {
+    opacity: 0.7;
+}
+
+.drag-handle:hover {
+    opacity: 1;
+    color: #667eea;
+}
+
+.snippet-item.dragging .drag-handle {
+    cursor: grabbing;
+}
+
+/* Reorder indicator */
+.reorder-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #667eea;
+    border-radius: 1px;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.reorder-indicator.show {
+    opacity: 1;
+}
+
 .snippet-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 8px;
+    margin-left: 20px; /* Make room for drag handle */
 }
 
 .snippet-title {
@@ -210,6 +275,7 @@ body {
     font-size: 12px;
     color: #666;
     margin-bottom: 8px;
+    margin-left: 20px; /* Make room for drag handle */
     word-break: break-all;
     line-height: 1.4;
 }
@@ -219,6 +285,7 @@ body {
     flex-wrap: wrap;
     gap: 4px;
     margin-bottom: 10px;
+    margin-left: 20px; /* Make room for drag handle */
 }
 
 .tag {
@@ -235,6 +302,7 @@ body {
     gap: 5px;
     opacity: 0;
     transition: opacity 0.2s ease;
+    margin-left: 20px; /* Make room for drag handle */
 }
 
 .snippet-item:hover .snippet-actions {
@@ -245,6 +313,7 @@ body {
     font-size: 10px;
     color: #999;
     margin-top: 5px;
+    margin-left: 20px; /* Make room for drag handle */
 }
 
 /* Estado vazio */

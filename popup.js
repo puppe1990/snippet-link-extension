@@ -6,6 +6,8 @@ class SnippetManager {
         this.currentSearch = '';
         this.editingId = null;
         this.deletingId = null;
+        this.draggedElement = null;
+        this.draggedIndex = -1;
         
         this.init();
     }
@@ -125,7 +127,8 @@ class SnippetManager {
         const displayTitle = snippet.title.trim() || 'Sem título';
         
         return `
-            <div class="snippet-item" data-id="${snippet.id}">
+            <div class="snippet-item" data-id="${snippet.id}" draggable="true">
+                <div class="drag-handle">⋮⋮</div>
                 <div class="snippet-header">
                     <h3 class="snippet-title">${this.escapeHtml(displayTitle)}</h3>
                     <span class="snippet-type ${snippet.type}">${snippet.type === 'link' ? '🔗 Link' : '📝 Texto'}</span>
@@ -173,12 +176,129 @@ class SnippetManager {
         // Clique no snippet para copiar
         document.querySelectorAll('.snippet-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                if (!e.target.closest('.snippet-actions')) {
+                if (!e.target.closest('.snippet-actions') && !e.target.closest('.drag-handle')) {
                     const id = item.dataset.id;
                     this.copySnippet(id);
                 }
             });
         });
+
+        // Drag and Drop listeners
+        document.querySelectorAll('.snippet-item').forEach(item => {
+            this.attachDragListeners(item);
+        });
+    }
+
+    // Drag and Drop functionality
+    attachDragListeners(element) {
+        element.addEventListener('dragstart', (e) => this.handleDragStart(e));
+        element.addEventListener('dragend', (e) => this.handleDragEnd(e));
+        element.addEventListener('dragover', (e) => this.handleDragOver(e));
+        element.addEventListener('drop', (e) => this.handleDrop(e));
+        element.addEventListener('dragenter', (e) => this.handleDragEnter(e));
+        element.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+    }
+
+    handleDragStart(e) {
+        this.draggedElement = e.target;
+        this.draggedElement.classList.add('dragging');
+        
+        const snippetId = e.target.dataset.id;
+        const filteredSnippets = this.getFilteredSnippets();
+        this.draggedIndex = filteredSnippets.findIndex(snippet => snippet.id === snippetId);
+        
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.target.outerHTML);
+    }
+
+    handleDragEnd(e) {
+        this.draggedElement.classList.remove('dragging');
+        
+        // Remove drag-over classes from all elements
+        document.querySelectorAll('.snippet-item').forEach(item => {
+            item.classList.remove('drag-over');
+        });
+        
+        // Remove reorder indicators
+        document.querySelectorAll('.reorder-indicator').forEach(indicator => {
+            indicator.remove();
+        });
+        
+        this.draggedElement = null;
+        this.draggedIndex = -1;
+    }
+
+    handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+
+    handleDragEnter(e) {
+        e.preventDefault();
+        if (e.target.classList.contains('snippet-item') && e.target !== this.draggedElement) {
+            e.target.classList.add('drag-over');
+        }
+    }
+
+    handleDragLeave(e) {
+        if (e.target.classList.contains('snippet-item')) {
+            e.target.classList.remove('drag-over');
+        }
+    }
+
+    async handleDrop(e) {
+        e.preventDefault();
+        
+        if (!this.draggedElement || this.draggedElement === e.target) {
+            return;
+        }
+
+        const dropTarget = e.target.closest('.snippet-item');
+        if (!dropTarget) return;
+
+        const dropTargetId = dropTarget.dataset.id;
+        const filteredSnippets = this.getFilteredSnippets();
+        const dropTargetIndex = filteredSnippets.findIndex(snippet => snippet.id === dropTargetId);
+
+        if (this.draggedIndex === -1 || dropTargetIndex === -1) return;
+
+        // Remove dragged snippet from original position
+        const draggedSnippet = filteredSnippets.splice(this.draggedIndex, 1)[0];
+        
+        // Insert at new position
+        const newIndex = this.draggedIndex < dropTargetIndex ? dropTargetIndex - 1 : dropTargetIndex;
+        filteredSnippets.splice(newIndex, 0, draggedSnippet);
+
+        // Update the main snippets array with the new order
+        await this.updateSnippetsOrder(filteredSnippets);
+        
+        // Re-render to show new order
+        this.renderSnippets();
+        
+        this.showNotification('Ordem atualizada!');
+    }
+
+    async updateSnippetsOrder(filteredSnippets) {
+        // If we're filtering, we need to update the order in the main array
+        if (this.currentFilter !== 'all' || this.currentSearch) {
+            // Create a map of the new order
+            const orderMap = {};
+            filteredSnippets.forEach((snippet, index) => {
+                orderMap[snippet.id] = index;
+            });
+
+            // Sort the main snippets array based on the new order
+            this.snippets.sort((a, b) => {
+                const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : this.snippets.length;
+                const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : this.snippets.length;
+                return orderA - orderB;
+            });
+        } else {
+            // If no filtering, directly update the main array
+            this.snippets = [...filteredSnippets];
+        }
+
+        await this.saveSnippets();
     }
 
     // Funcionalidades dos snippets
