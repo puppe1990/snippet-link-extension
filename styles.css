@@ -537,3 +537,60 @@ body {
 .snippets-container::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
+
+/* Import/Export Section */
+.import-export-section {
+    display: flex;
+    gap: 12px;
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.import-export-section .btn {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 2px solid #667eea;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #f8f9fa;
+    color: #333;
+}
+
+.import-export-section .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #667eea;
+    background: #e9ecef;
+    color: #333;
+}
+
+.import-export-section .btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#importFile {
+    display: none;
+}
+
+/* Garantir que o texto dos botões de import/export seja sempre visível */
+#importBtn, #exportBtn {
+    color: #333 !important;
+    background: #f8f9fa !important;
+    border: 2px solid #667eea !important;
+}
+
+#importBtn:hover, #exportBtn:hover {
+    color: #333 !important;
+    background: #e9ecef !important;
+    border-color: #667eea !important;
+}

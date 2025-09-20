@@ -59,6 +59,35 @@ class SnippetManager {
         document.getElementById('closeSettingsModal').addEventListener('click', () => this.closeSettingsModal());
         document.getElementById('cancelSettingsBtn').addEventListener('click', () => this.closeSettingsModal());
         document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
+        
+        // Import/Export buttons
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const importFile = document.getElementById('importFile');
+        
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                console.log('Botão de exportar clicado!');
+                this.exportSnippets();
+            });
+        } else {
+            console.error('Botão de exportar não encontrado!');
+        }
+        
+        if (importBtn) {
+            importBtn.addEventListener('click', () => {
+                console.log('Botão de importar clicado!');
+                this.triggerImport();
+            });
+        } else {
+            console.error('Botão de importar não encontrado!');
+        }
+        
+        if (importFile) {
+            importFile.addEventListener('change', (e) => this.handleImport(e));
+        } else {
+            console.error('Input de arquivo não encontrado!');
+        }
 
         // Fechar modal clicando fora
         window.addEventListener('click', (e) => {
@@ -163,6 +192,10 @@ class SnippetManager {
         // Atualizar modal de configurações
         document.querySelector('#settingsModal .modal-header h2').textContent = this.t('settings_title');
         document.querySelector('#settingsModal label[for="languageSelect"]').textContent = this.t('language_label');
+        document.getElementById('dataLabel').textContent = this.t('data_label');
+        document.getElementById('exportBtn').textContent = this.t('export_button');
+        document.getElementById('importBtn').textContent = this.t('import_button');
+        document.getElementById('dataDescription').textContent = this.t('data_description');
         document.getElementById('saveSettingsBtn').textContent = this.t('save_button');
         document.getElementById('cancelSettingsBtn').textContent = this.t('cancel_button');
         
@@ -624,6 +657,94 @@ class SnippetManager {
         }
     }
 
+    // Import/Export functionality
+    exportSnippets() {
+        try {
+            console.log('Iniciando exportação...', this.snippets.length, 'snippets');
+            
+            const exportData = {
+                snippets: this.snippets,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `snippets-export-${new Date().toISOString().split('T')[0]}.json`;
+            
+            // Adicionar link ao DOM temporariamente
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            URL.revokeObjectURL(link.href);
+            
+            console.log('Exportação concluída, mostrando notificação...');
+            this.showNotification(this.t('export_success'));
+        } catch (error) {
+            console.error('Erro ao exportar snippets:', error);
+            this.showNotification(this.t('export_error'));
+        }
+    }
+
+    triggerImport() {
+        document.getElementById('importFile').click();
+    }
+
+    async handleImport(event) {
+        const file = event.target.files[0];
+        
+        if (!file) {
+            this.showNotification(this.t('import_no_file'));
+            return;
+        }
+
+        if (!file.name.toLowerCase().endsWith('.json')) {
+            this.showNotification(this.t('import_invalid_file'));
+            return;
+        }
+
+        try {
+            const text = await file.text();
+            const importData = JSON.parse(text);
+            
+            // Validate the imported data structure
+            if (!importData.snippets || !Array.isArray(importData.snippets)) {
+                throw new Error('Invalid file format');
+            }
+
+            // Validate each snippet has required fields
+            const validSnippets = importData.snippets.filter(snippet => {
+                return snippet.id && snippet.type && snippet.content && snippet.createdAt;
+            });
+
+            if (validSnippets.length === 0) {
+                throw new Error('No valid snippets found in file');
+            }
+
+            // Merge with existing snippets (avoid duplicates by ID)
+            const existingIds = new Set(this.snippets.map(s => s.id));
+            const newSnippets = validSnippets.filter(snippet => !existingIds.has(snippet.id));
+            
+            // Add new snippets to the beginning of the array
+            this.snippets = [...newSnippets, ...this.snippets];
+            
+            await this.saveSnippets();
+            this.renderSnippets();
+            
+            // Reset file input
+            event.target.value = '';
+            
+            this.showNotification(`${this.t('import_success')} (${newSnippets.length} snippets)`);
+        } catch (error) {
+            console.error('Erro ao importar snippets:', error);
+            this.showNotification(this.t('import_error'));
+        }
+    }
+
     // Utilitários
     escapeHtml(text) {
         const div = document.createElement('div');
@@ -632,32 +753,44 @@ class SnippetManager {
     }
 
     showNotification(message) {
+        console.log('Mostrando notificação:', message);
+        
+        // Remover notificações existentes
+        const existingNotifications = document.querySelectorAll('.snippet-notification');
+        existingNotifications.forEach(notif => notif.remove());
+        
         // Criar notificação temporária
         const notification = document.createElement('div');
+        notification.className = 'snippet-notification';
         notification.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
             background: #4CAF50;
             color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
+            padding: 15px 25px;
+            border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             z-index: 10000;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             animation: slideIn 0.3s ease;
+            max-width: 300px;
+            word-wrap: break-word;
         `;
         notification.textContent = message;
         
         document.body.appendChild(notification);
+        console.log('Notificação adicionada ao DOM');
         
         setTimeout(() => {
             notification.style.animation = 'slideOut 0.3s ease';
             setTimeout(() => {
-                document.body.removeChild(notification);
+                if (notification.parentNode) {
+                    document.body.removeChild(notification);
+                }
             }, 300);
-        }, 2000);
+        }, 3000);
     }
 }
 

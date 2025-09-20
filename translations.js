@@ -41,6 +41,10 @@ const translations = {
         'portuguese': '🇧🇷 Português',
         'english': '🇺🇸 English',
         'french': '🇫🇷 Français',
+        'data_label': '📁 Backup e Restauração:',
+        'export_button': '📤 Exportar Snippets',
+        'import_button': '📥 Importar Snippets',
+        'data_description': 'Exporte seus snippets para backup ou importe de outro dispositivo',
         
         // Ações dos snippets
         'copy_button': '📋 Copiar',
@@ -65,7 +69,13 @@ const translations = {
         'content_required': 'Conteúdo é obrigatório',
         'invalid_url': 'Por favor, insira uma URL válida',
         'add_favorite_tooltip': 'Adicionar aos favoritos',
-        'remove_favorite_tooltip': 'Remover dos favoritos'
+        'remove_favorite_tooltip': 'Remover dos favoritos',
+        'export_success': 'Snippets exportados com sucesso!',
+        'export_error': 'Erro ao exportar snippets',
+        'import_success': 'Snippets importados com sucesso!',
+        'import_error': 'Erro ao importar snippets',
+        'import_invalid_file': 'Arquivo inválido. Por favor, selecione um arquivo JSON válido.',
+        'import_no_file': 'Nenhum arquivo selecionado'
     },
     en: {
         // Main interface
@@ -108,6 +118,10 @@ const translations = {
         'portuguese': '🇧🇷 Português',
         'english': '🇺🇸 English',
         'french': '🇫🇷 Français',
+        'data_label': '📁 Backup and Restore:',
+        'export_button': '📤 Export Snippets',
+        'import_button': '📥 Import Snippets',
+        'data_description': 'Export your snippets for backup or import from another device',
         
         // Snippet actions
         'copy_button': '📋 Copy',
@@ -132,7 +146,13 @@ const translations = {
         'content_required': 'Content is required',
         'invalid_url': 'Please enter a valid URL',
         'add_favorite_tooltip': 'Add to favorites',
-        'remove_favorite_tooltip': 'Remove from favorites'
+        'remove_favorite_tooltip': 'Remove from favorites',
+        'export_success': 'Snippets exported successfully!',
+        'export_error': 'Error exporting snippets',
+        'import_success': 'Snippets imported successfully!',
+        'import_error': 'Error importing snippets',
+        'import_invalid_file': 'Invalid file. Please select a valid JSON file.',
+        'import_no_file': 'No file selected'
     },
     fr: {
         // Interface principale
@@ -175,6 +195,10 @@ const translations = {
         'portuguese': '🇧🇷 Português',
         'english': '🇺🇸 English',
         'french': '🇫🇷 Français',
+        'data_label': '📁 Sauvegarde et Restauration :',
+        'export_button': '📤 Exporter les Snippets',
+        'import_button': '📥 Importer les Snippets',
+        'data_description': 'Exportez vos snippets pour sauvegarde ou importez depuis un autre appareil',
         
         // Actions des snippets
         'copy_button': '📋 Copier',
@@ -199,7 +223,13 @@ const translations = {
         'content_required': 'Le contenu est obligatoire',
         'invalid_url': 'Veuillez entrer une URL valide',
         'add_favorite_tooltip': 'Ajouter aux favoris',
-        'remove_favorite_tooltip': 'Retirer des favoris'
+        'remove_favorite_tooltip': 'Retirer des favoris',
+        'export_success': 'Snippets exportés avec succès !',
+        'export_error': 'Erreur lors de l\'exportation des snippets',
+        'import_success': 'Snippets importés avec succès !',
+        'import_error': 'Erreur lors de l\'importation des snippets',
+        'import_invalid_file': 'Fichier invalide. Veuillez sélectionner un fichier JSON valide.',
+        'import_no_file': 'Aucun fichier sélectionné'
     }
 };
 
