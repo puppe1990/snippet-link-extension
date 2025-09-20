@@ -131,6 +131,73 @@ const translations = {
         'invalid_url': 'Please enter a valid URL',
         'add_favorite_tooltip': 'Add to favorites',
         'remove_favorite_tooltip': 'Remove from favorites'
+    },
+    fr: {
+        // Interface principale
+        'app_title': 'Gestionnaire de Snippets',
+        'new_button': '+ Nouveau',
+        'sort_button': '🔄 Trier',
+        'settings_button': '⚙️',
+        'search_placeholder': '🔍 Rechercher des snippets...',
+        'all_tab': 'Tous',
+        'favorites_tab': '⭐ Favoris',
+        'links_tab': 'Liens',
+        'text_tab': 'Textes',
+        'empty_state_title': '📋 Aucun snippet trouvé',
+        'empty_state_subtitle': 'Cliquez sur "Nouveau" pour ajouter votre premier snippet !',
+        
+        // Modal de snippet
+        'new_snippet': 'Nouveau Snippet',
+        'edit_snippet': 'Modifier le Snippet',
+        'title_label': 'Titre (optionnel) :',
+        'title_placeholder': 'Entrez un titre...',
+        'type_label': 'Type :',
+        'link_type': '🔗 Lien',
+        'text_type': '📝 Texte',
+        'content_label': 'Contenu :',
+        'content_placeholder': 'Entrez le lien ou le texte...',
+        'tags_label': 'Tags (optionnel) :',
+        'tags_placeholder': 'Ex: travail, étude, important',
+        'cancel_button': 'Annuler',
+        'save_button': 'Sauvegarder',
+        
+        // Modal de suppression
+        'confirm_delete_title': 'Confirmer la Suppression',
+        'confirm_delete_text': 'Êtes-vous sûr de vouloir supprimer ce snippet ?',
+        'delete_warning': 'Cette action ne peut pas être annulée.',
+        'delete_button': 'Supprimer',
+        
+        // Modal de paramètres
+        'settings_title': 'Paramètres',
+        'language_label': 'Langue :',
+        'portuguese': '🇧🇷 Português',
+        'english': '🇺🇸 English',
+        'french': '🇫🇷 Français',
+        
+        // Actions des snippets
+        'copy_button': '📋 Copier',
+        'favorite_button': 'Favoris',
+        'favorite_active_button': 'Favorisé',
+        'edit_button': '✏️ Modifier',
+        'delete_button': '🗑️ Supprimer',
+        'open_button': '🔗 Ouvrir',
+        'no_title': 'Sans titre',
+        'created_at': 'Créé le :',
+        
+        // Notifications
+        'snippet_copied': 'Snippet copié !',
+        'copy_error': 'Erreur lors de la copie du snippet',
+        'snippet_added': 'Snippet ajouté !',
+        'snippet_updated': 'Snippet mis à jour !',
+        'snippet_favorited': 'ajouté aux favoris',
+        'snippet_unfavorited': 'retiré des favoris',
+        'order_updated': 'Ordre mis à jour !',
+        'snippets_sorted': 'Snippets triés par date de mise à jour',
+        'settings_saved': 'Paramètres sauvegardés !',
+        'content_required': 'Le contenu est obligatoire',
+        'invalid_url': 'Veuillez entrer une URL valide',
+        'add_favorite_tooltip': 'Ajouter aux favoris',
+        'remove_favorite_tooltip': 'Retirer des favoris'
     }
 };
 
@@ -243,7 +310,12 @@ class SnippetManager {
 
     updateLanguage() {
         // Atualizar atributo lang do HTML
-        document.documentElement.lang = this.currentLanguage === 'pt' ? 'pt-BR' : 'en-US';
+        const langMap = {
+            'pt': 'pt-BR',
+            'en': 'en-US',
+            'fr': 'fr-FR'
+        };
+        document.documentElement.lang = langMap[this.currentLanguage] || 'pt-BR';
         
         // Atualizar elementos da interface
         document.querySelector('h1').textContent = this.t('app_title');
@@ -305,6 +377,7 @@ class SnippetManager {
         languageSelect.innerHTML = `
             <option value="pt">${this.t('portuguese')}</option>
             <option value="en">${this.t('english')}</option>
+            <option value="fr">${this.t('french')}</option>
         `;
         languageSelect.value = this.currentLanguage;
     }
@@ -359,7 +432,8 @@ class SnippetManager {
 
     createSnippetHTML(snippet) {
         const tags = snippet.tags ? snippet.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
-        const date = new Date(snippet.createdAt).toLocaleDateString(this.currentLanguage === 'pt' ? 'pt-BR' : 'en-US');
+        const locale = this.currentLanguage === 'pt' ? 'pt-BR' : this.currentLanguage === 'fr' ? 'fr-FR' : 'en-US';
+        const date = new Date(snippet.createdAt).toLocaleDateString(locale);
         const displayTitle = snippet.title.trim() || this.t('no_title');
         const favoriteIcon = snippet.isFavorite ? '⭐' : '☆';
         const favoriteClass = snippet.isFavorite ? 'btn-favorite-active' : 'btn-favorite';
