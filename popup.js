@@ -143,9 +143,9 @@ class SnippetManager {
                 <div class="snippet-content">${this.escapeHtml(snippet.content)}</div>
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
+                    <button class="btn btn-small btn-secondary copy-btn" data-id="${snippet.id}">📋 Copiar</button>
                     <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${snippet.isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">${favoriteIcon} ${snippet.isFavorite ? 'Favorito' : 'Favoritar'}</button>
                     <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">✏️ Editar</button>
-                    <button class="btn btn-small btn-secondary copy-btn" data-id="${snippet.id}">📋 Copiar</button>
                     <button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">🗑️ Excluir</button>
                     ${snippet.type === 'link' ? `<button class="btn btn-small btn-secondary open-btn" data-url="${snippet.content}">🔗 Abrir</button>` : ''}
                 </div>
