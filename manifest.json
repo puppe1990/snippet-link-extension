@@ -7,6 +7,15 @@
     "storage",
     "activeTab"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "https://api.allorigins.win/*",
+    "https://cors-anywhere.herokuapp.com/*",
+    "https://api.codetabs.com/*",
+    "https://*/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_title": "Snippet Link Manager",

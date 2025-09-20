@@ -19,29 +19,29 @@ class SnippetManager {
         await this.loadSettings();
         this.setupEventListeners();
         this.updateLanguage();
-        this.renderSnippets();
+        await this.renderSnippets();
     }
 
     // Event Listeners
     setupEventListeners() {
         // Botões principais
         document.getElementById('addBtn').addEventListener('click', () => this.openModal());
-        document.getElementById('sortBtn').addEventListener('click', () => this.sortSnippets());
+        document.getElementById('sortBtn').addEventListener('click', async () => await this.sortSnippets());
         document.getElementById('settingsBtn').addEventListener('click', () => this.openSettingsModal());
         
         // Busca
-        document.getElementById('searchInput').addEventListener('input', (e) => {
+        document.getElementById('searchInput').addEventListener('input', async (e) => {
             this.currentSearch = e.target.value.toLowerCase();
-            this.renderSnippets();
+            await this.renderSnippets();
         });
 
         // Tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 this.currentFilter = e.target.dataset.type;
-                this.renderSnippets();
+                await this.renderSnippets();
             });
         });
 
@@ -121,12 +121,16 @@ class SnippetManager {
     // Gerenciamento de configurações
     async loadSettings() {
         try {
-            const result = await chrome.storage.local.get(['language']);
+            const result = await chrome.storage.local.get(['language', 'linkPreviewEnabled']);
             const language = result.language || 'pt';
+            const linkPreviewEnabled = result.linkPreviewEnabled !== undefined ? result.linkPreviewEnabled : true;
+            
             this.translationManager.setLanguage(language);
+            this.linkPreviewEnabled = linkPreviewEnabled;
         } catch (error) {
             console.error('Erro ao carregar configurações:', error);
             this.translationManager.setLanguage('pt');
+            this.linkPreviewEnabled = true; // Default habilitado
         }
     }
 
@@ -192,6 +196,8 @@ class SnippetManager {
         // Atualizar modal de configurações
         document.querySelector('#settingsModal .modal-header h2').textContent = this.t('settings_title');
         document.querySelector('#settingsModal label[for="languageSelect"]').textContent = this.t('language_label');
+        document.getElementById('linkPreviewLabel').textContent = this.t('link_preview_label');
+        document.getElementById('linkPreviewDescription').textContent = this.t('link_preview_description');
         document.getElementById('dataLabel').textContent = this.t('data_label');
         document.getElementById('exportBtn').textContent = this.t('export_button');
         document.getElementById('importBtn').textContent = this.t('import_button');
@@ -210,7 +216,7 @@ class SnippetManager {
     }
 
     // Renderização
-    renderSnippets() {
+    async renderSnippets() {
         const container = document.getElementById('snippetsList');
         const emptyState = document.getElementById('emptyState');
         
@@ -225,7 +231,12 @@ class SnippetManager {
         container.style.display = 'block';
         emptyState.style.display = 'none';
         
-        container.innerHTML = filteredSnippets.map(snippet => this.createSnippetHTML(snippet)).join('');
+        // Renderizar snippets com previews de forma assíncrona
+        const snippetsHTML = await Promise.all(
+            filteredSnippets.map(snippet => this.createSnippetHTML(snippet))
+        );
+        
+        container.innerHTML = snippetsHTML.join('');
         
         // Adicionar event listeners aos snippets
         this.attachSnippetListeners();
@@ -257,7 +268,7 @@ class SnippetManager {
         return filtered;
     }
 
-    createSnippetHTML(snippet) {
+    async createSnippetHTML(snippet) {
         const tags = snippet.tags ? snippet.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
         const date = new Date(snippet.createdAt).toLocaleDateString(this.translationManager.getLocale());
         const displayTitle = snippet.title.trim() || this.t('no_title');
@@ -265,6 +276,55 @@ class SnippetManager {
         const favoriteClass = snippet.isFavorite ? 'btn-favorite-active' : 'btn-favorite';
         const favoriteText = snippet.isFavorite ? this.t('favorite_active_button') : this.t('favorite_button');
         const favoriteTooltip = snippet.isFavorite ? this.t('remove_favorite_tooltip') : this.t('add_favorite_tooltip');
+        
+        // Gerar preview para links (apenas se habilitado)
+        let linkPreview = '';
+        if (this.linkPreviewEnabled && snippet.type === 'link' && this.isValidUrl(snippet.content)) {
+            // Mostrar loading inicial
+            linkPreview = `
+                <div class="link-preview preview-loading">
+                    <div class="preview-image preview-placeholder">⏳</div>
+                    <div class="preview-content">
+                        <div class="preview-title">Carregando preview...</div>
+                        <div class="preview-description">Buscando informações do link</div>
+                        <div class="preview-url">${this.escapeHtml(snippet.content)}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Buscar preview em background
+            this.generateLinkPreview(snippet.content).then(preview => {
+                if (preview) {
+                    const previewImage = preview.image ? 
+                        `<div class="preview-image" style="background-image: url('${preview.image}'); background-size: cover; background-position: center;"></div>` :
+                        `<div class="preview-image preview-placeholder">🔗</div>`;
+                    
+                    const snippetElement = document.querySelector(`[data-id="${snippet.id}"] .link-preview`);
+                    if (snippetElement) {
+                        snippetElement.outerHTML = `
+                            <div class="link-preview">
+                                ${previewImage}
+                                <div class="preview-content">
+                                    <div class="preview-title">${this.escapeHtml(preview.title)}</div>
+                                    ${preview.description ? `<div class="preview-description">${this.escapeHtml(preview.description)}</div>` : ''}
+                                    <div class="preview-url">${this.escapeHtml(preview.url)}</div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Re-attach event listeners
+                        this.attachSnippetListeners();
+                    }
+                }
+            }).catch(error => {
+                console.error('Erro ao gerar preview:', error);
+                // Remover loading em caso de erro
+                const snippetElement = document.querySelector(`[data-id="${snippet.id}"] .link-preview`);
+                if (snippetElement) {
+                    snippetElement.remove();
+                }
+            });
+        }
         
         return `
             <div class="snippet-item ${snippet.isFavorite ? 'favorite-snippet' : ''}" data-id="${snippet.id}" draggable="true">
@@ -274,6 +334,7 @@ class SnippetManager {
                     <span class="snippet-type ${snippet.type}">${snippet.type === 'link' ? this.t('link_type') : this.t('text_type')}</span>
                 </div>
                 <div class="snippet-content">${this.escapeHtml(snippet.content)}</div>
+                ${linkPreview}
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
                     <button class="btn btn-small btn-secondary copy-btn" data-id="${snippet.id}">${this.t('copy_button')}</button>
@@ -336,9 +397,22 @@ class SnippetManager {
         // Clique no snippet para copiar
         document.querySelectorAll('.snippet-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                if (!e.target.closest('.snippet-actions') && !e.target.closest('.drag-handle')) {
+                if (!e.target.closest('.snippet-actions') && !e.target.closest('.drag-handle') && !e.target.closest('.link-preview')) {
                     const id = item.dataset.id;
                     this.copySnippet(id);
+                }
+            });
+        });
+
+        // Clique na preview para abrir o link
+        document.querySelectorAll('.link-preview').forEach(preview => {
+            preview.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const snippetItem = preview.closest('.snippet-item');
+                const snippetId = snippetItem.dataset.id;
+                const snippet = this.snippets.find(s => s.id === snippetId);
+                if (snippet && snippet.type === 'link') {
+                    this.openLink(snippet.content);
                 }
             });
         });
@@ -476,7 +550,7 @@ class SnippetManager {
 
         this.snippets.unshift(snippet);
         await this.saveSnippets();
-        this.renderSnippets();
+        await this.renderSnippets();
     }
 
     async updateSnippet(id, snippetData) {
@@ -491,7 +565,7 @@ class SnippetManager {
                 updatedAt: new Date().toISOString()
             };
             await this.saveSnippets();
-            this.renderSnippets();
+            await this.renderSnippets();
         }
     }
 
@@ -501,7 +575,7 @@ class SnippetManager {
             this.snippets[index].isFavorite = !this.snippets[index].isFavorite;
             this.snippets[index].updatedAt = new Date().toISOString();
             await this.saveSnippets();
-            this.renderSnippets();
+            await this.renderSnippets();
             
             const favoriteStatus = this.snippets[index].isFavorite ? this.t('snippet_favorited') : this.t('snippet_unfavorited');
             this.showNotification(`Snippet ${favoriteStatus}!`);
@@ -511,7 +585,7 @@ class SnippetManager {
     async deleteSnippetById(id) {
         this.snippets = this.snippets.filter(s => s.id !== id);
         await this.saveSnippets();
-        this.renderSnippets();
+        await this.renderSnippets();
     }
 
     editSnippet(id) {
@@ -549,10 +623,10 @@ class SnippetManager {
         chrome.tabs.create({ url: url });
     }
 
-    sortSnippets() {
+    async sortSnippets() {
         this.snippets.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        this.saveSnippets();
-        this.renderSnippets();
+        await this.saveSnippets();
+        await this.renderSnippets();
         this.showNotification(this.t('snippets_sorted'));
     }
 
@@ -629,7 +703,11 @@ class SnippetManager {
     openSettingsModal() {
         const modal = document.getElementById('settingsModal');
         const languageSelect = document.getElementById('languageSelect');
+        const linkPreviewToggle = document.getElementById('linkPreviewToggle');
+        
         languageSelect.value = this.translationManager.getCurrentLanguage();
+        linkPreviewToggle.checked = this.linkPreviewEnabled;
+        
         modal.style.display = 'block';
     }
 
@@ -639,19 +717,27 @@ class SnippetManager {
 
     async saveSettings() {
         const languageSelect = document.getElementById('languageSelect');
-        const language = languageSelect.value;
-        this.translationManager.setLanguage(language);
+        const linkPreviewToggle = document.getElementById('linkPreviewToggle');
         
-        await this.saveSettingsToStorage(language);
+        const language = languageSelect.value;
+        const linkPreviewEnabled = linkPreviewToggle.checked;
+        
+        this.translationManager.setLanguage(language);
+        this.linkPreviewEnabled = linkPreviewEnabled;
+        
+        await this.saveSettingsToStorage(language, linkPreviewEnabled);
         this.updateLanguage();
-        this.renderSnippets();
+        await this.renderSnippets();
         this.closeSettingsModal();
         this.showNotification(this.t('settings_saved'));
     }
 
-    async saveSettingsToStorage(language) {
+    async saveSettingsToStorage(language, linkPreviewEnabled) {
         try {
-            await chrome.storage.local.set({ language: language });
+            await chrome.storage.local.set({ 
+                language: language,
+                linkPreviewEnabled: linkPreviewEnabled
+            });
         } catch (error) {
             console.error('Erro ao salvar configurações:', error);
         }
@@ -733,7 +819,7 @@ class SnippetManager {
             this.snippets = [...newSnippets, ...this.snippets];
             
             await this.saveSnippets();
-            this.renderSnippets();
+            await this.renderSnippets();
             
             // Reset file input
             event.target.value = '';
@@ -742,6 +828,147 @@ class SnippetManager {
         } catch (error) {
             console.error('Erro ao importar snippets:', error);
             this.showNotification(this.t('import_error'));
+        }
+    }
+
+    // Funcionalidade de pré-visualização de links
+    async fetchLinkPreview(url) {
+        try {
+            // Usar o background script para fazer a requisição
+            return new Promise((resolve, reject) => {
+                chrome.runtime.sendMessage(
+                    { action: 'fetchPreview', url: url },
+                    (response) => {
+                        if (chrome.runtime.lastError) {
+                            console.error('Erro de runtime:', chrome.runtime.lastError);
+                            reject(new Error(chrome.runtime.lastError.message));
+                            return;
+                        }
+                        
+                        if (response && response.success) {
+                            resolve(response.preview);
+                        } else {
+                            reject(new Error(response?.error || 'Erro desconhecido'));
+                        }
+                    }
+                );
+            });
+        } catch (error) {
+            console.error('Erro ao buscar preview do link:', error);
+            throw error;
+        }
+    }
+
+    async generateLinkPreview(url) {
+        // Verificar se já temos o preview em cache
+        const cacheKey = `preview_${url}`;
+        const cached = await this.getCachedPreview(cacheKey);
+        if (cached) {
+            return cached;
+        }
+        
+        try {
+            // Buscar novo preview
+            const preview = await this.fetchLinkPreview(url);
+            if (preview) {
+                // Salvar no cache
+                await this.cachePreview(cacheKey, preview);
+                return preview;
+            }
+        } catch (error) {
+            console.error('Erro ao gerar preview:', error);
+            
+            // Fallback: criar preview básico baseado na URL
+            const fallbackPreview = this.createFallbackPreview(url);
+            if (fallbackPreview) {
+                await this.cachePreview(cacheKey, fallbackPreview);
+                return fallbackPreview;
+            }
+        }
+        
+        return null;
+    }
+
+    createFallbackPreview(url) {
+        try {
+            const urlObj = new URL(url);
+            let title = urlObj.hostname.replace('www.', '');
+            let description = '';
+
+            // Mapear domínios conhecidos para títulos mais amigáveis
+            const domainMap = {
+                'youtube.com': 'YouTube',
+                'youtu.be': 'YouTube',
+                'github.com': 'GitHub',
+                'stackoverflow.com': 'Stack Overflow',
+                'medium.com': 'Medium',
+                'linkedin.com': 'LinkedIn',
+                'twitter.com': 'Twitter',
+                'instagram.com': 'Instagram',
+                'facebook.com': 'Facebook',
+                'netflix.com': 'Netflix',
+                'amazon.com': 'Amazon',
+                'google.com': 'Google',
+                'docs.google.com': 'Google Docs',
+                'drive.google.com': 'Google Drive',
+                'sheets.google.com': 'Google Sheets',
+                'chrome.google.com': 'Chrome Web Store'
+            };
+
+            if (domainMap[urlObj.hostname]) {
+                title = domainMap[urlObj.hostname];
+                description = `Link para ${title}`;
+            } else {
+                description = `Link para ${title}`;
+            }
+
+            return {
+                title: title,
+                description: description,
+                image: '',
+                url: url
+            };
+        } catch (error) {
+            console.error('Erro ao criar fallback preview:', error);
+            return null;
+        }
+    }
+
+    async getCachedPreview(key) {
+        try {
+            const result = await chrome.storage.local.get([key]);
+            const cached = result[key];
+            
+            // Verificar se o cache não expirou (24 horas)
+            if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
+                return cached.data;
+            }
+        } catch (error) {
+            console.error('Erro ao buscar cache do preview:', error);
+        }
+        
+        return null;
+    }
+
+    async cachePreview(key, data) {
+        try {
+            await chrome.storage.local.set({
+                [key]: {
+                    data: data,
+                    timestamp: Date.now()
+                }
+            });
+        } catch (error) {
+            console.error('Erro ao salvar cache do preview:', error);
+        }
+    }
+
+    isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
         }
     }
 
