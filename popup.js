@@ -1,3 +1,139 @@
+// Sistema de traduções
+const translations = {
+    pt: {
+        // Interface principal
+        'app_title': 'Snippet Manager',
+        'new_button': '+ Novo',
+        'sort_button': '🔄 Ordenar',
+        'settings_button': '⚙️',
+        'search_placeholder': '🔍 Buscar snippets...',
+        'all_tab': 'Todos',
+        'favorites_tab': '⭐ Favoritos',
+        'links_tab': 'Links',
+        'text_tab': 'Textos',
+        'empty_state_title': '📋 Nenhum snippet encontrado',
+        'empty_state_subtitle': 'Clique em "Novo" para adicionar seu primeiro snippet!',
+        
+        // Modal de snippet
+        'new_snippet': 'Novo Snippet',
+        'edit_snippet': 'Editar Snippet',
+        'title_label': 'Título (opcional):',
+        'title_placeholder': 'Digite um título...',
+        'type_label': 'Tipo:',
+        'link_type': '🔗 Link',
+        'text_type': '📝 Texto',
+        'content_label': 'Conteúdo:',
+        'content_placeholder': 'Digite o link ou texto...',
+        'tags_label': 'Tags (opcional):',
+        'tags_placeholder': 'Ex: trabalho, estudo, importante',
+        'cancel_button': 'Cancelar',
+        'save_button': 'Salvar',
+        
+        // Modal de exclusão
+        'confirm_delete_title': 'Confirmar Exclusão',
+        'confirm_delete_text': 'Tem certeza que deseja excluir este snippet?',
+        'delete_warning': 'Esta ação não pode ser desfeita.',
+        'delete_button': 'Excluir',
+        
+        // Modal de configurações
+        'settings_title': 'Configurações',
+        'language_label': 'Idioma:',
+        'portuguese': '🇧🇷 Português',
+        'english': '🇺🇸 English',
+        
+        // Ações dos snippets
+        'copy_button': '📋 Copiar',
+        'favorite_button': 'Favoritar',
+        'favorite_active_button': 'Favorito',
+        'edit_button': '✏️ Editar',
+        'delete_button': '🗑️ Excluir',
+        'open_button': '🔗 Abrir',
+        'no_title': 'Sem título',
+        'created_at': 'Criado em:',
+        
+        // Notificações
+        'snippet_copied': 'Snippet copiado!',
+        'copy_error': 'Erro ao copiar snippet',
+        'snippet_added': 'Snippet adicionado!',
+        'snippet_updated': 'Snippet atualizado!',
+        'snippet_favorited': 'favoritado',
+        'snippet_unfavorited': 'removido dos favoritos',
+        'order_updated': 'Ordem atualizada!',
+        'snippets_sorted': 'Snippets ordenados por data de atualização',
+        'settings_saved': 'Configurações salvas!',
+        'content_required': 'Conteúdo é obrigatório',
+        'invalid_url': 'Por favor, insira uma URL válida',
+        'add_favorite_tooltip': 'Adicionar aos favoritos',
+        'remove_favorite_tooltip': 'Remover dos favoritos'
+    },
+    en: {
+        // Main interface
+        'app_title': 'Snippet Manager',
+        'new_button': '+ New',
+        'sort_button': '🔄 Sort',
+        'settings_button': '⚙️',
+        'search_placeholder': '🔍 Search snippets...',
+        'all_tab': 'All',
+        'favorites_tab': '⭐ Favorites',
+        'links_tab': 'Links',
+        'text_tab': 'Texts',
+        'empty_state_title': '📋 No snippets found',
+        'empty_state_subtitle': 'Click "New" to add your first snippet!',
+        
+        // Snippet modal
+        'new_snippet': 'New Snippet',
+        'edit_snippet': 'Edit Snippet',
+        'title_label': 'Title (optional):',
+        'title_placeholder': 'Enter a title...',
+        'type_label': 'Type:',
+        'link_type': '🔗 Link',
+        'text_type': '📝 Text',
+        'content_label': 'Content:',
+        'content_placeholder': 'Enter the link or text...',
+        'tags_label': 'Tags (optional):',
+        'tags_placeholder': 'Ex: work, study, important',
+        'cancel_button': 'Cancel',
+        'save_button': 'Save',
+        
+        // Delete modal
+        'confirm_delete_title': 'Confirm Deletion',
+        'confirm_delete_text': 'Are you sure you want to delete this snippet?',
+        'delete_warning': 'This action cannot be undone.',
+        'delete_button': 'Delete',
+        
+        // Settings modal
+        'settings_title': 'Settings',
+        'language_label': 'Language:',
+        'portuguese': '🇧🇷 Português',
+        'english': '🇺🇸 English',
+        
+        // Snippet actions
+        'copy_button': '📋 Copy',
+        'favorite_button': 'Favorite',
+        'favorite_active_button': 'Favorited',
+        'edit_button': '✏️ Edit',
+        'delete_button': '🗑️ Delete',
+        'open_button': '🔗 Open',
+        'no_title': 'No title',
+        'created_at': 'Created at:',
+        
+        // Notifications
+        'snippet_copied': 'Snippet copied!',
+        'copy_error': 'Error copying snippet',
+        'snippet_added': 'Snippet added!',
+        'snippet_updated': 'Snippet updated!',
+        'snippet_favorited': 'favorited',
+        'snippet_unfavorited': 'removed from favorites',
+        'order_updated': 'Order updated!',
+        'snippets_sorted': 'Snippets sorted by update date',
+        'settings_saved': 'Settings saved!',
+        'content_required': 'Content is required',
+        'invalid_url': 'Please enter a valid URL',
+        'add_favorite_tooltip': 'Add to favorites',
+        'remove_favorite_tooltip': 'Remove from favorites'
+    }
+};
+
 // Classe principal para gerenciar snippets
 class SnippetManager {
     constructor() {
@@ -8,13 +144,16 @@ class SnippetManager {
         this.deletingId = null;
         this.draggedElement = null;
         this.draggedIndex = -1;
+        this.currentLanguage = 'pt'; // Idioma padrão
         
         this.init();
     }
 
     async init() {
         await this.loadSnippets();
+        await this.loadSettings();
         this.setupEventListeners();
+        this.updateLanguage();
         this.renderSnippets();
     }
 
@@ -23,6 +162,7 @@ class SnippetManager {
         // Botões principais
         document.getElementById('addBtn').addEventListener('click', () => this.openModal());
         document.getElementById('sortBtn').addEventListener('click', () => this.sortSnippets());
+        document.getElementById('settingsBtn').addEventListener('click', () => this.openSettingsModal());
         
         // Busca
         document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -50,11 +190,17 @@ class SnippetManager {
         document.getElementById('cancelDeleteBtn').addEventListener('click', () => this.closeDeleteModal());
         document.getElementById('confirmDeleteBtn').addEventListener('click', () => this.confirmDelete());
 
+        // Modal de configurações
+        document.getElementById('closeSettingsModal').addEventListener('click', () => this.closeSettingsModal());
+        document.getElementById('cancelSettingsBtn').addEventListener('click', () => this.closeSettingsModal());
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
+
         // Fechar modal clicando fora
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 this.closeModal();
                 this.closeDeleteModal();
+                this.closeSettingsModal();
             }
         });
     }
@@ -76,6 +222,91 @@ class SnippetManager {
         } catch (error) {
             console.error('Erro ao salvar snippets:', error);
         }
+    }
+
+    // Gerenciamento de configurações
+    async loadSettings() {
+        try {
+            const result = await chrome.storage.local.get(['language']);
+            this.currentLanguage = result.language || 'pt';
+        } catch (error) {
+            console.error('Erro ao carregar configurações:', error);
+            this.currentLanguage = 'pt';
+        }
+    }
+
+
+    // Sistema de tradução
+    t(key) {
+        return translations[this.currentLanguage][key] || key;
+    }
+
+    updateLanguage() {
+        // Atualizar atributo lang do HTML
+        document.documentElement.lang = this.currentLanguage === 'pt' ? 'pt-BR' : 'en-US';
+        
+        // Atualizar elementos da interface
+        document.querySelector('h1').textContent = this.t('app_title');
+        document.getElementById('addBtn').textContent = this.t('new_button');
+        document.getElementById('sortBtn').textContent = this.t('sort_button');
+        document.getElementById('searchInput').placeholder = this.t('search_placeholder');
+        
+        // Atualizar tabs
+        const tabs = document.querySelectorAll('.tab-btn');
+        const tabKeys = ['all_tab', 'favorites_tab', 'links_tab', 'text_tab'];
+        tabs.forEach((tab, index) => {
+            tab.textContent = this.t(tabKeys[index]);
+        });
+        
+        // Atualizar estado vazio
+        const emptyState = document.getElementById('emptyState');
+        emptyState.innerHTML = `
+            <p>${this.t('empty_state_title')}</p>
+            <p>${this.t('empty_state_subtitle')}</p>
+        `;
+        
+        // Atualizar modal de snippet
+        document.getElementById('snippetTitle').placeholder = this.t('title_placeholder');
+        document.getElementById('snippetContent').placeholder = this.t('content_placeholder');
+        document.getElementById('snippetTags').placeholder = this.t('tags_placeholder');
+        
+        // Atualizar opções do select de tipo
+        const typeSelect = document.getElementById('snippetType');
+        typeSelect.innerHTML = `
+            <option value="link">${this.t('link_type')}</option>
+            <option value="text">${this.t('text_type')}</option>
+        `;
+        
+        // Atualizar labels do formulário
+        document.querySelector('label[for="snippetTitle"]').textContent = this.t('title_label');
+        document.querySelector('label[for="snippetType"]').textContent = this.t('type_label');
+        document.querySelector('label[for="snippetContent"]').textContent = this.t('content_label');
+        document.querySelector('label[for="snippetTags"]').textContent = this.t('tags_label');
+        
+        // Atualizar botões do modal
+        document.getElementById('cancelBtn').textContent = this.t('cancel_button');
+        document.querySelector('#snippetForm button[type="submit"]').textContent = this.t('save_button');
+        
+        // Atualizar modal de exclusão
+        document.querySelector('#deleteModal .modal-header h2').textContent = this.t('confirm_delete_title');
+        document.querySelector('#deleteModal .modal-body p').textContent = this.t('confirm_delete_text');
+        document.querySelector('#deleteModal .delete-warning').textContent = this.t('delete_warning');
+        document.getElementById('cancelDeleteBtn').textContent = this.t('cancel_button');
+        document.getElementById('confirmDeleteBtn').textContent = this.t('delete_button');
+        
+        // Atualizar modal de configurações
+        document.querySelector('#settingsModal .modal-header h2').textContent = this.t('settings_title');
+        document.querySelector('#settingsModal label[for="languageSelect"]').textContent = this.t('language_label');
+        document.getElementById('saveSettingsBtn').textContent = this.t('save_button');
+        document.getElementById('cancelSettingsBtn').textContent = this.t('cancel_button');
+        
+        // Atualizar opções do select de idioma
+        const languageSelect = document.getElementById('languageSelect');
+        languageSelect.innerHTML = `
+            <option value="pt">${this.t('portuguese')}</option>
+            <option value="en">${this.t('english')}</option>
+        `;
+        languageSelect.value = this.currentLanguage;
     }
 
     // Renderização
@@ -128,28 +359,30 @@ class SnippetManager {
 
     createSnippetHTML(snippet) {
         const tags = snippet.tags ? snippet.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
-        const date = new Date(snippet.createdAt).toLocaleDateString('pt-BR');
-        const displayTitle = snippet.title.trim() || 'Sem título';
+        const date = new Date(snippet.createdAt).toLocaleDateString(this.currentLanguage === 'pt' ? 'pt-BR' : 'en-US');
+        const displayTitle = snippet.title.trim() || this.t('no_title');
         const favoriteIcon = snippet.isFavorite ? '⭐' : '☆';
         const favoriteClass = snippet.isFavorite ? 'btn-favorite-active' : 'btn-favorite';
+        const favoriteText = snippet.isFavorite ? this.t('favorite_active_button') : this.t('favorite_button');
+        const favoriteTooltip = snippet.isFavorite ? this.t('remove_favorite_tooltip') : this.t('add_favorite_tooltip');
         
         return `
             <div class="snippet-item ${snippet.isFavorite ? 'favorite-snippet' : ''}" data-id="${snippet.id}" draggable="true">
                 <div class="drag-handle">⋮⋮</div>
                 <div class="snippet-header">
                     <h3 class="snippet-title">${this.escapeHtml(displayTitle)}</h3>
-                    <span class="snippet-type ${snippet.type}">${snippet.type === 'link' ? '🔗 Link' : '📝 Texto'}</span>
+                    <span class="snippet-type ${snippet.type}">${snippet.type === 'link' ? this.t('link_type') : this.t('text_type')}</span>
                 </div>
                 <div class="snippet-content">${this.escapeHtml(snippet.content)}</div>
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
-                    <button class="btn btn-small btn-secondary copy-btn" data-id="${snippet.id}">📋 Copiar</button>
-                    <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${snippet.isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">${favoriteIcon} ${snippet.isFavorite ? 'Favorito' : 'Favoritar'}</button>
-                    <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">✏️ Editar</button>
-                    <button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">🗑️ Excluir</button>
-                    ${snippet.type === 'link' ? `<button class="btn btn-small btn-secondary open-btn" data-url="${snippet.content}">🔗 Abrir</button>` : ''}
+                    <button class="btn btn-small btn-secondary copy-btn" data-id="${snippet.id}">${this.t('copy_button')}</button>
+                    <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${favoriteTooltip}">${favoriteIcon} ${favoriteText}</button>
+                    <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">${this.t('edit_button')}</button>
+                    <button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">${this.t('delete_button')}</button>
+                    ${snippet.type === 'link' ? `<button class="btn btn-small btn-secondary open-btn" data-url="${snippet.content}">${this.t('open_button')}</button>` : ''}
                 </div>
-                <div class="snippet-date">Criado em: ${date}</div>
+                <div class="snippet-date">${this.t('created_at')} ${date}</div>
             </div>
         `;
     }
@@ -302,7 +535,7 @@ class SnippetManager {
         // Re-render to show new order
         this.renderSnippets();
         
-        this.showNotification('Ordem atualizada!');
+        this.showNotification(this.t('order_updated'));
     }
 
     async updateSnippetsOrder(filteredSnippets) {
@@ -370,7 +603,7 @@ class SnippetManager {
             await this.saveSnippets();
             this.renderSnippets();
             
-            const favoriteStatus = this.snippets[index].isFavorite ? 'favoritado' : 'removido dos favoritos';
+            const favoriteStatus = this.snippets[index].isFavorite ? this.t('snippet_favorited') : this.t('snippet_unfavorited');
             this.showNotification(`Snippet ${favoriteStatus}!`);
         }
     }
@@ -405,9 +638,9 @@ class SnippetManager {
         const snippet = this.snippets.find(s => s.id === id);
         if (snippet) {
             navigator.clipboard.writeText(snippet.content).then(() => {
-                this.showNotification('Snippet copiado!');
+                this.showNotification(this.t('snippet_copied'));
             }).catch(() => {
-                this.showNotification('Erro ao copiar snippet');
+                this.showNotification(this.t('copy_error'));
             });
         }
     }
@@ -420,7 +653,7 @@ class SnippetManager {
         this.snippets.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         this.saveSnippets();
         this.renderSnippets();
-        this.showNotification('Snippets ordenados por data de atualização');
+        this.showNotification(this.t('snippets_sorted'));
     }
 
     // Modal
@@ -430,13 +663,13 @@ class SnippetManager {
         const title = document.getElementById('modalTitle');
         
         if (snippet) {
-            title.textContent = 'Editar Snippet';
+            title.textContent = this.t('edit_snippet');
             document.getElementById('snippetTitle').value = snippet.title;
             document.getElementById('snippetType').value = snippet.type;
             document.getElementById('snippetContent').value = snippet.content;
             document.getElementById('snippetTags').value = snippet.tags ? snippet.tags.join(', ') : '';
         } else {
-            title.textContent = 'Novo Snippet';
+            title.textContent = this.t('new_snippet');
             form.reset();
             this.editingId = null;
         }
@@ -467,7 +700,7 @@ class SnippetManager {
 
         // Validação básica
         if (!formData.content.trim()) {
-            this.showNotification('Conteúdo é obrigatório');
+            this.showNotification(this.t('content_required'));
             return;
         }
 
@@ -476,20 +709,51 @@ class SnippetManager {
             try {
                 new URL(formData.content);
             } catch {
-                this.showNotification('Por favor, insira uma URL válida');
+                this.showNotification(this.t('invalid_url'));
                 return;
             }
         }
 
         if (this.editingId) {
             await this.updateSnippet(this.editingId, formData);
-            this.showNotification('Snippet atualizado!');
+            this.showNotification(this.t('snippet_updated'));
         } else {
             await this.addSnippet(formData);
-            this.showNotification('Snippet adicionado!');
+            this.showNotification(this.t('snippet_added'));
         }
 
         this.closeModal();
+    }
+
+    // Modal de configurações
+    openSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        const languageSelect = document.getElementById('languageSelect');
+        languageSelect.value = this.currentLanguage;
+        modal.style.display = 'block';
+    }
+
+    closeSettingsModal() {
+        document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    async saveSettings() {
+        const languageSelect = document.getElementById('languageSelect');
+        this.currentLanguage = languageSelect.value;
+        
+        await this.saveSettingsToStorage();
+        this.updateLanguage();
+        this.renderSnippets();
+        this.closeSettingsModal();
+        this.showNotification(this.t('settings_saved'));
+    }
+
+    async saveSettingsToStorage() {
+        try {
+            await chrome.storage.local.set({ language: this.currentLanguage });
+        } catch (error) {
+            console.error('Erro ao salvar configurações:', error);
+        }
     }
 
     // Utilitários
