@@ -87,7 +87,11 @@ const translations = {
         // Resumo
         'summarize_button': '📄 Resumir',
         'summarize_label': '📄 Resumo de Links:',
-        'summarize_description': 'Ativar opção de resumir links com IA'
+        'summarize_description': 'Ativar opção de resumir links com IA',
+        'ai_provider_label': '🤖 Provedor de IA:',
+        'ai_provider_description': 'Escolha qual IA usar para resumir os links',
+        'perplexity_ai': 'Perplexity AI',
+        'chatgpt': 'ChatGPT'
     },
     en: {
         // Main interface
@@ -176,7 +180,11 @@ const translations = {
         // Summarize
         'summarize_button': '📄 Summarize',
         'summarize_label': '📄 Link Summarization:',
-        'summarize_description': 'Enable option to summarize links with AI'
+        'summarize_description': 'Enable option to summarize links with AI',
+        'ai_provider_label': '🤖 AI Provider:',
+        'ai_provider_description': 'Choose which AI to use for summarizing links',
+        'perplexity_ai': 'Perplexity AI',
+        'chatgpt': 'ChatGPT'
     },
     fr: {
         // Interface principale
@@ -265,7 +273,11 @@ const translations = {
         // Résumé
         'summarize_button': '📄 Résumer',
         'summarize_label': '📄 Résumé des Liens :',
-        'summarize_description': 'Activer l\'option de résumer les liens avec IA'
+        'summarize_description': 'Activer l\'option de résumer les liens avec IA',
+        'ai_provider_label': '🤖 Fournisseur d\'IA :',
+        'ai_provider_description': 'Choisissez quelle IA utiliser pour résumer les liens',
+        'perplexity_ai': 'Perplexity AI',
+        'chatgpt': 'ChatGPT'
     }
 };
 

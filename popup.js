@@ -12,6 +12,7 @@ class SnippetManager {
         this.draggedIndex = -1;
         this.translationManager = new TranslationManager();
         this.summarizeEnabled = false;
+        this.aiProvider = 'perplexity';
         
         this.init();
     }
@@ -78,6 +79,12 @@ class SnippetManager {
         document.getElementById('cancelSettingsBtn').addEventListener('click', () => this.closeSettingsModal());
         document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
         
+        // Toggle de resumo para mostrar/ocultar seletor de IA
+        const summarizeToggle = document.getElementById('summarizeToggle');
+        if (summarizeToggle) {
+            summarizeToggle.addEventListener('change', () => this.toggleAiProviderVisibility());
+        }
+        
         // Import/Export buttons
         const exportBtn = document.getElementById('exportBtn');
         const importBtn = document.getElementById('importBtn');
@@ -139,19 +146,22 @@ class SnippetManager {
     // Gerenciamento de configurações
     async loadSettings() {
         try {
-            const result = await chrome.storage.local.get(['language', 'linkPreviewEnabled', 'summarizeEnabled']);
+            const result = await chrome.storage.local.get(['language', 'linkPreviewEnabled', 'summarizeEnabled', 'aiProvider']);
             const language = result.language || 'pt';
             const linkPreviewEnabled = result.linkPreviewEnabled !== undefined ? result.linkPreviewEnabled : true;
             const summarizeEnabled = result.summarizeEnabled !== undefined ? result.summarizeEnabled : false;
+            const aiProvider = result.aiProvider || 'perplexity';
             
             this.translationManager.setLanguage(language);
             this.linkPreviewEnabled = linkPreviewEnabled;
             this.summarizeEnabled = summarizeEnabled;
+            this.aiProvider = aiProvider;
         } catch (error) {
             console.error('Erro ao carregar configurações:', error);
             this.translationManager.setLanguage('pt');
             this.linkPreviewEnabled = true; // Default habilitado
             this.summarizeEnabled = false; // Default desabilitado
+            this.aiProvider = 'perplexity'; // Default Perplexity
         }
     }
 
@@ -159,6 +169,15 @@ class SnippetManager {
     // Sistema de tradução
     t(key) {
         return this.translationManager.t(key);
+    }
+
+    toggleAiProviderVisibility() {
+        const summarizeToggle = document.getElementById('summarizeToggle');
+        const aiProviderGroup = document.getElementById('aiProviderGroup');
+        
+        if (summarizeToggle && aiProviderGroup) {
+            aiProviderGroup.style.display = summarizeToggle.checked ? 'block' : 'none';
+        }
     }
 
     updateLanguage() {
@@ -224,6 +243,21 @@ class SnippetManager {
         const summarizeDescription = document.getElementById('summarizeDescription');
         if (summarizeLabel) summarizeLabel.textContent = this.t('summarize_label');
         if (summarizeDescription) summarizeDescription.textContent = this.t('summarize_description');
+        
+        const aiProviderLabel = document.getElementById('aiProviderLabel');
+        const aiProviderDescription = document.getElementById('aiProviderDescription');
+        if (aiProviderLabel) aiProviderLabel.textContent = this.t('ai_provider_label');
+        if (aiProviderDescription) aiProviderDescription.textContent = this.t('ai_provider_description');
+        
+        // Atualizar opções do select de IA
+        const aiProviderSelect = document.getElementById('aiProviderSelect');
+        if (aiProviderSelect) {
+            aiProviderSelect.innerHTML = `
+                <option value="perplexity">${this.t('perplexity_ai')}</option>
+                <option value="chatgpt">${this.t('chatgpt')}</option>
+            `;
+            aiProviderSelect.value = this.aiProvider;
+        }
         document.getElementById('dataLabel').textContent = this.t('data_label');
         document.getElementById('exportBtn').textContent = this.t('export_button');
         document.getElementById('importBtn').textContent = this.t('import_button');
@@ -793,7 +827,17 @@ class SnippetManager {
     }
 
     summarizeLink(url) {
-        const summarizeUrl = `https://www.perplexity.ai/search?q=resuma+${encodeURIComponent(url)}&copilot=true`;
+        let summarizeUrl;
+        
+        if (this.aiProvider === 'chatgpt') {
+            // ChatGPT URL format with hints=search and temporary-chat parameters
+            const prompt = `Resuma o conteúdo deste link: ${url}`;
+            summarizeUrl = `https://chat.openai.com/?q=${encodeURIComponent(prompt)}&hints=search&temporary-chat=true`;
+        } else {
+            // Perplexity AI URL format (default)
+            summarizeUrl = `https://www.perplexity.ai/search?q=resuma+${encodeURIComponent(url)}&copilot=true`;
+        }
+        
         chrome.tabs.create({ url: summarizeUrl });
     }
 
@@ -883,10 +927,15 @@ class SnippetManager {
         const languageSelect = document.getElementById('languageSelect');
         const linkPreviewToggle = document.getElementById('linkPreviewToggle');
         const summarizeToggle = document.getElementById('summarizeToggle');
+        const aiProviderSelect = document.getElementById('aiProviderSelect');
         
         languageSelect.value = this.translationManager.getCurrentLanguage();
         linkPreviewToggle.checked = this.linkPreviewEnabled;
         if (summarizeToggle) summarizeToggle.checked = this.summarizeEnabled;
+        if (aiProviderSelect) aiProviderSelect.value = this.aiProvider;
+        
+        // Mostrar/ocultar seletor de IA baseado no toggle de resumo
+        this.toggleAiProviderVisibility();
         
         modal.style.display = 'block';
     }
@@ -899,28 +948,32 @@ class SnippetManager {
         const languageSelect = document.getElementById('languageSelect');
         const linkPreviewToggle = document.getElementById('linkPreviewToggle');
         const summarizeToggle = document.getElementById('summarizeToggle');
+        const aiProviderSelect = document.getElementById('aiProviderSelect');
         
         const language = languageSelect.value;
         const linkPreviewEnabled = linkPreviewToggle.checked;
         const summarizeEnabled = summarizeToggle ? summarizeToggle.checked : false;
+        const aiProvider = aiProviderSelect ? aiProviderSelect.value : 'perplexity';
         
         this.translationManager.setLanguage(language);
         this.linkPreviewEnabled = linkPreviewEnabled;
         this.summarizeEnabled = summarizeEnabled;
+        this.aiProvider = aiProvider;
         
-        await this.saveSettingsToStorage(language, linkPreviewEnabled, summarizeEnabled);
+        await this.saveSettingsToStorage(language, linkPreviewEnabled, summarizeEnabled, aiProvider);
         this.updateLanguage();
         await this.renderSnippets();
         this.closeSettingsModal();
         this.showNotification(this.t('settings_saved'));
     }
 
-    async saveSettingsToStorage(language, linkPreviewEnabled, summarizeEnabled) {
+    async saveSettingsToStorage(language, linkPreviewEnabled, summarizeEnabled, aiProvider) {
         try {
             await chrome.storage.local.set({ 
                 language: language,
                 linkPreviewEnabled: linkPreviewEnabled,
-                summarizeEnabled: summarizeEnabled
+                summarizeEnabled: summarizeEnabled,
+                aiProvider: aiProvider
             });
         } catch (error) {
             console.error('Erro ao salvar configurações:', error);

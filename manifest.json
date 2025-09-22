@@ -14,7 +14,8 @@
     "https://api.allorigins.win/*",
     "https://cors-anywhere.herokuapp.com/*",
     "https://api.codetabs.com/*",
-    "https://www.perplexity.ai/*"
+    "https://www.perplexity.ai/*",
+    "https://chat.openai.com/*"
   ],
   "action": {
     "default_popup": "popup.html",
