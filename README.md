@@ -106,7 +106,7 @@ snippet-link-extension/
 
 A extensão solicita apenas as permissões mínimas necessárias:
 - **storage**: Para salvar seus snippets localmente
-- **activeTab**: Para funcionalidades relacionadas à aba ativa
+- **tabs**: Para abrir links em novas abas
 
 ## 💾 Armazenamento
 
