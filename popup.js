@@ -5,6 +5,7 @@ class SnippetManager {
         this.snippets = [];
         this.currentFilter = 'all';
         this.currentSearch = '';
+        this.currentTagFilter = null;
         this.editingId = null;
         this.deletingId = null;
         this.draggedElement = null;
@@ -19,6 +20,7 @@ class SnippetManager {
         await this.loadSettings();
         this.setupEventListeners();
         this.updateLanguage();
+        await this.renderTagFilters();
         await this.renderSnippets();
     }
 
@@ -40,6 +42,15 @@ class SnippetManager {
             this.currentSearch = e.target.value.toLowerCase();
             await this.renderSnippets();
         });
+
+        // Tag filter
+        const clearTagFilterBtn = document.getElementById('clearTagFilter');
+        if (clearTagFilterBtn) {
+            clearTagFilterBtn.addEventListener('click', async () => {
+                this.clearTagFilter();
+                await this.renderSnippets();
+            });
+        }
 
         // Tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -211,6 +222,17 @@ class SnippetManager {
         document.getElementById('saveSettingsBtn').textContent = this.t('save_button');
         document.getElementById('cancelSettingsBtn').textContent = this.t('cancel_button');
         
+        // Atualizar elementos do filtro de tags
+        const tagsFilterTitle = document.getElementById('tagsFilterTitle');
+        if (tagsFilterTitle) {
+            tagsFilterTitle.textContent = this.t('tags_filter_title');
+        }
+        
+        const clearTagFilterBtn = document.getElementById('clearTagFilter');
+        if (clearTagFilterBtn) {
+            clearTagFilterBtn.textContent = this.t('clear_tag_filter');
+        }
+        
         // Atualizar opções do select de idioma
         const languageSelect = document.getElementById('languageSelect');
         languageSelect.innerHTML = `
@@ -259,6 +281,13 @@ class SnippetManager {
         // Filtrar por favoritos
         if (this.currentFilter === 'favorites') {
             filtered = filtered.filter(snippet => snippet.isFavorite === true);
+        }
+
+        // Filtrar por tag
+        if (this.currentTagFilter) {
+            filtered = filtered.filter(snippet => 
+                snippet.tags && snippet.tags.includes(this.currentTagFilter)
+            );
         }
 
         // Filtrar por busca
@@ -541,6 +570,89 @@ class SnippetManager {
         await this.saveSnippets();
     }
 
+    // Tag filtering functionality
+    async renderTagFilters() {
+        const tagsContainer = document.getElementById('tagsFilter');
+        if (!tagsContainer) return;
+
+        // Extract unique tags from all snippets
+        const uniqueTags = this.getUniqueTags();
+        
+        if (uniqueTags.length === 0) {
+            tagsContainer.innerHTML = `<span style="color: #6c757d; font-size: 12px; font-style: italic;">${this.t('no_tags_found')}</span>`;
+            return;
+        }
+
+        // Create tag filter buttons
+        const tagButtonsHTML = uniqueTags.map(tag => {
+            const count = this.getTagCount(tag);
+            const isActive = this.currentTagFilter === tag;
+            return `
+                <button class="tag-filter-btn ${isActive ? 'active' : ''}" data-tag="${this.escapeHtml(tag)}">
+                    ${this.escapeHtml(tag)}
+                    <span class="tag-count">${count}</span>
+                </button>
+            `;
+        }).join('');
+
+        tagsContainer.innerHTML = tagButtonsHTML;
+
+        // Show/hide clear button based on active tag filter
+        const clearBtn = document.getElementById('clearTagFilter');
+        if (clearBtn) {
+            clearBtn.style.display = this.currentTagFilter ? 'block' : 'none';
+        }
+
+        // Add event listeners to tag buttons
+        this.attachTagFilterListeners();
+    }
+
+    getUniqueTags() {
+        const allTags = new Set();
+        this.snippets.forEach(snippet => {
+            if (snippet.tags && Array.isArray(snippet.tags)) {
+                snippet.tags.forEach(tag => {
+                    if (tag && tag.trim()) {
+                        allTags.add(tag.trim());
+                    }
+                });
+            }
+        });
+        return Array.from(allTags).sort();
+    }
+
+    getTagCount(tag) {
+        return this.snippets.filter(snippet => 
+            snippet.tags && snippet.tags.includes(tag)
+        ).length;
+    }
+
+    attachTagFilterListeners() {
+        document.querySelectorAll('.tag-filter-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const tag = e.target.dataset.tag;
+                await this.toggleTagFilter(tag);
+            });
+        });
+    }
+
+    async toggleTagFilter(tag) {
+        if (this.currentTagFilter === tag) {
+            this.currentTagFilter = null;
+        } else {
+            this.currentTagFilter = tag;
+        }
+        
+        await this.renderTagFilters();
+        await this.renderSnippets();
+    }
+
+    clearTagFilter() {
+        this.currentTagFilter = null;
+        this.renderTagFilters();
+    }
+
     // Funcionalidades dos snippets
     async addSnippet(snippetData) {
         const snippet = {
@@ -556,6 +668,7 @@ class SnippetManager {
 
         this.snippets.unshift(snippet);
         await this.saveSnippets();
+        await this.renderTagFilters();
         await this.renderSnippets();
     }
 
@@ -571,6 +684,7 @@ class SnippetManager {
                 updatedAt: new Date().toISOString()
             };
             await this.saveSnippets();
+            await this.renderTagFilters();
             await this.renderSnippets();
         }
     }
@@ -591,6 +705,7 @@ class SnippetManager {
     async deleteSnippetById(id) {
         this.snippets = this.snippets.filter(s => s.id !== id);
         await this.saveSnippets();
+        await this.renderTagFilters();
         await this.renderSnippets();
     }
 
@@ -829,6 +944,7 @@ class SnippetManager {
             this.snippets = [...newSnippets, ...this.snippets];
             
             await this.saveSnippets();
+            await this.renderTagFilters();
             await this.renderSnippets();
             
             // Reset file input

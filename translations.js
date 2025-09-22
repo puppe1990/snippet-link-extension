@@ -14,6 +14,11 @@ const translations = {
         'empty_state_title': '📋 Nenhum snippet encontrado',
         'empty_state_subtitle': 'Clique em "Novo" para adicionar seu primeiro snippet!',
         
+        // Tag filter
+        'tags_filter_title': '🏷️ Filtrar por Tags:',
+        'clear_tag_filter': 'Limpar',
+        'no_tags_found': 'Nenhuma tag encontrada',
+        
         // Modal de snippet
         'new_snippet': 'Novo Snippet',
         'edit_snippet': 'Editar Snippet',
@@ -93,6 +98,11 @@ const translations = {
         'empty_state_title': '📋 No snippets found',
         'empty_state_subtitle': 'Click "New" to add your first snippet!',
         
+        // Tag filter
+        'tags_filter_title': '🏷️ Filter by Tags:',
+        'clear_tag_filter': 'Clear',
+        'no_tags_found': 'No tags found',
+        
         // Snippet modal
         'new_snippet': 'New Snippet',
         'edit_snippet': 'Edit Snippet',
@@ -171,6 +181,11 @@ const translations = {
         'text_tab': 'Textes',
         'empty_state_title': '📋 Aucun snippet trouvé',
         'empty_state_subtitle': 'Cliquez sur "Nouveau" pour ajouter votre premier snippet !',
+        
+        // Tag filter
+        'tags_filter_title': '🏷️ Filtrer par Tags :',
+        'clear_tag_filter': 'Effacer',
+        'no_tags_found': 'Aucune tag trouvée',
         
         // Modal de snippet
         'new_snippet': 'Nouveau Snippet',
