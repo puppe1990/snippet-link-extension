@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snippet Link Manager - Full Page</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilos específicos para a versão full-page */
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .search-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .search-input {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            display: block;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            padding: 0 20px;
+            border-bottom: 1px solid #e9ecef;
+            gap: 0;
+        }
+        
+        .tab-btn {
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            position: relative;
+        }
+        
+        .tab-btn:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .snippets-container {
+            padding: 20px;
+            min-height: 400px;
+        }
+        
+        .snippets-list {
+            display: grid;
+            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        }
+        
+        .snippet-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .snippet-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+        
+        .snippet-item.favorite-snippet {
+            border-color: #ffc107;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+        }
+        
+        .snippet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        
+        .snippet-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.4;
+            flex: 1;
+        }
+        
+        .snippet-type {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        
+        .snippet-type.link {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .snippet-type.text {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .snippet-content {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            word-break: break-word;
+        }
+        
+        .link-preview {
+            display: flex;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .link-preview:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .preview-image {
+            width: 120px;
+            height: 80px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #6c757d;
+            flex-shrink: 0;
+        }
+        
+        .preview-content {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .preview-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.3;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .preview-description {
+            color: #666;
+            font-size: 12px;
+            line-height: 1.3;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .preview-url {
+            color: #667eea;
+            font-size: 11px;
+            font-weight: 500;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        
+        .snippet-tags {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .tag {
+            background: #e9ecef;
+            color: #495057;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .snippet-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+        
+        .btn-small {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+        
+        .btn-favorite {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-favorite:hover {
+            background: #e0a800;
+            transform: translateY(-1px);
+        }
+        
+        .btn-favorite-active {
+            background: #ffc107;
+            color: #212529;
+            box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3);
+        }
+        
+        .snippet-date {
+            font-size: 11px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        .empty-state p:first-child {
+            font-size: 20px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        /* Modal styles remain the same as popup */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .modal-actions {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-radius: 0 0 15px 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .toggle-description {
+            font-size: 12px;
+            color: #6c757d;
+            flex: 1;
+        }
+        
+        .import-export-section {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .header-actions {
+                justify-content: center;
+            }
+            
+            .snippets-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+            
+            .import-export-section {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📝 Snippet Manager</h1>
+            <div class="header-actions">
+                <button id="settingsBtn" class="btn btn-secondary" title="Configurações">⚙️</button>
+                <button id="addBtn" class="btn btn-primary">+ Novo</button>
+                <button id="sortBtn" class="btn btn-secondary">🔄 Ordenar</button>
+            </div>
+        </header>
+
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="🔍 Buscar snippets..." class="search-input">
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-type="all">Todos</button>
+            <button class="tab-btn" data-type="favorites">⭐ Favoritos</button>
+            <button class="tab-btn" data-type="link">Links</button>
+            <button class="tab-btn" data-type="text">Textos</button>
+        </div>
+
+        <div class="snippets-container">
+            <div id="snippetsList" class="snippets-list">
+                <!-- Snippets serão inseridos aqui dinamicamente -->
+            </div>
+            <div id="emptyState" class="empty-state">
+                <p>📋 Nenhum snippet encontrado</p>
+                <p>Clique em "Novo" para adicionar seu primeiro snippet!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para adicionar/editar snippet -->
+    <div id="snippetModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Novo Snippet</h2>
+                <button id="closeModal" class="close-btn">&times;</button>
+            </div>
+            <form id="snippetForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="snippetTitle">Título (opcional):</label>
+                        <input type="text" id="snippetTitle" placeholder="Digite um título...">
+                    </div>
+                    <div class="form-group">
+                        <label for="snippetType">Tipo:</label>
+                        <select id="snippetType" required>
+                            <option value="link">🔗 Link</option>
+                            <option value="text">📝 Texto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="snippetContent">Conteúdo:</label>
+                        <textarea id="snippetContent" required placeholder="Digite o link ou texto..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="snippetTags">Tags (opcional):</label>
+                        <input type="text" id="snippetTags" placeholder="Ex: trabalho, estudo, importante">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelBtn" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmação para exclusão -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirmar Exclusão</h2>
+                <button id="closeDeleteModal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir este snippet?</p>
+                <p class="delete-warning">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelDeleteBtn" class="btn btn-secondary">Cancelar</button>
+                <button id="confirmDeleteBtn" class="btn btn-danger">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de configurações -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configurações</h2>
+                <button id="closeSettingsModal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="languageSelect">Idioma:</label>
+                    <select id="languageSelect">
+                        <option value="pt">🇧🇷 Português</option>
+                        <option value="en">🇺🇸 English</option>
+                        <option value="fr">🇫🇷 Français</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="linkPreviewToggle" id="linkPreviewLabel">🔗 Pré-visualização de Links:</label>
+                    <div class="toggle-container">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="linkPreviewToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span id="linkPreviewDescription" class="toggle-description">Ativar preview automático para links salvos</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label id="dataLabel" style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 10px; display: block;">📁 Backup e Restauração:</label>
+                    <div class="import-export-section">
+                        <button id="exportBtn" class="btn btn-secondary">📤 Exportar Snippets</button>
+                        <button id="importBtn" class="btn btn-secondary">📥 Importar Snippets</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                    </div>
+                    <p id="dataDescription" style="font-size: 12px; color: #666; margin-top: 8px; text-align: center;">
+                        Exporte seus snippets para backup ou importe de outro dispositivo
+                    </p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="saveSettingsBtn" class="btn btn-primary">Salvar</button>
+                <button id="cancelSettingsBtn" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="translations.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

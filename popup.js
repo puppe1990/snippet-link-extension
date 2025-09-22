@@ -29,6 +29,12 @@ class SnippetManager {
         document.getElementById('sortBtn').addEventListener('click', async () => await this.sortSnippets());
         document.getElementById('settingsBtn').addEventListener('click', () => this.openSettingsModal());
         
+        // Botão para abrir em nova aba
+        const openInTabBtn = document.getElementById('openInTabBtn');
+        if (openInTabBtn) {
+            openInTabBtn.addEventListener('click', () => this.openInNewTab());
+        }
+        
         // Busca
         document.getElementById('searchInput').addEventListener('input', async (e) => {
             this.currentSearch = e.target.value.toLowerCase();
@@ -621,6 +627,10 @@ class SnippetManager {
 
     openLink(url) {
         chrome.tabs.create({ url: url });
+    }
+
+    openInNewTab() {
+        chrome.tabs.create({ url: chrome.runtime.getURL('fullpage.html') });
     }
 
     async sortSnippets() {
