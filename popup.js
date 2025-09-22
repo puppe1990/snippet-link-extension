@@ -347,8 +347,8 @@ class SnippetManager {
                             </div>
                         `;
                         
-                        // Re-attach event listeners
-                        this.attachSnippetListeners();
+                        // Re-attach event listeners apenas para o preview específico
+                        this.attachLinkPreviewListener(snippetElement);
                     }
                 }
             }).catch(error => {
@@ -384,6 +384,9 @@ class SnippetManager {
     }
 
     attachSnippetListeners() {
+        // Limpar event listeners existentes para evitar duplicação
+        this.removeSnippetListeners();
+        
         // Botões de favorito
         document.querySelectorAll('.favorite-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -456,6 +459,31 @@ class SnippetManager {
         document.querySelectorAll('.snippet-item').forEach(item => {
             this.attachDragListeners(item);
         });
+    }
+
+    // Função para anexar listener apenas ao preview específico
+    attachLinkPreviewListener(previewElement) {
+        if (previewElement) {
+            previewElement.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const snippetItem = previewElement.closest('.snippet-item');
+                const snippetId = snippetItem.dataset.id;
+                const snippet = this.snippets.find(s => s.id === snippetId);
+                if (snippet && snippet.type === 'link') {
+                    this.openLink(snippet.content);
+                }
+            });
+        }
+    }
+
+    // Função para remover event listeners existentes
+    removeSnippetListeners() {
+        // Remover todos os event listeners clonando os elementos
+        const snippetsList = document.getElementById('snippetsList');
+        if (snippetsList) {
+            const newSnippetsList = snippetsList.cloneNode(true);
+            snippetsList.parentNode.replaceChild(newSnippetsList, snippetsList);
+        }
     }
 
     // Drag and Drop functionality
