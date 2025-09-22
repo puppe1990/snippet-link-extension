@@ -306,7 +306,8 @@ class SnippetManager {
     async createSnippetHTML(snippet) {
         const tags = snippet.tags ? snippet.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
         const date = new Date(snippet.createdAt).toLocaleDateString(this.translationManager.getLocale());
-        const displayTitle = snippet.title.trim() || this.t('no_title');
+        const hasTitle = snippet.title && snippet.title.trim();
+        const displayTitle = hasTitle ? this.escapeHtml(snippet.title.trim()) : '';
         const favoriteIcon = snippet.isFavorite ? '⭐' : '☆';
         const favoriteClass = snippet.isFavorite ? 'btn-favorite-active' : 'btn-favorite';
         const favoriteText = snippet.isFavorite ? this.t('favorite_active_button') : this.t('favorite_button');
@@ -365,7 +366,7 @@ class SnippetManager {
             <div class="snippet-item ${snippet.isFavorite ? 'favorite-snippet' : ''}" data-id="${snippet.id}" draggable="true">
                 <div class="drag-handle">⋮⋮</div>
                 <div class="snippet-header">
-                    <h3 class="snippet-title">${this.escapeHtml(displayTitle)}</h3>
+                    ${hasTitle ? `<h3 class="snippet-title">${displayTitle}</h3>` : ''}
                     <span class="snippet-type ${snippet.type}">${snippet.type === 'link' ? this.t('link_type') : this.t('text_type')}</span>
                 </div>
                 <div class="snippet-content">${this.escapeHtml(snippet.content)}</div>
