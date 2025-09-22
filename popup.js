@@ -11,6 +11,7 @@ class SnippetManager {
         this.draggedElement = null;
         this.draggedIndex = -1;
         this.translationManager = new TranslationManager();
+        this.summarizeEnabled = false;
         
         this.init();
     }
@@ -138,16 +139,19 @@ class SnippetManager {
     // Gerenciamento de configurações
     async loadSettings() {
         try {
-            const result = await chrome.storage.local.get(['language', 'linkPreviewEnabled']);
+            const result = await chrome.storage.local.get(['language', 'linkPreviewEnabled', 'summarizeEnabled']);
             const language = result.language || 'pt';
             const linkPreviewEnabled = result.linkPreviewEnabled !== undefined ? result.linkPreviewEnabled : true;
+            const summarizeEnabled = result.summarizeEnabled !== undefined ? result.summarizeEnabled : false;
             
             this.translationManager.setLanguage(language);
             this.linkPreviewEnabled = linkPreviewEnabled;
+            this.summarizeEnabled = summarizeEnabled;
         } catch (error) {
             console.error('Erro ao carregar configurações:', error);
             this.translationManager.setLanguage('pt');
             this.linkPreviewEnabled = true; // Default habilitado
+            this.summarizeEnabled = false; // Default desabilitado
         }
     }
 
@@ -215,6 +219,11 @@ class SnippetManager {
         document.querySelector('#settingsModal label[for="languageSelect"]').textContent = this.t('language_label');
         document.getElementById('linkPreviewLabel').textContent = this.t('link_preview_label');
         document.getElementById('linkPreviewDescription').textContent = this.t('link_preview_description');
+        
+        const summarizeLabel = document.getElementById('summarizeLabel');
+        const summarizeDescription = document.getElementById('summarizeDescription');
+        if (summarizeLabel) summarizeLabel.textContent = this.t('summarize_label');
+        if (summarizeDescription) summarizeDescription.textContent = this.t('summarize_description');
         document.getElementById('dataLabel').textContent = this.t('data_label');
         document.getElementById('exportBtn').textContent = this.t('export_button');
         document.getElementById('importBtn').textContent = this.t('import_button');
@@ -240,7 +249,7 @@ class SnippetManager {
             <option value="en">${this.t('english')}</option>
             <option value="fr">${this.t('french')}</option>
         `;
-        languageSelect.value = this.currentLanguage;
+        languageSelect.value = this.translationManager.getCurrentLanguage();
     }
 
     // Renderização
@@ -378,6 +387,7 @@ class SnippetManager {
                     <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">${this.t('edit_button')}</button>
                     <button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">${this.t('delete_button')}</button>
                     ${snippet.type === 'link' ? `<button class="btn btn-small btn-secondary open-btn" data-url="${snippet.content}">${this.t('open_button')}</button>` : ''}
+                    ${snippet.type === 'link' && this.summarizeEnabled ? `<button class="btn btn-small btn-secondary summarize-btn" data-url="${snippet.content}">${this.t('summarize_button')}</button>` : ''}
                 </div>
                 <div class="snippet-date">${this.t('created_at')} ${date}</div>
             </div>
@@ -430,6 +440,15 @@ class SnippetManager {
                 e.stopPropagation();
                 const url = e.target.dataset.url;
                 this.openLink(url);
+            });
+        });
+
+        // Botões de resumir
+        document.querySelectorAll('.summarize-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const url = e.target.dataset.url;
+                this.summarizeLink(url);
             });
         });
 
@@ -773,6 +792,11 @@ class SnippetManager {
         chrome.tabs.create({ url: url });
     }
 
+    summarizeLink(url) {
+        const summarizeUrl = `https://www.perplexity.ai/search?q=resuma+${encodeURIComponent(url)}&copilot=true`;
+        chrome.tabs.create({ url: summarizeUrl });
+    }
+
     openInNewTab() {
         chrome.tabs.create({ url: chrome.runtime.getURL('fullpage.html') });
     }
@@ -858,9 +882,11 @@ class SnippetManager {
         const modal = document.getElementById('settingsModal');
         const languageSelect = document.getElementById('languageSelect');
         const linkPreviewToggle = document.getElementById('linkPreviewToggle');
+        const summarizeToggle = document.getElementById('summarizeToggle');
         
         languageSelect.value = this.translationManager.getCurrentLanguage();
         linkPreviewToggle.checked = this.linkPreviewEnabled;
+        if (summarizeToggle) summarizeToggle.checked = this.summarizeEnabled;
         
         modal.style.display = 'block';
     }
@@ -872,25 +898,29 @@ class SnippetManager {
     async saveSettings() {
         const languageSelect = document.getElementById('languageSelect');
         const linkPreviewToggle = document.getElementById('linkPreviewToggle');
+        const summarizeToggle = document.getElementById('summarizeToggle');
         
         const language = languageSelect.value;
         const linkPreviewEnabled = linkPreviewToggle.checked;
+        const summarizeEnabled = summarizeToggle ? summarizeToggle.checked : false;
         
         this.translationManager.setLanguage(language);
         this.linkPreviewEnabled = linkPreviewEnabled;
+        this.summarizeEnabled = summarizeEnabled;
         
-        await this.saveSettingsToStorage(language, linkPreviewEnabled);
+        await this.saveSettingsToStorage(language, linkPreviewEnabled, summarizeEnabled);
         this.updateLanguage();
         await this.renderSnippets();
         this.closeSettingsModal();
         this.showNotification(this.t('settings_saved'));
     }
 
-    async saveSettingsToStorage(language, linkPreviewEnabled) {
+    async saveSettingsToStorage(language, linkPreviewEnabled, summarizeEnabled) {
         try {
             await chrome.storage.local.set({ 
                 language: language,
-                linkPreviewEnabled: linkPreviewEnabled
+                linkPreviewEnabled: linkPreviewEnabled,
+                summarizeEnabled: summarizeEnabled
             });
         } catch (error) {
             console.error('Erro ao salvar configurações:', error);

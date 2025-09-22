@@ -13,7 +13,8 @@
   "host_permissions": [
     "https://api.allorigins.win/*",
     "https://cors-anywhere.herokuapp.com/*",
-    "https://api.codetabs.com/*"
+    "https://api.codetabs.com/*",
+    "https://www.perplexity.ai/*"
   ],
   "action": {
     "default_popup": "popup.html",

@@ -82,7 +82,12 @@ const translations = {
         'import_success': 'Snippets importados com sucesso!',
         'import_error': 'Erro ao importar snippets',
         'import_invalid_file': 'Arquivo inválido. Por favor, selecione um arquivo JSON válido.',
-        'import_no_file': 'Nenhum arquivo selecionado'
+        'import_no_file': 'Nenhum arquivo selecionado',
+        
+        // Resumo
+        'summarize_button': '📄 Resumir',
+        'summarize_label': '📄 Resumo de Links:',
+        'summarize_description': 'Ativar opção de resumir links com IA'
     },
     en: {
         // Main interface
@@ -166,7 +171,12 @@ const translations = {
         'import_success': 'Snippets imported successfully!',
         'import_error': 'Error importing snippets',
         'import_invalid_file': 'Invalid file. Please select a valid JSON file.',
-        'import_no_file': 'No file selected'
+        'import_no_file': 'No file selected',
+        
+        // Summarize
+        'summarize_button': '📄 Summarize',
+        'summarize_label': '📄 Link Summarization:',
+        'summarize_description': 'Enable option to summarize links with AI'
     },
     fr: {
         // Interface principale
@@ -250,7 +260,12 @@ const translations = {
         'import_success': 'Snippets importés avec succès !',
         'import_error': 'Erreur lors de l\'importation des snippets',
         'import_invalid_file': 'Fichier invalide. Veuillez sélectionner un fichier JSON valide.',
-        'import_no_file': 'Aucun fichier sélectionné'
+        'import_no_file': 'Aucun fichier sélectionné',
+        
+        // Résumé
+        'summarize_button': '📄 Résumer',
+        'summarize_label': '📄 Résumé des Liens :',
+        'summarize_description': 'Activer l\'option de résumer les liens avec IA'
     }
 };
 
