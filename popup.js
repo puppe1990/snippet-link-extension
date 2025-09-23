@@ -129,6 +129,18 @@ class SnippetManager {
         try {
             const result = await chrome.storage.local.get(['snippets']);
             this.snippets = result.snippets || [];
+            
+            // Garantir que todos os snippets tenham a propriedade isArchived
+            this.snippets.forEach(snippet => {
+                if (snippet.isArchived === undefined) {
+                    snippet.isArchived = false;
+                }
+            });
+            
+            // Salvar se houve alguma atualização
+            if (this.snippets.some(snippet => snippet.isArchived === false && snippet.isArchived !== undefined)) {
+                await this.saveSnippets();
+            }
         } catch (error) {
             console.error('Erro ao carregar snippets:', error);
             this.snippets = [];
@@ -192,7 +204,7 @@ class SnippetManager {
         
         // Atualizar tabs
         const tabs = document.querySelectorAll('.tab-btn');
-        const tabKeys = ['all_tab', 'favorites_tab', 'links_tab', 'text_tab'];
+        const tabKeys = ['all_tab', 'links_tab', 'text_tab', 'favorites_tab', 'archived_tab'];
         tabs.forEach((tab, index) => {
             tab.textContent = this.t(tabKeys[index]);
         });
@@ -317,13 +329,23 @@ class SnippetManager {
         let filtered = this.snippets;
 
         // Filtrar por tipo
-        if (this.currentFilter !== 'all' && this.currentFilter !== 'favorites') {
+        if (this.currentFilter !== 'all' && this.currentFilter !== 'favorites' && this.currentFilter !== 'archived') {
             filtered = filtered.filter(snippet => snippet.type === this.currentFilter);
         }
 
         // Filtrar por favoritos
         if (this.currentFilter === 'favorites') {
             filtered = filtered.filter(snippet => snippet.isFavorite === true);
+        }
+
+        // Filtrar por arquivados
+        if (this.currentFilter === 'archived') {
+            filtered = filtered.filter(snippet => snippet.isArchived === true);
+        }
+
+        // Para outros filtros, excluir arquivados por padrão
+        if (this.currentFilter !== 'archived') {
+            filtered = filtered.filter(snippet => !snippet.isArchived);
         }
 
         // Filtrar por tag
@@ -355,6 +377,13 @@ class SnippetManager {
         const favoriteClass = snippet.isFavorite ? 'btn-favorite-active' : 'btn-favorite';
         const favoriteText = snippet.isFavorite ? this.t('favorite_active_button') : this.t('favorite_button');
         const favoriteTooltip = snippet.isFavorite ? this.t('remove_favorite_tooltip') : this.t('add_favorite_tooltip');
+        
+        const archiveIcon = snippet.isArchived ? '📂' : '📁';
+        const archiveClass = snippet.isArchived ? 'btn-archive-active' : 'btn-archive';
+        const archiveText = snippet.isArchived ? this.t('unarchive_button') : this.t('archive_button');
+        const archiveTooltip = snippet.isArchived ? this.t('unarchive_tooltip') : this.t('archive_tooltip');
+        
+        
         
         // Gerar preview para links (apenas se habilitado)
         let linkPreview = '';
@@ -406,7 +435,7 @@ class SnippetManager {
         }
         
         return `
-            <div class="snippet-item ${snippet.isFavorite ? 'favorite-snippet' : ''}" data-id="${snippet.id}" draggable="true">
+            <div class="snippet-item ${snippet.isFavorite ? 'favorite-snippet' : ''} ${snippet.isArchived ? 'archived-snippet' : ''}" data-id="${snippet.id}" draggable="true">
                 <div class="drag-handle">⋮⋮</div>
                 <div class="snippet-header">
                     ${hasTitle ? `<h3 class="snippet-title">${displayTitle}</h3>` : ''}
@@ -418,6 +447,7 @@ class SnippetManager {
                 <div class="snippet-actions">
                     <button class="btn btn-small btn-secondary copy-btn" data-id="${snippet.id}">${this.t('copy_button')}</button>
                     <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${favoriteTooltip}">${favoriteIcon} ${favoriteText}</button>
+                    <button class="btn btn-small ${archiveClass} archive-btn" data-id="${snippet.id}" title="${archiveTooltip}">${archiveIcon} ${archiveText}</button>
                     <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">${this.t('edit_button')}</button>
                     <button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">${this.t('delete_button')}</button>
                     ${snippet.type === 'link' ? `<button class="btn btn-small btn-secondary open-btn" data-url="${snippet.content}">${this.t('open_button')}</button>` : ''}
@@ -438,6 +468,16 @@ class SnippetManager {
                 e.stopPropagation();
                 const id = e.target.dataset.id;
                 this.toggleFavorite(id);
+            });
+        });
+
+        // Botões de arquivar
+        document.querySelectorAll('.archive-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const id = e.target.dataset.id;
+                this.toggleArchive(id);
             });
         });
 
@@ -744,6 +784,7 @@ class SnippetManager {
             content: snippetData.content,
             tags: snippetData.tags ? snippetData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
             isFavorite: false,
+            isArchived: false,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -781,6 +822,19 @@ class SnippetManager {
             
             const favoriteStatus = this.snippets[index].isFavorite ? this.t('snippet_favorited') : this.t('snippet_unfavorited');
             this.showNotification(`Snippet ${favoriteStatus}!`);
+        }
+    }
+
+    async toggleArchive(id) {
+        const index = this.snippets.findIndex(s => s.id === id);
+        if (index !== -1) {
+            this.snippets[index].isArchived = !this.snippets[index].isArchived;
+            this.snippets[index].updatedAt = new Date().toISOString();
+            await this.saveSnippets();
+            await this.renderSnippets();
+            
+            const archiveStatus = this.snippets[index].isArchived ? this.t('snippet_archived') : this.t('snippet_unarchived');
+            this.showNotification(`Snippet ${archiveStatus}!`);
         }
     }
 

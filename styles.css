@@ -68,13 +68,13 @@ body {
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.2);
+    background: #6c757d;
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: #5a6268;
+    transform: translateY(-1px);
 }
 
 /* Botão de copiar específico */
@@ -117,6 +117,28 @@ body {
 
 .btn-favorite-active:hover {
     background: #e55a2b;
+    transform: scale(1.05);
+}
+
+.btn-archive {
+    background: #6c757d;
+    color: white;
+    border: none;
+}
+
+.btn-archive:hover {
+    background: #5a6268;
+    transform: scale(1.05);
+}
+
+.btn-archive-active {
+    background: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-archive-active:hover {
+    background: #218838;
     transform: scale(1.05);
 }
 
@@ -225,6 +247,28 @@ body {
 .favorite-snippet:hover {
     border-color: #ff6b35;
     box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
+}
+
+.archived-snippet {
+    border-color: #6c757d;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    position: relative;
+    opacity: 0.8;
+}
+
+.archived-snippet::before {
+    content: '📁';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 16px;
+    opacity: 0.7;
+}
+
+.archived-snippet:hover {
+    border-color: #28a745;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+    opacity: 1;
 }
 
 /* Drag and Drop Styles */
