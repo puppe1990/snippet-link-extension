@@ -448,13 +448,13 @@ class SnippetManager {
                 ${linkPreview}
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
-                    <button class="btn btn-small btn-secondary copy-btn" data-id="${snippet.id}">${this.t('copy_button')}</button>
+                    ${snippet.type === 'link' ? `<button class="btn btn-small open-btn" data-url="${snippet.content}">${this.t('open_button')}</button>` : ''}
                     <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${favoriteTooltip}">${favoriteIcon} ${favoriteText}</button>
+                    ${snippet.type === 'link' && this.summarizeEnabled ? `<button class="btn btn-small summarize-btn" data-url="${snippet.content}">${this.t('summarize_button')}</button>` : ''}
                     <button class="btn btn-small ${archiveClass} archive-btn" data-id="${snippet.id}" title="${archiveTooltip}">${archiveIcon} ${archiveText}</button>
+                    <button class="btn btn-small copy-btn" data-id="${snippet.id}">${this.t('copy_button')}</button>
                     <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">${this.t('edit_button')}</button>
                     <button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">${this.t('delete_button')}</button>
-                    ${snippet.type === 'link' ? `<button class="btn btn-small btn-secondary open-btn" data-url="${snippet.content}">${this.t('open_button')}</button>` : ''}
-                    ${snippet.type === 'link' && this.summarizeEnabled ? `<button class="btn btn-small btn-secondary summarize-btn" data-url="${snippet.content}">${this.t('summarize_button')}</button>` : ''}
                 </div>
                 <div class="snippet-date">${this.t('created_at')} ${date}</div>
             </div>
