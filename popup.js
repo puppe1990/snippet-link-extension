@@ -412,12 +412,19 @@ class SnippetManager {
                     
                     const snippetElement = document.querySelector(`[data-id="${snippet.id}"] .link-preview`);
                     if (snippetElement) {
+                        // Verificar se é YouTube para mostrar informações específicas
+                        const isYouTube = this.isYouTubeUrl(snippet.content);
+                        const channelInfo = preview.channel ? `<div class="preview-channel">📺 ${this.escapeHtml(preview.channel)}</div>` : '';
+                        const videoIdInfo = preview.videoId && isYouTube ? `<div class="preview-video-id">🎥 ID: ${preview.videoId}</div>` : '';
+                        
                         snippetElement.outerHTML = `
-                            <div class="link-preview">
+                            <div class="link-preview ${isYouTube ? 'youtube-preview' : ''}">
                                 ${previewImage}
                                 <div class="preview-content">
                                     <div class="preview-title">${this.escapeHtml(preview.title)}</div>
                                     ${preview.description ? `<div class="preview-description">${this.escapeHtml(preview.description)}</div>` : ''}
+                                    ${channelInfo}
+                                    ${videoIdInfo}
                                     <div class="preview-url">${this.escapeHtml(preview.url)}</div>
                                 </div>
                             </div>
@@ -1189,42 +1196,91 @@ class SnippetManager {
             const urlObj = new URL(url);
             let title = urlObj.hostname.replace('www.', '');
             let description = '';
+            let image = '';
 
-            // Mapear domínios conhecidos para títulos mais amigáveis
-            const domainMap = {
-                'youtube.com': 'YouTube',
-                'youtu.be': 'YouTube',
-                'github.com': 'GitHub',
-                'stackoverflow.com': 'Stack Overflow',
-                'medium.com': 'Medium',
-                'linkedin.com': 'LinkedIn',
-                'twitter.com': 'Twitter',
-                'instagram.com': 'Instagram',
-                'facebook.com': 'Facebook',
-                'netflix.com': 'Netflix',
-                'amazon.com': 'Amazon',
-                'google.com': 'Google',
-                'docs.google.com': 'Google Docs',
-                'drive.google.com': 'Google Drive',
-                'sheets.google.com': 'Google Sheets',
-                'chrome.google.com': 'Chrome Web Store'
-            };
-
-            if (domainMap[urlObj.hostname]) {
-                title = domainMap[urlObj.hostname];
-                description = `Link para ${title}`;
+            // Verificar se é YouTube e extrair informações específicas
+            if (this.isYouTubeUrl(url)) {
+                const videoId = this.extractVideoId(url);
+                if (videoId) {
+                    title = 'Vídeo do YouTube';
+                    description = 'Assista no YouTube';
+                    image = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+                } else {
+                    title = 'YouTube';
+                    description = 'Link para YouTube';
+                }
             } else {
-                description = `Link para ${title}`;
+                // Mapear domínios conhecidos para títulos mais amigáveis
+                const domainMap = {
+                    'github.com': 'GitHub',
+                    'stackoverflow.com': 'Stack Overflow',
+                    'medium.com': 'Medium',
+                    'linkedin.com': 'LinkedIn',
+                    'twitter.com': 'Twitter',
+                    'instagram.com': 'Instagram',
+                    'facebook.com': 'Facebook',
+                    'netflix.com': 'Netflix',
+                    'amazon.com': 'Amazon',
+                    'google.com': 'Google',
+                    'docs.google.com': 'Google Docs',
+                    'drive.google.com': 'Google Drive',
+                    'sheets.google.com': 'Google Sheets',
+                    'chrome.google.com': 'Chrome Web Store'
+                };
+
+                if (domainMap[urlObj.hostname]) {
+                    title = domainMap[urlObj.hostname];
+                    description = `Link para ${title}`;
+                } else {
+                    description = `Link para ${title}`;
+                }
             }
 
             return {
                 title: title,
                 description: description,
-                image: '',
+                image: image,
                 url: url
             };
         } catch (error) {
             console.error('Erro ao criar fallback preview:', error);
+            return null;
+        }
+    }
+
+    isYouTubeUrl(url) {
+        try {
+            const urlObj = new URL(url);
+            return urlObj.hostname === 'youtube.com' || 
+                   urlObj.hostname === 'www.youtube.com' || 
+                   urlObj.hostname === 'youtu.be' ||
+                   urlObj.hostname === 'm.youtube.com';
+        } catch (error) {
+            return false;
+        }
+    }
+
+    extractVideoId(url) {
+        try {
+            const urlObj = new URL(url);
+            
+            // youtube.com/watch?v=VIDEO_ID
+            if (urlObj.hostname.includes('youtube.com') && urlObj.searchParams.has('v')) {
+                return urlObj.searchParams.get('v');
+            }
+            
+            // youtu.be/VIDEO_ID
+            if (urlObj.hostname === 'youtu.be') {
+                return urlObj.pathname.substring(1);
+            }
+            
+            // m.youtube.com/watch?v=VIDEO_ID
+            if (urlObj.hostname === 'm.youtube.com' && urlObj.searchParams.has('v')) {
+                return urlObj.searchParams.get('v');
+            }
+            
+            return null;
+        } catch (error) {
             return null;
         }
     }

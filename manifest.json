@@ -14,7 +14,9 @@
     "https://cors-anywhere.herokuapp.com/*",
     "https://api.codetabs.com/*",
     "https://www.perplexity.ai/*",
-    "https://chat.openai.com/*"
+    "https://chat.openai.com/*",
+    "https://www.youtube.com/*",
+    "https://noembed.com/*"
   ],
   "action": {
     "default_popup": "popup.html",
