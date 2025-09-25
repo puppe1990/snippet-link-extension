@@ -205,8 +205,11 @@ class SnippetManager {
         // Atualizar tabs
         const tabs = document.querySelectorAll('.tab-btn');
         const tabKeys = ['all_tab', 'links_tab', 'text_tab', 'favorites_tab', 'archived_tab'];
+        const tabIcons = ['📋', '🔗', '📝', '⭐', '📁'];
         tabs.forEach((tab, index) => {
-            tab.textContent = this.t(tabKeys[index]);
+            // Limpar qualquer ícone existente e adicionar apenas um
+            const cleanText = this.t(tabKeys[index]).replace(/^[^\w\s]*\s*/, '');
+            tab.textContent = `${tabIcons[index]} ${cleanText}`;
         });
         
         // Atualizar estado vazio
