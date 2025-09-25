@@ -48,103 +48,162 @@ body {
 .btn {
     padding: 8px 16px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 12px;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn:hover::before {
+    left: 100%;
 }
 
 .btn-primary {
-    background: #4CAF50;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-primary:hover {
-    background: #45a049;
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .btn-secondary {
-    background: #6c757d;
+    background: linear-gradient(135deg, #495057 0%, #343a40 100%);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-secondary:hover {
-    background: #5a6268;
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(73, 80, 87, 0.4);
 }
 
 /* Botão de copiar específico */
 .copy-btn {
-    background: #17a2b8;
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .copy-btn:hover {
-    background: #138496;
-    transform: scale(1.05);
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.4);
 }
 
 .btn-danger {
-    background: #f44336;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-danger:hover {
-    background: #da190b;
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
 }
 
 .btn-favorite {
-    background: #ffc107;
-    color: #333;
-    border: none;
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    color: #212529;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    font-weight: 700;
 }
 
 .btn-favorite:hover {
-    background: #e0a800;
-    transform: scale(1.05);
+    background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
 }
 
 .btn-favorite-active {
-    background: #ff6b35;
+    background: linear-gradient(135deg, #ff6b35 0%, #ff5722 100%);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 700;
 }
 
 .btn-favorite-active:hover {
-    background: #e55a2b;
-    transform: scale(1.05);
+    background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
 }
 
 .btn-archive {
-    background: #6c757d;
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-archive:hover {
-    background: #5a6268;
-    transform: scale(1.05);
+    background: linear-gradient(135deg, #5a32a3 0%, #4c2a8a 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
 }
 
 .btn-archive-active {
-    background: #28a745;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-archive-active:hover {
-    background: #218838;
-    transform: scale(1.05);
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
 }
 
 .btn-small {
     padding: 4px 8px;
     font-size: 10px;
+}
+
+/* Botão de abrir link específico */
+.open-btn {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.open-btn:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4) !important;
+}
+
+/* Botão de resumir específico */
+.summarize-btn {
+    background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.summarize-btn:hover {
+    background: linear-gradient(135deg, #e8590c 0%, #d63384 100%) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 4px 12px rgba(253, 126, 20, 0.4) !important;
 }
 
 /* Seção de busca */
@@ -598,28 +657,46 @@ body {
     padding: 12px 20px;
     font-size: 14px;
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 2px solid #667eea;
     min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: #f8f9fa;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     color: #333;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.import-export-section .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.import-export-section .btn:hover::before {
+    left: 100%;
 }
 
 .import-export-section .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-color: #667eea;
-    background: #e9ecef;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+    border-color: #5a6fd8;
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
     color: #333;
 }
 
 .import-export-section .btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
 }
 
 #importFile {
@@ -629,14 +706,14 @@ body {
 /* Garantir que o texto dos botões de import/export seja sempre visível */
 #importBtn, #exportBtn {
     color: #333 !important;
-    background: #f8f9fa !important;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
     border: 2px solid #667eea !important;
 }
 
 #importBtn:hover, #exportBtn:hover {
     color: #333 !important;
-    background: #e9ecef !important;
-    border-color: #667eea !important;
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%) !important;
+    border-color: #5a6fd8 !important;
 }
 
 /* Estilos para pré-visualização de links */
