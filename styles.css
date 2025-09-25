@@ -978,33 +978,33 @@ body {
 
 /* Estilos específicos para previews do YouTube */
 .youtube-preview {
-    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
-    border-color: #ff0000;
-    color: white;
+    background: #f8f9fa;
+    border-color: #e9ecef;
+    color: #333;
 }
 
 .youtube-preview:hover {
-    border-color: #ff3333;
-    box-shadow: 0 2px 8px rgba(255, 0, 0, 0.2);
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
     transform: translateY(-1px);
 }
 
 .youtube-preview .preview-title {
-    color: white;
+    color: #333;
     font-weight: 600;
 }
 
 .youtube-preview .preview-description {
-    color: rgba(255, 255, 255, 0.9);
+    color: #666;
 }
 
 .youtube-preview .preview-url {
-    color: rgba(255, 255, 255, 0.8);
+    color: #667eea;
     font-size: 11px;
 }
 
 .youtube-preview .preview-channel {
-    color: rgba(255, 255, 255, 0.9);
+    color: #666;
     font-size: 12px;
     font-weight: 500;
     margin: 4px 0;
@@ -1014,10 +1014,10 @@ body {
 }
 
 .youtube-preview .preview-video-id {
-    color: rgba(255, 255, 255, 0.7);
+    color: #888;
     font-size: 10px;
     font-family: monospace;
-    background: rgba(0, 0, 0, 0.2);
+    background: #e9ecef;
     padding: 2px 6px;
     border-radius: 4px;
     display: inline-block;
@@ -1025,7 +1025,7 @@ body {
 }
 
 .youtube-preview .preview-image {
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid #e9ecef;
 }
 
 /* Melhorar a imagem do YouTube */
