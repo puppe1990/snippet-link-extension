@@ -621,6 +621,8 @@ body {
 
 .modal-body {
     padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 /* Formulário */
@@ -681,21 +683,25 @@ body {
 }
 
 /* Scrollbar personalizada */
-.snippets-container::-webkit-scrollbar {
+.snippets-container::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
     width: 6px;
 }
 
-.snippets-container::-webkit-scrollbar-track {
+.snippets-container::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 3px;
 }
 
-.snippets-container::-webkit-scrollbar-thumb {
+.snippets-container::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 3px;
 }
 
-.snippets-container::-webkit-scrollbar-thumb:hover {
+.snippets-container::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
 
