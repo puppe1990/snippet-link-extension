@@ -868,6 +868,50 @@
         </div>
     </div>
 
+    <!-- Modal de seleção de tipo de exportação -->
+    <div id="exportTypeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Selecionar Tipo de Exportação</h2>
+                <button id="closeExportTypeModal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Escolha que tipo de snippets deseja exportar:</p>
+                <div class="export-type-options">
+                    <button class="export-type-btn" data-type="all">
+                        <span class="export-type-icon">📋</span>
+                        <span class="export-type-label">Todos os Snippets</span>
+                        <span class="export-type-description">Exportar todos os snippets</span>
+                    </button>
+                    <button class="export-type-btn" data-type="link">
+                        <span class="export-type-icon">🔗</span>
+                        <span class="export-type-label">Links</span>
+                        <span class="export-type-description">Apenas snippets do tipo link</span>
+                    </button>
+                    <button class="export-type-btn" data-type="text">
+                        <span class="export-type-icon">📝</span>
+                        <span class="export-type-label">Textos</span>
+                        <span class="export-type-description">Apenas snippets do tipo texto</span>
+                    </button>
+                    <button class="export-type-btn" data-type="markdown">
+                        <span class="export-type-icon">📄</span>
+                        <span class="export-type-label">Markdown</span>
+                        <span class="export-type-description">Apenas snippets do tipo markdown</span>
+                    </button>
+                    <button class="export-type-btn" data-type="favorites">
+                        <span class="export-type-icon">⭐</span>
+                        <span class="export-type-label">Favoritos</span>
+                        <span class="export-type-description">Apenas snippets marcados como favoritos</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="backToSettingsBtn" class="btn btn-secondary">Voltar às Configurações</button>
+                <button id="cancelExportTypeBtn" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de configurações -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">

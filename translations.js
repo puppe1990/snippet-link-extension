@@ -100,7 +100,22 @@ const translations = {
         'ai_provider_label': '🤖 Provedor de IA:',
         'ai_provider_description': 'Escolha qual IA usar para resumir os links',
         'perplexity_ai': 'Perplexity AI',
-        'chatgpt': 'ChatGPT'
+        'chatgpt': 'ChatGPT',
+        
+        // Export type selection
+        'export_type_title': 'Selecionar Tipo de Exportação',
+        'export_type_description': 'Escolha que tipo de snippets deseja exportar:',
+        'export_all_snippets': 'Todos os Snippets',
+        'export_all_description': 'Exportar todos os snippets',
+        'export_links': 'Links',
+        'export_links_description': 'Apenas snippets do tipo link',
+        'export_texts': 'Textos',
+        'export_texts_description': 'Apenas snippets do tipo texto',
+        'export_markdown': 'Markdown',
+        'export_markdown_description': 'Apenas snippets do tipo markdown',
+        'export_favorites': 'Favoritos',
+        'export_favorites_description': 'Apenas snippets marcados como favoritos',
+        'back_to_settings': 'Voltar às Configurações'
     },
     en: {
         // Main interface
@@ -202,7 +217,22 @@ const translations = {
         'ai_provider_label': '🤖 AI Provider:',
         'ai_provider_description': 'Choose which AI to use for summarizing links',
         'perplexity_ai': 'Perplexity AI',
-        'chatgpt': 'ChatGPT'
+        'chatgpt': 'ChatGPT',
+        
+        // Export type selection
+        'export_type_title': 'Select Export Type',
+        'export_type_description': 'Choose what type of snippets you want to export:',
+        'export_all_snippets': 'All Snippets',
+        'export_all_description': 'Export all snippets',
+        'export_links': 'Links',
+        'export_links_description': 'Only link type snippets',
+        'export_texts': 'Texts',
+        'export_texts_description': 'Only text type snippets',
+        'export_markdown': 'Markdown',
+        'export_markdown_description': 'Only markdown type snippets',
+        'export_favorites': 'Favorites',
+        'export_favorites_description': 'Only snippets marked as favorites',
+        'back_to_settings': 'Back to Settings'
     },
     fr: {
         // Interface principale
@@ -304,7 +334,22 @@ const translations = {
         'ai_provider_label': '🤖 Fournisseur d\'IA :',
         'ai_provider_description': 'Choisissez quelle IA utiliser pour résumer les liens',
         'perplexity_ai': 'Perplexity AI',
-        'chatgpt': 'ChatGPT'
+        'chatgpt': 'ChatGPT',
+        
+        // Export type selection
+        'export_type_title': 'Sélectionner le Type d\'Exportation',
+        'export_type_description': 'Choisissez quel type de snippets vous voulez exporter :',
+        'export_all_snippets': 'Tous les Snippets',
+        'export_all_description': 'Exporter tous les snippets',
+        'export_links': 'Liens',
+        'export_links_description': 'Seulement les snippets de type lien',
+        'export_texts': 'Textes',
+        'export_texts_description': 'Seulement les snippets de type texte',
+        'export_markdown': 'Markdown',
+        'export_markdown_description': 'Seulement les snippets de type markdown',
+        'export_favorites': 'Favoris',
+        'export_favorites_description': 'Seulement les snippets marqués comme favoris',
+        'back_to_settings': 'Retour aux Paramètres'
     }
 };
 

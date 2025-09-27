@@ -774,6 +774,87 @@ body {
     border-color: #5a6fd8 !important;
 }
 
+/* Estilos para o modal de seleção de tipo de exportação */
+#exportTypeModal {
+    z-index: 10002; /* Higher than settings modal */
+}
+
+.export-type-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.export-type-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: left;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.export-type-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.export-type-btn:hover::before {
+    left: 100%;
+}
+
+.export-type-btn:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.export-type-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.export-type-icon {
+    font-size: 24px;
+    min-width: 32px;
+    text-align: center;
+}
+
+.export-type-label {
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+    flex: 1;
+}
+
+.export-type-description {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.export-type-btn .export-type-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 /* Estilos para pré-visualização de links */
 .link-preview {
     background: #f8f9fa;

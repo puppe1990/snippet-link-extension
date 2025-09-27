@@ -79,6 +79,25 @@ class SnippetManager {
         document.getElementById('cancelSettingsBtn').addEventListener('click', () => this.closeSettingsModal());
         document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
         
+        // Modal de tipo de exportação
+        document.getElementById('closeExportTypeModal').addEventListener('click', () => this.closeExportTypeModal());
+        document.getElementById('cancelExportTypeBtn').addEventListener('click', () => this.closeExportTypeModal());
+        document.getElementById('backToSettingsBtn').addEventListener('click', () => {
+            this.closeExportTypeModal();
+            setTimeout(() => {
+                this.openSettingsModal();
+            }, 100);
+        });
+        
+        // Event listeners para botões de tipo de exportação
+        document.querySelectorAll('.export-type-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const exportType = e.currentTarget.dataset.type;
+                this.exportSnippets(exportType);
+                this.closeExportTypeModal();
+            });
+        });
+        
         // Toggle de resumo para mostrar/ocultar seletor de IA
         const summarizeToggle = document.getElementById('summarizeToggle');
         if (summarizeToggle) {
@@ -93,7 +112,11 @@ class SnippetManager {
         if (exportBtn) {
             exportBtn.addEventListener('click', () => {
                 console.log('Botão de exportar clicado!');
-                this.exportSnippets();
+                // Close settings modal first, then open export type modal
+                this.closeSettingsModal();
+                setTimeout(() => {
+                    this.openExportTypeModal();
+                }, 100); // Small delay to ensure modal closes first
             });
         } else {
             console.error('Botão de exportar não encontrado!');
@@ -120,6 +143,7 @@ class SnippetManager {
                 this.closeModal();
                 this.closeDeleteModal();
                 this.closeSettingsModal();
+                this.closeExportTypeModal();
             }
         });
     }
@@ -280,6 +304,28 @@ class SnippetManager {
         document.getElementById('dataDescription').textContent = this.t('data_description');
         document.getElementById('saveSettingsBtn').textContent = this.t('save_button');
         document.getElementById('cancelSettingsBtn').textContent = this.t('cancel_button');
+        
+        // Atualizar modal de tipo de exportação
+        const exportTypeModal = document.getElementById('exportTypeModal');
+        if (exportTypeModal) {
+            exportTypeModal.querySelector('.modal-header h2').textContent = this.t('export_type_title');
+            exportTypeModal.querySelector('.modal-body p').textContent = this.t('export_type_description');
+            
+            // Atualizar botões de tipo de exportação
+            const exportTypeButtons = exportTypeModal.querySelectorAll('.export-type-btn');
+            const typeKeys = ['export_all_snippets', 'export_links', 'export_texts', 'export_markdown', 'export_favorites'];
+            const descriptionKeys = ['export_all_description', 'export_links_description', 'export_texts_description', 'export_markdown_description', 'export_favorites_description'];
+            
+            exportTypeButtons.forEach((btn, index) => {
+                const label = btn.querySelector('.export-type-label');
+                const description = btn.querySelector('.export-type-description');
+                if (label) label.textContent = this.t(typeKeys[index]);
+                if (description) description.textContent = this.t(descriptionKeys[index]);
+            });
+            
+            exportTypeModal.querySelector('#cancelExportTypeBtn').textContent = this.t('cancel_button');
+            exportTypeModal.querySelector('#backToSettingsBtn').textContent = this.t('back_to_settings');
+        }
         
         // Atualizar elementos do filtro de tags
         const tagsFilterTitle = document.getElementById('tagsFilterTitle');
@@ -1009,6 +1055,16 @@ class SnippetManager {
         document.getElementById('settingsModal').style.display = 'none';
     }
 
+    // Modal de tipo de exportação
+    openExportTypeModal() {
+        const modal = document.getElementById('exportTypeModal');
+        modal.style.display = 'block';
+    }
+
+    closeExportTypeModal() {
+        document.getElementById('exportTypeModal').style.display = 'none';
+    }
+
     async saveSettings() {
         const languageSelect = document.getElementById('languageSelect');
         const linkPreviewToggle = document.getElementById('linkPreviewToggle');
@@ -1046,14 +1102,28 @@ class SnippetManager {
     }
 
     // Import/Export functionality
-    exportSnippets() {
+    exportSnippets(exportType = 'all') {
         try {
             console.log('Iniciando exportação...', this.snippets.length, 'snippets');
             
+            // Filtrar snippets baseado no tipo de exportação
+            let snippetsToExport = this.snippets;
+            
+            if (exportType !== 'all') {
+                if (exportType === 'favorites') {
+                    snippetsToExport = this.snippets.filter(snippet => snippet.isFavorite === true);
+                } else {
+                    snippetsToExport = this.snippets.filter(snippet => snippet.type === exportType);
+                }
+            }
+            
+            console.log(`Exportando ${snippetsToExport.length} snippets do tipo: ${exportType}`);
+            
             const exportData = {
-                snippets: this.snippets,
+                snippets: snippetsToExport,
                 exportDate: new Date().toISOString(),
-                version: '1.0'
+                version: '1.0',
+                exportType: exportType
             };
             
             const dataStr = JSON.stringify(exportData, null, 2);
@@ -1061,7 +1131,10 @@ class SnippetManager {
             
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
-            link.download = `snippets-export-${new Date().toISOString().split('T')[0]}.json`;
+            
+            // Nome do arquivo baseado no tipo de exportação
+            const typeLabel = this.getExportTypeLabel(exportType);
+            link.download = `snippets-${typeLabel}-${new Date().toISOString().split('T')[0]}.json`;
             
             // Adicionar link ao DOM temporariamente
             document.body.appendChild(link);
@@ -1071,10 +1144,27 @@ class SnippetManager {
             URL.revokeObjectURL(link.href);
             
             console.log('Exportação concluída, mostrando notificação...');
-            this.showNotification(this.t('export_success'));
+            this.showNotification(`${this.t('export_success')} (${snippetsToExport.length} snippets)`);
         } catch (error) {
             console.error('Erro ao exportar snippets:', error);
             this.showNotification(this.t('export_error'));
+        }
+    }
+    
+    getExportTypeLabel(exportType) {
+        switch (exportType) {
+            case 'all':
+                return 'all';
+            case 'link':
+                return 'links';
+            case 'text':
+                return 'texts';
+            case 'markdown':
+                return 'markdown';
+            case 'favorites':
+                return 'favorites';
+            default:
+                return 'all';
         }
     }
 
