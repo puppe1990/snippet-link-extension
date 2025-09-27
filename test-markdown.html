@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Markdown Functionality</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .markdown-content {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3 {
+            margin: 12px 0 8px 0;
+            font-weight: 600;
+            color: #333;
+        }
+        .markdown-content h1 {
+            font-size: 18px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 4px;
+        }
+        .markdown-content h2 {
+            font-size: 16px;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 2px;
+        }
+        .markdown-content h3 {
+            font-size: 14px;
+        }
+        .markdown-content p {
+            margin: 8px 0;
+        }
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        .markdown-content li {
+            margin: 4px 0;
+        }
+        .markdown-content blockquote {
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 0 4px 4px 0;
+            font-style: italic;
+            color: #555;
+        }
+        .markdown-content code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            color: #d63384;
+        }
+        .markdown-content pre {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 8px 0;
+            border: 1px solid #e9ecef;
+        }
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+            color: #333;
+            font-size: 12px;
+        }
+        .markdown-content a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .markdown-content a:hover {
+            text-decoration: underline;
+        }
+        .markdown-content strong {
+            font-weight: 600;
+            color: #333;
+        }
+        .markdown-content em {
+            font-style: italic;
+            color: #555;
+        }
+        .markdown-content hr {
+            border: none;
+            border-top: 1px solid #e9ecef;
+            margin: 16px 0;
+        }
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+        .markdown-content th,
+        .markdown-content td {
+            border: 1px solid #e9ecef;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        .markdown-content th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste de Funcionalidade Markdown</h1>
+    
+    <div class="test-section">
+        <h2>Markdown Básico</h2>
+        <div class="markdown-content" id="basic-markdown"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Markdown com Listas</h2>
+        <div class="markdown-content" id="list-markdown"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Markdown com Código</h2>
+        <div class="markdown-content" id="code-markdown"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Markdown com Tabela</h2>
+        <div class="markdown-content" id="table-markdown"></div>
+    </div>
+
+    <script>
+        // Configurar marked
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            sanitize: false,
+            smartLists: true,
+            smartypants: true
+        });
+
+        // Teste básico
+        const basicMarkdown = `# Título Principal
+## Subtítulo
+### Sub-subtítulo
+
+Este é um **texto em negrito** e este é um *texto em itálico*.
+
+> Esta é uma citação em markdown que demonstra como o conteúdo será renderizado.
+
+[Link para exemplo](https://example.com)
+
+---
+Uma linha horizontal acima.`;
+
+        document.getElementById('basic-markdown').innerHTML = marked.parse(basicMarkdown);
+
+        // Teste com listas
+        const listMarkdown = `## Lista de Tarefas
+
+### Tarefas Pendentes
+- [ ] Implementar funcionalidade markdown
+- [ ] Testar renderização
+- [ ] Adicionar estilos CSS
+- [x] Configurar marked.js
+
+### Lista Numerada
+1. Primeiro item
+2. Segundo item
+3. Terceiro item
+   - Sub-item A
+   - Sub-item B`;
+
+        document.getElementById('list-markdown').innerHTML = marked.parse(listMarkdown);
+
+        // Teste com código
+        const codeMarkdown = `## Exemplo de Código
+
+Aqui está um exemplo de código inline: \`console.log('Hello World')\`
+
+E aqui está um bloco de código:
+
+\`\`\`javascript
+function renderMarkdown(markdownText) {
+    if (typeof marked !== 'undefined') {
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            sanitize: false,
+            smartLists: true,
+            smartypants: true
+        });
+        return marked.parse(markdownText);
+    }
+    return markdownText;
+}
+\`\`\``;
+
+        document.getElementById('code-markdown').innerHTML = marked.parse(codeMarkdown);
+
+        // Teste com tabela
+        const tableMarkdown = `## Tabela de Exemplo
+
+| Recurso | Status | Descrição |
+|---------|--------|-----------|
+| Links | ✅ | Funcionando |
+| Texto | ✅ | Funcionando |
+| Markdown | ✅ | Novo recurso |
+| Favoritos | ✅ | Funcionando |
+| Arquivar | ✅ | Funcionando |`;
+
+        document.getElementById('table-markdown').innerHTML = marked.parse(tableMarkdown);
+
+        console.log('Testes de markdown carregados com sucesso!');
+    </script>
+</body>
+</html>

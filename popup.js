@@ -204,8 +204,8 @@ class SnippetManager {
         
         // Atualizar tabs
         const tabs = document.querySelectorAll('.tab-btn');
-        const tabKeys = ['all_tab', 'links_tab', 'text_tab', 'favorites_tab', 'archived_tab'];
-        const tabIcons = ['📋', '🔗', '📝', '⭐', '📁'];
+        const tabKeys = ['all_tab', 'links_tab', 'text_tab', 'markdown_tab', 'favorites_tab', 'archived_tab'];
+        const tabIcons = ['📋', '🔗', '📝', '📄', '⭐', '📁'];
         tabs.forEach((tab, index) => {
             // Limpar qualquer ícone existente e adicionar apenas um
             const cleanText = this.t(tabKeys[index]).replace(/^[^\w\s]*\s*/, '');
@@ -229,6 +229,7 @@ class SnippetManager {
         typeSelect.innerHTML = `
             <option value="link">${this.t('link_type')}</option>
             <option value="text">${this.t('text_type')}</option>
+            <option value="markdown">${this.t('markdown_type')}</option>
         `;
         
         // Atualizar labels do formulário
@@ -449,9 +450,9 @@ class SnippetManager {
                 <div class="drag-handle">⋮⋮</div>
                 <div class="snippet-header">
                     ${hasTitle ? `<h3 class="snippet-title">${displayTitle}</h3>` : ''}
-                    <span class="snippet-type ${snippet.type}">${snippet.type === 'link' ? this.t('link_type') : this.t('text_type')}</span>
+                    <span class="snippet-type ${snippet.type}">${this.getSnippetTypeLabel(snippet.type)}</span>
                 </div>
-                <div class="snippet-content">${this.escapeHtml(snippet.content)}</div>
+                <div class="snippet-content ${snippet.type === 'markdown' ? 'markdown-content' : ''}">${this.renderSnippetContent(snippet)}</div>
                 ${linkPreview}
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
@@ -1328,6 +1329,53 @@ class SnippetManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Renderizar conteúdo do snippet baseado no tipo
+    renderSnippetContent(snippet) {
+        if (snippet.type === 'markdown') {
+            return this.renderMarkdown(snippet.content);
+        } else {
+            return this.escapeHtml(snippet.content);
+        }
+    }
+
+    // Renderizar markdown para HTML
+    renderMarkdown(markdownText) {
+        try {
+            if (typeof marked !== 'undefined') {
+                // Configurar marked para segurança
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    sanitize: false, // Será sanitizado pelo escapeHtml se necessário
+                    smartLists: true,
+                    smartypants: true
+                });
+                return marked.parse(markdownText);
+            } else {
+                // Fallback se marked não estiver disponível
+                console.warn('Marked library not available, falling back to plain text');
+                return this.escapeHtml(markdownText);
+            }
+        } catch (error) {
+            console.error('Error rendering markdown:', error);
+            return this.escapeHtml(markdownText);
+        }
+    }
+
+    // Obter label do tipo de snippet
+    getSnippetTypeLabel(type) {
+        switch (type) {
+            case 'link':
+                return this.t('link_type');
+            case 'text':
+                return this.t('text_type');
+            case 'markdown':
+                return this.t('markdown_type');
+            default:
+                return type;
+        }
     }
 
     showNotification(message) {
