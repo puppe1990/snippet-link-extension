@@ -833,6 +833,16 @@
                             <option value="text">📝 Texto</option>
                         </select>
                     </div>
+                    <div class="form-group" id="linkListGroup" style="display: none;">
+                        <label for="linkListToggle" id="linkListLabel">Lista de links:</label>
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="linkListToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span id="linkListDescription" class="toggle-description">Adicionar mais de um link (um por linha)</span>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label for="snippetContent">Conteúdo:</label>
                         <textarea id="snippetContent" required placeholder="Digite o link ou texto..."></textarea>

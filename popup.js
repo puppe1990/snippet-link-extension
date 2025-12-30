@@ -22,6 +22,7 @@ class SnippetManager {
         await this.loadSettings();
         this.setupEventListeners();
         this.updateLanguage();
+        await this.restoreSnippetDraft();
         await this.renderTagFilters();
         await this.renderSnippets();
     }
@@ -68,6 +69,17 @@ class SnippetManager {
         document.getElementById('closeModal').addEventListener('click', () => this.closeModal());
         document.getElementById('cancelBtn').addEventListener('click', () => this.closeModal());
         document.getElementById('snippetForm').addEventListener('submit', (e) => this.handleSubmit(e));
+        document.getElementById('snippetType').addEventListener('change', () => {
+            this.updateLinkListVisibility();
+            this.saveSnippetDraft();
+        });
+        document.getElementById('linkListToggle').addEventListener('change', () => {
+            this.updateContentPlaceholder();
+            this.saveSnippetDraft();
+        });
+        document.getElementById('snippetTitle').addEventListener('input', () => this.saveSnippetDraft());
+        document.getElementById('snippetContent').addEventListener('input', () => this.saveSnippetDraft());
+        document.getElementById('snippetTags').addEventListener('input', () => this.saveSnippetDraft());
 
         // Modal de exclusão
         document.getElementById('closeDeleteModal').addEventListener('click', () => this.closeDeleteModal());
@@ -146,6 +158,8 @@ class SnippetManager {
                 this.closeExportTypeModal();
             }
         });
+
+        window.addEventListener('beforeunload', () => this.saveSnippetDraft());
     }
 
     // Gerenciamento de dados
@@ -177,6 +191,67 @@ class SnippetManager {
         } catch (error) {
             console.error('Erro ao salvar snippets:', error);
         }
+    }
+
+    async loadSnippetDraft() {
+        try {
+            const result = await chrome.storage.local.get(['snippetDraft']);
+            return result.snippetDraft || null;
+        } catch (error) {
+            console.error('Erro ao carregar draft do snippet:', error);
+            return null;
+        }
+    }
+
+    async saveSnippetDraft() {
+        const modal = document.getElementById('snippetModal');
+        if (!modal) {
+            return;
+        }
+
+        const draft = {
+            isOpen: modal.style.display === 'block',
+            editingId: this.editingId,
+            title: document.getElementById('snippetTitle').value,
+            type: document.getElementById('snippetType').value,
+            content: document.getElementById('snippetContent').value,
+            tags: document.getElementById('snippetTags').value,
+            isLinkList: document.getElementById('linkListToggle').checked
+        };
+
+        try {
+            await chrome.storage.local.set({ snippetDraft: draft });
+        } catch (error) {
+            console.error('Erro ao salvar draft do snippet:', error);
+        }
+    }
+
+    async clearSnippetDraft() {
+        try {
+            await chrome.storage.local.remove('snippetDraft');
+        } catch (error) {
+            console.error('Erro ao limpar draft do snippet:', error);
+        }
+    }
+
+    async restoreSnippetDraft() {
+        const draft = await this.loadSnippetDraft();
+        if (!draft || !draft.isOpen) {
+            return;
+        }
+
+        this.editingId = draft.editingId || null;
+        const modalTitle = this.editingId ? this.t('edit_snippet') : this.t('new_snippet');
+        document.getElementById('modalTitle').textContent = modalTitle;
+        document.getElementById('snippetTitle').value = draft.title || '';
+        document.getElementById('snippetType').value = draft.type || 'link';
+        document.getElementById('snippetContent').value = draft.content || '';
+        document.getElementById('snippetTags').value = draft.tags || '';
+        document.getElementById('linkListToggle').checked = Boolean(draft.isLinkList);
+
+        this.updateLinkListVisibility();
+        document.getElementById('snippetModal').style.display = 'flex';
+        document.getElementById('snippetTitle').focus();
     }
 
     // Gerenciamento de configurações
@@ -261,6 +336,8 @@ class SnippetManager {
         document.querySelector('label[for="snippetType"]').textContent = this.t('type_label');
         document.querySelector('label[for="snippetContent"]').textContent = this.t('content_label');
         document.querySelector('label[for="snippetTags"]').textContent = this.t('tags_label');
+        document.getElementById('linkListLabel').textContent = this.t('link_list_label');
+        document.getElementById('linkListDescription').textContent = this.t('link_list_description');
         
         // Atualizar botões do modal
         document.getElementById('cancelBtn').textContent = this.t('cancel_button');
@@ -346,6 +423,7 @@ class SnippetManager {
             <option value="fr">${this.t('french')}</option>
         `;
         languageSelect.value = this.translationManager.getCurrentLanguage();
+        this.updateLinkListVisibility();
     }
 
     // Renderização
@@ -432,12 +510,17 @@ class SnippetManager {
         const archiveClass = snippet.isArchived ? 'btn-archive-active' : 'btn-archive';
         const archiveText = snippet.isArchived ? this.t('unarchive_button') : this.t('archive_button');
         const archiveTooltip = snippet.isArchived ? this.t('unarchive_tooltip') : this.t('archive_tooltip');
+        const linkItems = snippet.type === 'link' ? this.getLinkList(snippet.content) : [];
+        const validLinks = linkItems.filter(item => this.isValidUrl(item));
+        const hasSingleLink = validLinks.length === 1 && linkItems.length === 1;
+        const hasMultipleLinks = validLinks.length > 1 && linkItems.length === validLinks.length;
+        const primaryLink = hasSingleLink ? validLinks[0] : '';
         
         
         
         // Gerar preview para links (apenas se habilitado)
         let linkPreview = '';
-        if (this.linkPreviewEnabled && snippet.type === 'link' && this.isValidUrl(snippet.content)) {
+        if (this.linkPreviewEnabled && hasSingleLink) {
             // Mostrar loading inicial
             linkPreview = `
                 <div class="link-preview preview-loading">
@@ -445,13 +528,13 @@ class SnippetManager {
                     <div class="preview-content">
                         <div class="preview-title">Carregando preview...</div>
                         <div class="preview-description">Buscando informações do link</div>
-                        <div class="preview-url">${this.escapeHtml(snippet.content)}</div>
+                        <div class="preview-url">${this.escapeHtml(primaryLink)}</div>
                     </div>
                 </div>
             `;
             
             // Buscar preview em background
-            this.generateLinkPreview(snippet.content).then(preview => {
+            this.generateLinkPreview(primaryLink).then(preview => {
                 if (preview) {
                     const previewImage = preview.image ? 
                         `<div class="preview-image" style="background-image: url('${preview.image}'); background-size: cover; background-position: center;"></div>` :
@@ -460,7 +543,7 @@ class SnippetManager {
                     const snippetElement = document.querySelector(`[data-id="${snippet.id}"] .link-preview`);
                     if (snippetElement) {
                         // Verificar se é YouTube para mostrar informações específicas
-                        const isYouTube = this.isYouTubeUrl(snippet.content);
+                        const isYouTube = this.isYouTubeUrl(primaryLink);
                         const channelInfo = preview.channel ? `<div class="preview-channel">📺 ${this.escapeHtml(preview.channel)}</div>` : '';
                         const videoIdInfo = preview.videoId && isYouTube ? `<div class="preview-video-id">🎥 ID: ${preview.videoId}</div>` : '';
                         
@@ -502,9 +585,10 @@ class SnippetManager {
                 ${linkPreview}
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
-                    ${snippet.type === 'link' ? `<button class="btn btn-small open-btn" data-url="${snippet.content}">${this.t('open_button')}</button>` : ''}
+                    ${hasSingleLink ? `<button class="btn btn-small open-btn" data-url="${primaryLink}">${this.t('open_button')}</button>` : ''}
+                    ${hasMultipleLinks ? `<button class="btn btn-small open-all-btn" data-urls="${encodeURIComponent(JSON.stringify(validLinks))}">${this.t('open_all_button')}</button>` : ''}
                     <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${favoriteTooltip}">${favoriteIcon} ${favoriteText}</button>
-                    ${snippet.type === 'link' && this.summarizeEnabled ? `<button class="btn btn-small summarize-btn" data-url="${snippet.content}">${this.t('summarize_button')}</button>` : ''}
+                    ${hasSingleLink && this.summarizeEnabled ? `<button class="btn btn-small summarize-btn" data-url="${primaryLink}">${this.t('summarize_button')}</button>` : ''}
                     <button class="btn btn-small ${archiveClass} archive-btn" data-id="${snippet.id}" title="${archiveTooltip}">${archiveIcon} ${archiveText}</button>
                     <button class="btn btn-small copy-btn" data-id="${snippet.id}">${this.t('copy_button')}</button>
                     <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">${this.t('edit_button')}</button>
@@ -574,6 +658,15 @@ class SnippetManager {
             });
         });
 
+        // Botões de abrir todos os links
+        document.querySelectorAll('.open-all-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const urls = e.target.dataset.urls ? JSON.parse(decodeURIComponent(e.target.dataset.urls)) : [];
+                this.openLinkList(urls);
+            });
+        });
+
         // Botões de resumir
         document.querySelectorAll('.summarize-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -586,7 +679,7 @@ class SnippetManager {
         // Clique no snippet para copiar
         document.querySelectorAll('.snippet-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                if (!e.target.closest('.snippet-actions') && !e.target.closest('.drag-handle') && !e.target.closest('.link-preview')) {
+                if (!e.target.closest('.snippet-actions') && !e.target.closest('.drag-handle') && !e.target.closest('.link-preview') && !e.target.closest('.link-list')) {
                     const id = item.dataset.id;
                     this.copySnippet(id);
                 }
@@ -601,8 +694,21 @@ class SnippetManager {
                 const snippetId = snippetItem.dataset.id;
                 const snippet = this.snippets.find(s => s.id === snippetId);
                 if (snippet && snippet.type === 'link') {
-                    this.openLink(snippet.content);
+                    const { items, invalid } = this.getValidLinkList(snippet.content);
+                    if (items.length === 1 && invalid.length === 0) {
+                        this.openLink(items[0]);
+                    }
                 }
+            });
+        });
+
+        // Links dentro de listas
+        document.querySelectorAll('.link-list-item').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const url = e.currentTarget.dataset.url;
+                this.openLink(url);
             });
         });
 
@@ -621,7 +727,10 @@ class SnippetManager {
                 const snippetId = snippetItem.dataset.id;
                 const snippet = this.snippets.find(s => s.id === snippetId);
                 if (snippet && snippet.type === 'link') {
-                    this.openLink(snippet.content);
+                    const { items, invalid } = this.getValidLinkList(snippet.content);
+                    if (items.length === 1 && invalid.length === 0) {
+                        this.openLink(items[0]);
+                    }
                 }
             });
         }
@@ -912,7 +1021,7 @@ class SnippetManager {
 
     deleteSnippet(id) {
         this.deletingId = id;
-        document.getElementById('deleteModal').style.display = 'block';
+        document.getElementById('deleteModal').style.display = 'flex';
     }
 
     async confirmDelete() {
@@ -935,6 +1044,14 @@ class SnippetManager {
 
     openLink(url) {
         chrome.tabs.create({ url: url });
+    }
+
+    openLinkList(urls) {
+        if (!Array.isArray(urls) || urls.length === 0) {
+            return;
+        }
+
+        urls.filter(url => this.isValidUrl(url)).forEach(url => this.openLink(url));
     }
 
     summarizeLink(url) {
@@ -975,19 +1092,31 @@ class SnippetManager {
             document.getElementById('snippetType').value = snippet.type;
             document.getElementById('snippetContent').value = snippet.content;
             document.getElementById('snippetTags').value = snippet.tags ? snippet.tags.join(', ') : '';
+            const linkListToggle = document.getElementById('linkListToggle');
+            if (linkListToggle) {
+                linkListToggle.checked = snippet.type === 'link' && this.isLinkListContent(snippet.content);
+            }
         } else {
             title.textContent = this.t('new_snippet');
             form.reset();
             this.editingId = null;
+            const linkListToggle = document.getElementById('linkListToggle');
+            if (linkListToggle) {
+                linkListToggle.checked = false;
+            }
         }
         
-        modal.style.display = 'block';
+        this.updateLinkListVisibility();
+        this.updateContentPlaceholder();
+        modal.style.display = 'flex';
         document.getElementById('snippetTitle').focus();
+        this.saveSnippetDraft();
     }
 
     closeModal() {
         document.getElementById('snippetModal').style.display = 'none';
         this.editingId = null;
+        this.clearSnippetDraft();
     }
 
     closeDeleteModal() {
@@ -1004,6 +1133,8 @@ class SnippetManager {
             content: document.getElementById('snippetContent').value,
             tags: document.getElementById('snippetTags').value
         };
+        const linkListToggle = document.getElementById('linkListToggle');
+        const isLinkList = linkListToggle ? linkListToggle.checked : false;
 
         // Validação básica
         if (!formData.content.trim()) {
@@ -1013,11 +1144,25 @@ class SnippetManager {
 
         // Validação de URL para links
         if (formData.type === 'link') {
-            try {
-                new URL(formData.content);
-            } catch {
-                this.showNotification(this.t('invalid_url'));
-                return;
+            if (isLinkList) {
+                const { items, invalid } = this.getValidLinkList(formData.content);
+                if (items.length === 0) {
+                    this.showNotification(this.t('content_required'));
+                    return;
+                }
+                if (invalid.length > 0) {
+                    this.showNotification(this.t('invalid_url_list'));
+                    return;
+                }
+                formData.content = items.join('\n');
+            } else {
+                try {
+                    new URL(formData.content.trim());
+                } catch {
+                    this.showNotification(this.t('invalid_url'));
+                    return;
+                }
+                formData.content = formData.content.trim();
             }
         }
 
@@ -1029,6 +1174,7 @@ class SnippetManager {
             this.showNotification(this.t('snippet_added'));
         }
 
+        await this.clearSnippetDraft();
         this.closeModal();
     }
 
@@ -1048,7 +1194,7 @@ class SnippetManager {
         // Mostrar/ocultar seletor de IA baseado no toggle de resumo
         this.toggleAiProviderVisibility();
         
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
     }
 
     closeSettingsModal() {
@@ -1058,7 +1204,7 @@ class SnippetManager {
     // Modal de tipo de exportação
     openExportTypeModal() {
         const modal = document.getElementById('exportTypeModal');
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
     }
 
     closeExportTypeModal() {
@@ -1414,6 +1560,55 @@ class SnippetManager {
         }
     }
 
+    getLinkList(content) {
+        return content
+            .split(/\r?\n/)
+            .map(item => item.trim())
+            .filter(item => item);
+    }
+
+    getValidLinkList(content) {
+        const items = this.getLinkList(content);
+        const invalid = items.filter(item => !this.isValidUrl(item));
+        return { items, invalid };
+    }
+
+    isLinkListContent(content) {
+        const { items, invalid } = this.getValidLinkList(content);
+        return items.length > 1 && invalid.length === 0;
+    }
+
+    updateLinkListVisibility() {
+        const typeSelect = document.getElementById('snippetType');
+        const linkListGroup = document.getElementById('linkListGroup');
+        const linkListToggle = document.getElementById('linkListToggle');
+        if (!typeSelect || !linkListGroup) {
+            return;
+        }
+
+        const isLink = typeSelect.value === 'link';
+        linkListGroup.style.display = isLink ? 'block' : 'none';
+        if (!isLink && linkListToggle) {
+            linkListToggle.checked = false;
+        }
+        this.updateContentPlaceholder();
+    }
+
+    updateContentPlaceholder() {
+        const contentInput = document.getElementById('snippetContent');
+        const typeSelect = document.getElementById('snippetType');
+        const linkListToggle = document.getElementById('linkListToggle');
+        if (!contentInput || !typeSelect) {
+            return;
+        }
+
+        if (typeSelect.value === 'link' && linkListToggle && linkListToggle.checked) {
+            contentInput.placeholder = this.t('link_list_placeholder');
+        } else {
+            contentInput.placeholder = this.t('content_placeholder');
+        }
+    }
+
     // Utilitários
     escapeHtml(text) {
         const div = document.createElement('div');
@@ -1423,11 +1618,26 @@ class SnippetManager {
 
     // Renderizar conteúdo do snippet baseado no tipo
     renderSnippetContent(snippet) {
+        if (snippet.type === 'link') {
+            const { items, invalid } = this.getValidLinkList(snippet.content);
+            if (items.length > 1 && invalid.length === 0) {
+                return this.renderLinkList(items);
+            }
+        }
+
         if (snippet.type === 'markdown') {
             return this.renderMarkdown(snippet.content);
         } else {
             return this.escapeHtml(snippet.content);
         }
+    }
+
+    renderLinkList(links) {
+        const listItems = links.map(link => {
+            const safeLink = this.escapeHtml(link);
+            return `<li><a class="link-list-item" href="${safeLink}" data-url="${safeLink}" target="_blank" rel="noopener">${safeLink}</a></li>`;
+        }).join('');
+        return `<ul class="link-list">${listItems}</ul>`;
     }
 
     // Renderizar markdown para HTML
@@ -1547,4 +1757,3 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Erro ao inicializar SnippetManager:', error);
     }
 });
-
