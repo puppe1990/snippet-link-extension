@@ -21,9 +21,9 @@ Uma extensão do Chrome moderna e intuitiva para gerenciar links e textos salvos
 
 Antes de instalar a extensão, você precisa gerar os ícones PNG necessários:
 
-1. **Abra o arquivo `create_icons.html` no seu navegador**
+1. **Abra o arquivo `scripts/create_icons.html` no seu navegador**
 2. **Os ícones serão baixados automaticamente** (icon16.png, icon32.png, icon48.png, icon128.png)
-3. **Mova os arquivos baixados** para a pasta `icons/` do projeto
+3. **Mova os arquivos baixados** para a pasta `extension/icons/` do projeto
 
 ### Instalação no Chrome
 
@@ -41,7 +41,7 @@ Antes de instalar a extensão, você precisa gerar os ícones PNG necessários:
 
 5. **Clique em "Carregar sem compactação"**
 
-6. **Selecione a pasta** do projeto `snippet-link-extension`
+6. **Selecione a pasta** `extension/` deste repositório
 
 7. **A extensão será instalada** e aparecerá na barra de ferramentas
 
@@ -89,30 +89,132 @@ Antes de instalar a extensão, você precisa gerar os ícones PNG necessários:
 
 ```
 snippet-link-extension/
-├── manifest.json          # Configuração da extensão
-├── popup.html             # Interface do usuário
-├── popup.js              # Lógica da aplicação
-├── styles.css            # Estilos e design
-├── icons/                # Ícones da extensão
-│   ├── icon16.png
-│   ├── icon32.png
-│   ├── icon48.png
-│   └── icon128.png
-├── create_icons.html     # Gerador de ícones
-└── README.md            # Este arquivo
+├── extension/                     # Chrome extension (MV3)
+│   ├── manifest.json
+│   ├── popup.html
+│   ├── popup.js
+│   ├── fullpage.html
+│   ├── background.js
+│   ├── styles.css
+│   ├── translations.js
+│   └── icons/
+├── web/                           # App web/PWA (Pocket-style)
+│   ├── mobile-app.html
+│   ├── mobile-app.js
+│   ├── mobile-app.css
+│   ├── mobile-sw.js
+│   ├── manifest.webmanifest
+│   └── icons/
+├── api/netlify/functions/         # API serverless (Netlify Functions)
+│   ├── auth.js
+│   └── snippets.js
+├── scripts/                       # utilitários (ícones/testes)
+├── docs/                          # documentação extra
+├── netlify.toml
+├── package.json
+└── README.md
 ```
 
 ## 🔒 Permissões
 
 A extensão solicita apenas as permissões mínimas necessárias:
 - **storage**: Para salvar seus snippets localmente
-- **tabs**: Para abrir links em novas abas
+- **host_permissions**: Para buscar metadados e pré-visualizações de links em serviços externos (allorigins, codetabs, noembed, YouTube, Perplexity e ChatGPT)
 
 ## 💾 Armazenamento
 
-- **Local Storage**: Todos os dados são armazenados localmente no seu navegador
-- **Privacidade**: Nenhum dado é enviado para servidores externos
+- **Local Storage**: Todos os snippets e configurações são armazenados localmente no seu navegador
+- **Privacidade**: O conteúdo dos links pode ser enviado a serviços externos apenas para gerar pré-visualização/resumo quando essas funcionalidades são usadas
 - **Backup**: Os dados ficam salvos até você desinstalar a extensão
+
+## ☁️ Sincronização com Turso + Netlify
+
+### 1. Criar banco no Turso
+
+```bash
+turso db create snippet-link
+turso db show snippet-link
+turso db tokens create snippet-link
+```
+
+### 2. Configurar API no Netlify
+
+Este projeto inclui as funções `api/netlify/functions/snippets.js` e `api/netlify/functions/auth.js`.
+
+Instale dependências:
+
+```bash
+npm install
+```
+
+Variáveis de ambiente no Netlify:
+
+- `TURSO_DATABASE_URL`
+- `TURSO_AUTH_TOKEN`
+- `EXTENSION_API_KEY` (fallback para clientes legados sem login)
+
+Deploy:
+
+```bash
+npm run deploy
+```
+
+### 3. Configurar a extensão
+
+No modal **Configurações**:
+
+1. Ative `Sincronização em Nuvem`
+2. Preencha `URL base da API` (ex.: `https://seu-site.netlify.app`)
+3. Preencha `Email` e `Senha`
+4. Clique em `Cadastrar` (primeiro acesso) ou `Entrar`
+5. Clique em `Sincronizar agora`
+
+Observações:
+
+- A extensão continua funcionando offline com `chrome.storage.local`.
+- A nuvem usa merge por `updatedAt` (última atualização vence).
+- Exclusão é `soft delete` no banco para evitar perda acidental.
+- A extensão agora sincroniza em segundo plano automaticamente a cada 15 minutos (mesmo sem abrir o popup), desde que a opção de nuvem esteja ativada.
+
+## 📱 Mini App Mobile (estilo Pocket)
+
+Após deploy no Netlify, você terá também o mini app em:
+
+- `https://SEU-SITE.netlify.app/` (redireciona para o mini app)
+- `https://SEU-SITE.netlify.app/mobile-app.html`
+
+No primeiro acesso:
+
+1. Abra `Config`
+2. Preencha `API Base URL` (seu domínio Netlify)
+3. Preencha `Email` e `Senha`
+4. Clique em `Cadastrar` (primeiro acesso) ou `Entrar`
+5. Clique em `Sincronizar`
+
+Recursos do mini app:
+
+- Salvar link com tags
+- Buscar por título, URL e tags
+- Favoritar / Arquivar / Excluir
+- Abrir links em nova aba
+
+Link rápido para pré-preencher URL compartilhada:
+
+- `https://SEU-SITE.netlify.app/mobile-app.html?url=https://exemplo.com&title=Meu+Link`
+
+## 📲 PWA (instalável)
+
+O mini app foi preparado como PWA com:
+
+- `web/manifest.webmanifest`
+- `web/mobile-sw.js` (cache offline do app shell)
+- ícones `web/icons/icon192.png` e `web/icons/icon512.png`
+
+Como instalar no celular:
+
+1. Abra `https://SEU-SITE.netlify.app/mobile-app.html` no navegador móvel
+2. No Chrome Android: menu > `Adicionar à tela inicial`
+3. No Safari iOS: compartilhar > `Adicionar à Tela de Início`
 
 ## 🐛 Solução de Problemas
 
@@ -122,9 +224,9 @@ A extensão solicita apenas as permissões mínimas necessárias:
 3. Recarregue a extensão em `chrome://extensions/`
 
 ### Ícones não aparecem
-1. Abra `create_icons.html` no navegador
+1. Abra `scripts/create_icons.html` no navegador
 2. Baixe os ícones gerados automaticamente
-3. Mova-os para a pasta `icons/`
+3. Mova-os para a pasta `extension/icons/`
 4. Recarregue a extensão
 
 ### Snippets não salvam
@@ -134,7 +236,7 @@ A extensão solicita apenas as permissões mínimas necessárias:
 
 ## 🚀 Funcionalidades Futuras
 
-- [ ] Sincronização na nuvem
+- [x] Sincronização na nuvem (Turso + Netlify)
 - [ ] Importar/Exportar dados
 - [ ] Categorias personalizadas
 - [ ] Atalhos de teclado
@@ -155,4 +257,4 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 
 ---
 
-**Desenvolvido com ❤️ para facilitar o gerenciamento de links e textos no Chrome!**
+Desenvolvido para facilitar o gerenciamento de links e snippets no Chrome e no celular.

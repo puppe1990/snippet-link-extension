@@ -7,6 +7,31 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div id="authGate" class="auth-gate hidden">
+        <div class="auth-card">
+            <h2>🔐 Snippet Cloud</h2>
+            <p id="authGateSubtitle">Entre para sincronizar seus snippets</p>
+            <div class="auth-tabs">
+                <button id="authSignInTab" class="auth-tab active" type="button">Sign in</button>
+                <button id="authSignUpTab" class="auth-tab" type="button">Sign up</button>
+            </div>
+
+            <form id="authSignInForm" class="auth-form">
+                <input id="authSignInEmail" type="email" placeholder="Email" required>
+                <input id="authSignInPassword" type="password" placeholder="Senha" required>
+                <button id="authSignInSubmit" class="btn btn-primary" type="submit">Entrar</button>
+            </form>
+
+            <form id="authSignUpForm" class="auth-form hidden">
+                <input id="authSignUpEmail" type="email" placeholder="Email" required>
+                <input id="authSignUpPassword" type="password" placeholder="Senha (min 6)" required>
+                <button id="authSignUpSubmit" class="btn btn-primary" type="submit">Criar conta</button>
+            </form>
+
+            <p id="authGateStatus" class="auth-status">Não autenticado.</p>
+        </div>
+    </div>
+
     <div class="container">
         <header class="header">
             <h1>📝 Snippet Manager</h1>
@@ -198,6 +223,55 @@
                         <option value="chatgpt">ChatGPT</option>
                     </select>
                     <p id="aiProviderDescription" style="font-size: 12px; color: #666; margin-top: 8px;">Escolha qual IA usar para resumir os links</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="cloudSyncToggle" id="cloudSyncLabel">☁️ Sincronização em Nuvem:</label>
+                    <div class="toggle-container">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="cloudSyncToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span id="cloudSyncDescription" class="toggle-description">Ativar sincronização com Turso via API Netlify</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cloudApiBase" id="cloudApiBaseLabel">URL base da API:</label>
+                    <input type="url" id="cloudApiBase" placeholder="https://seu-site.netlify.app">
+                </div>
+
+                <div class="form-group">
+                    <label for="cloudAuthEmail" id="cloudAuthEmailLabel">Email:</label>
+                    <input type="email" id="cloudAuthEmail" placeholder="seu@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="cloudAuthPassword" id="cloudAuthPasswordLabel">Senha:</label>
+                    <input type="password" id="cloudAuthPassword" placeholder="mínimo 6 caracteres">
+                </div>
+
+                <div class="form-group">
+                    <div class="import-export-section">
+                        <button id="cloudRegisterBtn" class="btn btn-secondary" type="button">Cadastrar</button>
+                        <button id="cloudLoginBtn" class="btn btn-secondary" type="button">Entrar</button>
+                        <button id="cloudLogoutBtn" class="btn btn-secondary" type="button">Sair</button>
+                    </div>
+                    <p id="cloudAuthStatus" style="font-size: 12px; color: #666; margin-top: 8px; text-align: center;">Não autenticado.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="cloudApiKey" id="cloudApiKeyLabel">API Key:</label>
+                    <input type="password" id="cloudApiKey" placeholder="chave configurada no Netlify">
+                </div>
+
+                <div class="form-group">
+                    <label for="cloudUserId" id="cloudUserIdLabel">User ID:</label>
+                    <input type="text" id="cloudUserId" placeholder="default-user">
+                </div>
+
+                <div class="form-group">
+                    <button id="syncNowBtn" class="btn btn-secondary" type="button">☁️ Sincronizar agora</button>
                 </div>
                 
                 <div class="form-group">

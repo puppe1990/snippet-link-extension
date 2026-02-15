@@ -2,6 +2,7 @@
 // Classe principal para gerenciar snippets
 class SnippetManager {
     constructor() {
+        this.defaultCloudApiBase = 'https://snippet-link-pocket.netlify.app';
         this.snippets = [];
         this.currentFilter = 'all';
         this.currentSearch = '';
@@ -13,6 +14,14 @@ class SnippetManager {
         this.translationManager = new TranslationManager();
         this.summarizeEnabled = false;
         this.aiProvider = 'perplexity';
+        this.cloudSyncEnabled = true;
+        this.cloudApiBase = this.defaultCloudApiBase;
+        this.cloudApiKey = '';
+        this.cloudUserId = 'default-user';
+        this.cloudAuthEmail = '';
+        this.cloudAuthToken = '';
+        this.cloudAuthUserId = '';
+        this.cloudSyncInProgress = false;
         
         this.init();
     }
@@ -21,6 +30,11 @@ class SnippetManager {
         await this.loadSnippets();
         await this.loadSettings();
         this.setupEventListeners();
+        await this.validateCloudSession();
+        this.updateAuthGateVisibility();
+        if (this.cloudAuthToken) {
+            await this.syncWithCloud({ showNotification: false, refreshUI: false });
+        }
         this.updateLanguage();
         await this.restoreSnippetDraft();
         await this.renderTagFilters();
@@ -149,6 +163,57 @@ class SnippetManager {
             console.error('Input de arquivo não encontrado!');
         }
 
+        const syncNowBtn = document.getElementById('syncNowBtn');
+        if (syncNowBtn) {
+            syncNowBtn.addEventListener('click', async () => {
+                await this.syncWithCloud({ showNotification: true, refreshUI: true });
+            });
+        }
+
+        const cloudRegisterBtn = document.getElementById('cloudRegisterBtn');
+        const cloudLoginBtn = document.getElementById('cloudLoginBtn');
+        const cloudLogoutBtn = document.getElementById('cloudLogoutBtn');
+
+        if (cloudRegisterBtn) {
+            cloudRegisterBtn.addEventListener('click', async () => {
+                await this.handleCloudRegister();
+            });
+        }
+        if (cloudLoginBtn) {
+            cloudLoginBtn.addEventListener('click', async () => {
+                await this.handleCloudLogin();
+            });
+        }
+        if (cloudLogoutBtn) {
+            cloudLogoutBtn.addEventListener('click', async () => {
+                await this.handleCloudLogout();
+            });
+        }
+
+        const authSignInTab = document.getElementById('authSignInTab');
+        const authSignUpTab = document.getElementById('authSignUpTab');
+        const authSignInForm = document.getElementById('authSignInForm');
+        const authSignUpForm = document.getElementById('authSignUpForm');
+
+        if (authSignInTab) {
+            authSignInTab.addEventListener('click', () => this.switchAuthGateMode('signin'));
+        }
+        if (authSignUpTab) {
+            authSignUpTab.addEventListener('click', () => this.switchAuthGateMode('signup'));
+        }
+        if (authSignInForm) {
+            authSignInForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleAuthGateSignIn();
+            });
+        }
+        if (authSignUpForm) {
+            authSignUpForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleAuthGateSignUp();
+            });
+        }
+
         // Fechar modal clicando fora
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
@@ -167,16 +232,18 @@ class SnippetManager {
         try {
             const result = await chrome.storage.local.get(['snippets']);
             this.snippets = result.snippets || [];
-            
+
             // Garantir que todos os snippets tenham a propriedade isArchived
+            let hasMigrationChanges = false;
             this.snippets.forEach(snippet => {
                 if (snippet.isArchived === undefined) {
                     snippet.isArchived = false;
+                    hasMigrationChanges = true;
                 }
             });
-            
-            // Salvar se houve alguma atualização
-            if (this.snippets.some(snippet => snippet.isArchived === false && snippet.isArchived !== undefined)) {
+
+            // Salvar somente se houve migração real
+            if (hasMigrationChanges) {
                 await this.saveSnippets();
             }
         } catch (error) {
@@ -210,7 +277,7 @@ class SnippetManager {
         }
 
         const draft = {
-            isOpen: modal.style.display === 'block',
+            isOpen: modal.style.display === 'flex',
             editingId: this.editingId,
             title: document.getElementById('snippetTitle').value,
             type: document.getElementById('snippetType').value,
@@ -257,22 +324,55 @@ class SnippetManager {
     // Gerenciamento de configurações
     async loadSettings() {
         try {
-            const result = await chrome.storage.local.get(['language', 'linkPreviewEnabled', 'summarizeEnabled', 'aiProvider']);
+            const result = await chrome.storage.local.get([
+                'language',
+                'linkPreviewEnabled',
+                'summarizeEnabled',
+                'aiProvider',
+                'cloudSyncEnabled',
+                'cloudApiBase',
+                'cloudApiKey',
+                'cloudUserId',
+                'cloudAuthEmail',
+                'cloudAuthToken',
+                'cloudAuthUserId'
+            ]);
             const language = result.language || 'pt';
             const linkPreviewEnabled = result.linkPreviewEnabled !== undefined ? result.linkPreviewEnabled : true;
             const summarizeEnabled = result.summarizeEnabled !== undefined ? result.summarizeEnabled : false;
             const aiProvider = result.aiProvider || 'perplexity';
+            const cloudSyncEnabled = result.cloudSyncEnabled !== undefined ? result.cloudSyncEnabled === true : true;
+            const cloudApiBase = this.normalizeCloudApiBase(result.cloudApiBase || this.defaultCloudApiBase);
+            const cloudApiKey = result.cloudApiKey || '';
+            const cloudUserId = result.cloudUserId || 'default-user';
+            const cloudAuthEmail = result.cloudAuthEmail || '';
+            const cloudAuthToken = result.cloudAuthToken || '';
+            const cloudAuthUserId = result.cloudAuthUserId || '';
             
             this.translationManager.setLanguage(language);
             this.linkPreviewEnabled = linkPreviewEnabled;
             this.summarizeEnabled = summarizeEnabled;
             this.aiProvider = aiProvider;
+            this.cloudSyncEnabled = cloudSyncEnabled;
+            this.cloudApiBase = cloudApiBase;
+            this.cloudApiKey = cloudApiKey;
+            this.cloudUserId = cloudUserId;
+            this.cloudAuthEmail = cloudAuthEmail;
+            this.cloudAuthToken = cloudAuthToken;
+            this.cloudAuthUserId = cloudAuthUserId;
         } catch (error) {
             console.error('Erro ao carregar configurações:', error);
             this.translationManager.setLanguage('pt');
             this.linkPreviewEnabled = true; // Default habilitado
             this.summarizeEnabled = false; // Default desabilitado
             this.aiProvider = 'perplexity'; // Default Perplexity
+            this.cloudSyncEnabled = true;
+            this.cloudApiBase = this.defaultCloudApiBase;
+            this.cloudApiKey = '';
+            this.cloudUserId = 'default-user';
+            this.cloudAuthEmail = '';
+            this.cloudAuthToken = '';
+            this.cloudAuthUserId = '';
         }
     }
 
@@ -280,6 +380,402 @@ class SnippetManager {
     // Sistema de tradução
     t(key) {
         return this.translationManager.t(key);
+    }
+
+    normalizeCloudApiBase(baseUrl) {
+        return (baseUrl || '').trim().replace(/\/+$/, '');
+    }
+
+    hasCloudSyncConfig() {
+        return this.cloudSyncEnabled && Boolean(this.cloudApiBase) && (Boolean(this.cloudAuthToken) || Boolean(this.cloudApiKey));
+    }
+
+    getCloudHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.cloudAuthToken) {
+            headers.Authorization = `Bearer ${this.cloudAuthToken}`;
+        } else if (this.cloudApiKey) {
+            headers['X-API-Key'] = this.cloudApiKey;
+        }
+        return headers;
+    }
+
+    setCloudAuthStatus(message) {
+        const statusEl = document.getElementById('cloudAuthStatus');
+        if (statusEl) {
+            statusEl.textContent = message;
+        }
+    }
+
+    setAuthGateStatus(message) {
+        const statusEl = document.getElementById('authGateStatus');
+        if (statusEl) {
+            statusEl.textContent = message;
+        }
+    }
+
+    switchAuthGateMode(mode) {
+        const signInTab = document.getElementById('authSignInTab');
+        const signUpTab = document.getElementById('authSignUpTab');
+        const signInForm = document.getElementById('authSignInForm');
+        const signUpForm = document.getElementById('authSignUpForm');
+        const isSignIn = mode !== 'signup';
+
+        if (signInTab) signInTab.classList.toggle('active', isSignIn);
+        if (signUpTab) signUpTab.classList.toggle('active', !isSignIn);
+        if (signInForm) signInForm.classList.toggle('hidden', !isSignIn);
+        if (signUpForm) signUpForm.classList.toggle('hidden', isSignIn);
+    }
+
+    updateAuthGateVisibility() {
+        const gate = document.getElementById('authGate');
+        if (!gate) return;
+        const shouldShow = !this.cloudAuthToken;
+        gate.classList.toggle('hidden', !shouldShow);
+    }
+
+    async validateCloudSession() {
+        if (!this.cloudApiBase || !this.cloudAuthToken) {
+            return false;
+        }
+
+        try {
+            const endpoint = `${this.cloudApiBase}/.netlify/functions/auth`;
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                headers: this.getCloudHeaders()
+            });
+            if (!response.ok) {
+                throw new Error(`auth check ${response.status}`);
+            }
+            const data = await response.json();
+            this.cloudAuthEmail = data?.user?.email || this.cloudAuthEmail;
+            this.cloudAuthUserId = data?.user?.id || this.cloudAuthUserId;
+            await this.persistCloudAuth();
+            return true;
+        } catch {
+            this.cloudAuthToken = '';
+            this.cloudAuthUserId = '';
+            await this.persistCloudAuth();
+            return false;
+        }
+    }
+
+    async applyCloudAuthSession(data, fallbackEmail = '') {
+        this.cloudAuthEmail = data?.user?.email || fallbackEmail;
+        this.cloudAuthUserId = data?.user?.id || '';
+        this.cloudAuthToken = data?.token || '';
+        await this.persistCloudAuth();
+        this.updateCloudAuthStatusFromState();
+        this.updateAuthGateVisibility();
+    }
+
+    async handleAuthGateSignIn() {
+        try {
+            const email = (document.getElementById('authSignInEmail')?.value || '').trim().toLowerCase();
+            const password = document.getElementById('authSignInPassword')?.value || '';
+            const data = await this.cloudAuthRequest('login', email, password);
+            await this.applyCloudAuthSession(data, email);
+            this.setAuthGateStatus(this.t('cloud_auth_login_success'));
+            await this.syncWithCloud({ showNotification: false, refreshUI: true });
+        } catch (error) {
+            this.setAuthGateStatus(`${this.t('cloud_auth_error')}: ${error.message}`);
+        }
+    }
+
+    async handleAuthGateSignUp() {
+        try {
+            const email = (document.getElementById('authSignUpEmail')?.value || '').trim().toLowerCase();
+            const password = document.getElementById('authSignUpPassword')?.value || '';
+            const data = await this.cloudAuthRequest('register', email, password);
+            await this.applyCloudAuthSession(data, email);
+            this.setAuthGateStatus(this.t('cloud_auth_register_success'));
+            await this.syncWithCloud({ showNotification: false, refreshUI: true });
+        } catch (error) {
+            this.setAuthGateStatus(`${this.t('cloud_auth_error')}: ${error.message}`);
+        }
+    }
+
+    updateCloudAuthStatusFromState() {
+        if (this.cloudAuthToken && this.cloudAuthEmail) {
+            this.setCloudAuthStatus(`${this.t('cloud_auth_logged_as')} ${this.cloudAuthEmail}`);
+        } else {
+            this.setCloudAuthStatus(this.t('cloud_auth_not_logged'));
+        }
+        this.updateAuthGateVisibility();
+    }
+
+    async cloudAuthRequest(action, email, password) {
+        const endpoint = `${this.cloudApiBase}/.netlify/functions/auth`;
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: this.getCloudHeaders(),
+            body: JSON.stringify({ action, email, password })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.error || `auth failed (${response.status})`);
+        }
+        return data;
+    }
+
+    async handleCloudRegister() {
+        try {
+            const emailInput = document.getElementById('cloudAuthEmail');
+            const passwordInput = document.getElementById('cloudAuthPassword');
+            const email = (emailInput?.value || '').trim().toLowerCase();
+            const password = passwordInput?.value || '';
+
+            if (!this.cloudApiBase) {
+                this.showNotification(this.t('cloud_sync_config_required'));
+                return;
+            }
+
+            const data = await this.cloudAuthRequest('register', email, password);
+            await this.applyCloudAuthSession(data, email);
+            this.showNotification(this.t('cloud_auth_register_success'));
+            await this.syncWithCloud({ showNotification: false, refreshUI: true });
+        } catch (error) {
+            this.setCloudAuthStatus(`${this.t('cloud_auth_error')}: ${error.message}`);
+            this.showNotification(this.t('cloud_auth_error'));
+        }
+    }
+
+    async handleCloudLogin() {
+        try {
+            const emailInput = document.getElementById('cloudAuthEmail');
+            const passwordInput = document.getElementById('cloudAuthPassword');
+            const email = (emailInput?.value || '').trim().toLowerCase();
+            const password = passwordInput?.value || '';
+
+            if (!this.cloudApiBase) {
+                this.showNotification(this.t('cloud_sync_config_required'));
+                return;
+            }
+
+            const data = await this.cloudAuthRequest('login', email, password);
+            await this.applyCloudAuthSession(data, email);
+            this.showNotification(this.t('cloud_auth_login_success'));
+            await this.syncWithCloud({ showNotification: false, refreshUI: true });
+        } catch (error) {
+            this.setCloudAuthStatus(`${this.t('cloud_auth_error')}: ${error.message}`);
+            this.showNotification(this.t('cloud_auth_error'));
+        }
+    }
+
+    async handleCloudLogout() {
+        try {
+            if (this.cloudApiBase && this.cloudAuthToken) {
+                const endpoint = `${this.cloudApiBase}/.netlify/functions/auth`;
+                await fetch(endpoint, {
+                    method: 'POST',
+                    headers: this.getCloudHeaders(),
+                    body: JSON.stringify({ action: 'logout' })
+                });
+            }
+        } catch (error) {
+            console.error('Erro no logout da nuvem:', error);
+        } finally {
+            this.cloudAuthToken = '';
+            this.cloudAuthUserId = '';
+            await this.persistCloudAuth();
+            this.updateCloudAuthStatusFromState();
+            this.showNotification(this.t('cloud_auth_logout_success'));
+        }
+    }
+
+    async persistCloudAuth() {
+        await chrome.storage.local.set({
+            cloudAuthEmail: this.cloudAuthEmail,
+            cloudAuthToken: this.cloudAuthToken,
+            cloudAuthUserId: this.cloudAuthUserId
+        });
+    }
+
+    getSnippetTimestamp(snippet) {
+        const value = snippet?.updatedAt || snippet?.createdAt || 0;
+        const timestamp = new Date(value).getTime();
+        return Number.isFinite(timestamp) ? timestamp : 0;
+    }
+
+    toCloudSnippet(snippet) {
+        const resolvedUserId = this.cloudAuthUserId || this.cloudUserId;
+        return {
+            id: snippet.id,
+            userId: resolvedUserId,
+            title: snippet.title || null,
+            type: snippet.type,
+            content: snippet.content,
+            tags: Array.isArray(snippet.tags) ? snippet.tags : [],
+            isFavorite: Boolean(snippet.isFavorite),
+            isArchived: Boolean(snippet.isArchived),
+            createdAt: snippet.createdAt || new Date().toISOString(),
+            updatedAt: snippet.updatedAt || new Date().toISOString()
+        };
+    }
+
+    fromCloudSnippet(row) {
+        let tags = [];
+        if (Array.isArray(row.tags)) {
+            tags = row.tags;
+        } else if (typeof row.tags === 'string') {
+            try {
+                const parsed = JSON.parse(row.tags);
+                tags = Array.isArray(parsed) ? parsed : [];
+            } catch {
+                tags = [];
+            }
+        }
+
+        return {
+            id: String(row.id),
+            title: row.title || '',
+            type: row.type,
+            content: row.content,
+            tags,
+            isFavorite: Boolean(row.is_favorite ?? row.isFavorite),
+            isArchived: Boolean(row.is_archived ?? row.isArchived),
+            createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+            updatedAt: row.updated_at || row.updatedAt || new Date().toISOString()
+        };
+    }
+
+    async fetchCloudSnippets() {
+        const userQuery = this.cloudAuthToken ? '' : `?userId=${encodeURIComponent(this.cloudUserId)}`;
+        const endpoint = `${this.cloudApiBase}/.netlify/functions/snippets${userQuery}`;
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: this.getCloudHeaders()
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Falha ao buscar nuvem: ${response.status} ${errorText}`);
+        }
+
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+            throw new Error('Resposta inválida da API de sincronização');
+        }
+
+        return data.map(row => this.fromCloudSnippet(row));
+    }
+
+    async upsertSnippetToCloud(snippet) {
+        if (!this.hasCloudSyncConfig() || !snippet) return;
+
+        const endpoint = `${this.cloudApiBase}/.netlify/functions/snippets`;
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: this.getCloudHeaders(),
+            body: JSON.stringify(this.toCloudSnippet(snippet))
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Falha ao enviar snippet: ${response.status} ${errorText}`);
+        }
+    }
+
+    async deleteSnippetFromCloud(id, updatedAt) {
+        if (!this.hasCloudSyncConfig() || !id) return;
+
+        const endpoint = `${this.cloudApiBase}/.netlify/functions/snippets`;
+        const response = await fetch(endpoint, {
+            method: 'DELETE',
+            headers: this.getCloudHeaders(),
+            body: JSON.stringify({
+                id,
+                userId: this.cloudAuthUserId || this.cloudUserId,
+                updatedAt: updatedAt || new Date().toISOString()
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Falha ao remover snippet: ${response.status} ${errorText}`);
+        }
+    }
+
+    async syncWithCloud(options = {}) {
+        const { showNotification = true, refreshUI = true } = options;
+
+        if (!this.hasCloudSyncConfig()) {
+            if (showNotification) {
+                this.showNotification(this.t('cloud_sync_config_required'));
+            }
+            return;
+        }
+
+        if (this.cloudSyncInProgress) {
+            return;
+        }
+
+        this.cloudSyncInProgress = true;
+
+        try {
+            const remoteSnippets = await this.fetchCloudSnippets();
+            const localById = new Map(this.snippets.map(snippet => [snippet.id, snippet]));
+            const remoteById = new Map(remoteSnippets.map(snippet => [snippet.id, snippet]));
+            const mergedById = new Map();
+            const snippetsToUpload = [];
+
+            for (const [id, localSnippet] of localById.entries()) {
+                const remoteSnippet = remoteById.get(id);
+                if (!remoteSnippet) {
+                    mergedById.set(id, localSnippet);
+                    snippetsToUpload.push(localSnippet);
+                    continue;
+                }
+
+                const localTimestamp = this.getSnippetTimestamp(localSnippet);
+                const remoteTimestamp = this.getSnippetTimestamp(remoteSnippet);
+
+                if (localTimestamp >= remoteTimestamp) {
+                    mergedById.set(id, localSnippet);
+                    if (localTimestamp > remoteTimestamp) {
+                        snippetsToUpload.push(localSnippet);
+                    }
+                } else {
+                    mergedById.set(id, remoteSnippet);
+                }
+            }
+
+            for (const [id, remoteSnippet] of remoteById.entries()) {
+                if (!mergedById.has(id)) {
+                    mergedById.set(id, remoteSnippet);
+                }
+            }
+
+            this.snippets = Array.from(mergedById.values()).sort(
+                (a, b) => this.getSnippetTimestamp(b) - this.getSnippetTimestamp(a)
+            );
+            await this.saveSnippets();
+
+            for (const snippet of snippetsToUpload) {
+                try {
+                    await this.upsertSnippetToCloud(snippet);
+                } catch (uploadError) {
+                    console.error('Erro ao enviar snippet durante sync:', uploadError);
+                }
+            }
+
+            if (refreshUI) {
+                await this.renderTagFilters();
+                await this.renderSnippets();
+            }
+
+            if (showNotification) {
+                this.showNotification(`${this.t('cloud_sync_success')} (${this.snippets.length} snippets)`);
+            }
+        } catch (error) {
+            console.error('Erro de sincronização com nuvem:', error);
+            if (showNotification) {
+                this.showNotification(this.t('cloud_sync_error'));
+            }
+        } finally {
+            this.cloudSyncInProgress = false;
+        }
     }
 
     toggleAiProviderVisibility() {
@@ -365,6 +861,61 @@ class SnippetManager {
         const aiProviderDescription = document.getElementById('aiProviderDescription');
         if (aiProviderLabel) aiProviderLabel.textContent = this.t('ai_provider_label');
         if (aiProviderDescription) aiProviderDescription.textContent = this.t('ai_provider_description');
+
+        const cloudSyncLabel = document.getElementById('cloudSyncLabel');
+        const cloudSyncDescription = document.getElementById('cloudSyncDescription');
+        const cloudApiBaseLabel = document.getElementById('cloudApiBaseLabel');
+        const cloudAuthEmailLabel = document.getElementById('cloudAuthEmailLabel');
+        const cloudAuthPasswordLabel = document.getElementById('cloudAuthPasswordLabel');
+        const cloudApiKeyLabel = document.getElementById('cloudApiKeyLabel');
+        const cloudUserIdLabel = document.getElementById('cloudUserIdLabel');
+        const syncNowBtn = document.getElementById('syncNowBtn');
+        const cloudRegisterBtn = document.getElementById('cloudRegisterBtn');
+        const cloudLoginBtn = document.getElementById('cloudLoginBtn');
+        const cloudLogoutBtn = document.getElementById('cloudLogoutBtn');
+        const cloudApiBaseInput = document.getElementById('cloudApiBase');
+        const cloudAuthEmailInput = document.getElementById('cloudAuthEmail');
+        const cloudAuthPasswordInput = document.getElementById('cloudAuthPassword');
+        const cloudApiKeyInput = document.getElementById('cloudApiKey');
+        const cloudUserIdInput = document.getElementById('cloudUserId');
+
+        if (cloudSyncLabel) cloudSyncLabel.textContent = this.t('cloud_sync_label');
+        if (cloudSyncDescription) cloudSyncDescription.textContent = this.t('cloud_sync_description');
+        if (cloudApiBaseLabel) cloudApiBaseLabel.textContent = this.t('cloud_api_base_label');
+        if (cloudAuthEmailLabel) cloudAuthEmailLabel.textContent = this.t('cloud_auth_email_label');
+        if (cloudAuthPasswordLabel) cloudAuthPasswordLabel.textContent = this.t('cloud_auth_password_label');
+        if (cloudApiKeyLabel) cloudApiKeyLabel.textContent = this.t('cloud_api_key_label');
+        if (cloudUserIdLabel) cloudUserIdLabel.textContent = this.t('cloud_user_id_label');
+        if (syncNowBtn) syncNowBtn.textContent = this.t('sync_now_button');
+        if (cloudRegisterBtn) cloudRegisterBtn.textContent = this.t('cloud_auth_register_button');
+        if (cloudLoginBtn) cloudLoginBtn.textContent = this.t('cloud_auth_login_button');
+        if (cloudLogoutBtn) cloudLogoutBtn.textContent = this.t('cloud_auth_logout_button');
+        if (cloudApiBaseInput) cloudApiBaseInput.placeholder = this.t('cloud_api_base_placeholder');
+        if (cloudAuthEmailInput) cloudAuthEmailInput.placeholder = this.t('cloud_auth_email_placeholder');
+        if (cloudAuthPasswordInput) cloudAuthPasswordInput.placeholder = this.t('cloud_auth_password_placeholder');
+        if (cloudApiKeyInput) cloudApiKeyInput.placeholder = this.t('cloud_api_key_placeholder');
+        if (cloudUserIdInput) cloudUserIdInput.placeholder = this.t('cloud_user_id_placeholder');
+        this.updateCloudAuthStatusFromState();
+
+        const authSignInTab = document.getElementById('authSignInTab');
+        const authSignUpTab = document.getElementById('authSignUpTab');
+        const authSignInEmail = document.getElementById('authSignInEmail');
+        const authSignInPassword = document.getElementById('authSignInPassword');
+        const authSignUpEmail = document.getElementById('authSignUpEmail');
+        const authSignUpPassword = document.getElementById('authSignUpPassword');
+        const authSignInSubmit = document.getElementById('authSignInSubmit');
+        const authSignUpSubmit = document.getElementById('authSignUpSubmit');
+        const authGateStatus = document.getElementById('authGateStatus');
+
+        if (authSignInTab) authSignInTab.textContent = this.t('cloud_auth_login_button');
+        if (authSignUpTab) authSignUpTab.textContent = this.t('cloud_auth_register_button');
+        if (authSignInEmail) authSignInEmail.placeholder = this.t('cloud_auth_email_placeholder');
+        if (authSignInPassword) authSignInPassword.placeholder = this.t('cloud_auth_password_placeholder');
+        if (authSignUpEmail) authSignUpEmail.placeholder = this.t('cloud_auth_email_placeholder');
+        if (authSignUpPassword) authSignUpPassword.placeholder = this.t('cloud_auth_password_placeholder');
+        if (authSignInSubmit) authSignInSubmit.textContent = this.t('cloud_auth_login_button');
+        if (authSignUpSubmit) authSignUpSubmit.textContent = this.t('cloud_auth_register_button');
+        if (authGateStatus && !this.cloudAuthToken) authGateStatus.textContent = this.t('cloud_auth_not_logged');
         
         // Atualizar opções do select de IA
         const aiProviderSelect = document.getElementById('aiProviderSelect');
@@ -497,7 +1048,7 @@ class SnippetManager {
     }
 
     async createSnippetHTML(snippet) {
-        const tags = snippet.tags ? snippet.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
+        const tags = snippet.tags ? snippet.tags.map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('') : '';
         const date = new Date(snippet.createdAt).toLocaleDateString(this.translationManager.getLocale());
         const hasTitle = snippet.title && snippet.title.trim();
         const displayTitle = hasTitle ? this.escapeHtml(snippet.title.trim()) : '';
@@ -559,9 +1110,10 @@ class SnippetManager {
                                 </div>
                             </div>
                         `;
-                        
-                        // Re-attach event listeners apenas para o preview específico
-                        this.attachLinkPreviewListener(snippetElement);
+
+                        // Re-attach event listeners no novo elemento renderizado
+                        const updatedPreviewElement = document.querySelector(`[data-id="${snippet.id}"] .link-preview`);
+                        this.attachLinkPreviewListener(updatedPreviewElement);
                     }
                 }
             }).catch(error => {
@@ -919,7 +1471,7 @@ class SnippetManager {
         document.querySelectorAll('.tag-filter-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const tag = e.target.dataset.tag;
+                const tag = e.currentTarget.dataset.tag;
                 await this.toggleTagFilter(tag);
             });
         });
@@ -957,6 +1509,11 @@ class SnippetManager {
 
         this.snippets.unshift(snippet);
         await this.saveSnippets();
+        try {
+            await this.upsertSnippetToCloud(snippet);
+        } catch (error) {
+            console.error('Erro ao sincronizar snippet criado:', error);
+        }
         await this.renderTagFilters();
         await this.renderSnippets();
     }
@@ -973,6 +1530,11 @@ class SnippetManager {
                 updatedAt: new Date().toISOString()
             };
             await this.saveSnippets();
+            try {
+                await this.upsertSnippetToCloud(this.snippets[index]);
+            } catch (error) {
+                console.error('Erro ao sincronizar snippet atualizado:', error);
+            }
             await this.renderTagFilters();
             await this.renderSnippets();
         }
@@ -984,6 +1546,11 @@ class SnippetManager {
             this.snippets[index].isFavorite = !this.snippets[index].isFavorite;
             this.snippets[index].updatedAt = new Date().toISOString();
             await this.saveSnippets();
+            try {
+                await this.upsertSnippetToCloud(this.snippets[index]);
+            } catch (error) {
+                console.error('Erro ao sincronizar favorito:', error);
+            }
             await this.renderSnippets();
             
             const favoriteStatus = this.snippets[index].isFavorite ? this.t('snippet_favorited') : this.t('snippet_unfavorited');
@@ -997,6 +1564,11 @@ class SnippetManager {
             this.snippets[index].isArchived = !this.snippets[index].isArchived;
             this.snippets[index].updatedAt = new Date().toISOString();
             await this.saveSnippets();
+            try {
+                await this.upsertSnippetToCloud(this.snippets[index]);
+            } catch (error) {
+                console.error('Erro ao sincronizar arquivamento:', error);
+            }
             await this.renderSnippets();
             
             const archiveStatus = this.snippets[index].isArchived ? this.t('snippet_archived') : this.t('snippet_unarchived');
@@ -1005,8 +1577,14 @@ class SnippetManager {
     }
 
     async deleteSnippetById(id) {
+        const deletedAt = new Date().toISOString();
         this.snippets = this.snippets.filter(s => s.id !== id);
         await this.saveSnippets();
+        try {
+            await this.deleteSnippetFromCloud(id, deletedAt);
+        } catch (error) {
+            console.error('Erro ao sincronizar exclusão:', error);
+        }
         await this.renderTagFilters();
         await this.renderSnippets();
     }
@@ -1185,11 +1763,23 @@ class SnippetManager {
         const linkPreviewToggle = document.getElementById('linkPreviewToggle');
         const summarizeToggle = document.getElementById('summarizeToggle');
         const aiProviderSelect = document.getElementById('aiProviderSelect');
+        const cloudSyncToggle = document.getElementById('cloudSyncToggle');
+        const cloudApiBaseInput = document.getElementById('cloudApiBase');
+        const cloudAuthEmailInput = document.getElementById('cloudAuthEmail');
+        const cloudApiKeyInput = document.getElementById('cloudApiKey');
+        const cloudUserIdInput = document.getElementById('cloudUserId');
         
         languageSelect.value = this.translationManager.getCurrentLanguage();
         linkPreviewToggle.checked = this.linkPreviewEnabled;
         if (summarizeToggle) summarizeToggle.checked = this.summarizeEnabled;
         if (aiProviderSelect) aiProviderSelect.value = this.aiProvider;
+        if (cloudSyncToggle) cloudSyncToggle.checked = this.cloudSyncEnabled;
+        if (cloudApiBaseInput) cloudApiBaseInput.value = this.cloudApiBase;
+        if (cloudApiBaseInput) cloudApiBaseInput.readOnly = true;
+        if (cloudAuthEmailInput) cloudAuthEmailInput.value = this.cloudAuthEmail;
+        if (cloudApiKeyInput) cloudApiKeyInput.value = this.cloudApiKey;
+        if (cloudUserIdInput) cloudUserIdInput.value = this.cloudUserId;
+        this.updateCloudAuthStatusFromState();
         
         // Mostrar/ocultar seletor de IA baseado no toggle de resumo
         this.toggleAiProviderVisibility();
@@ -1216,31 +1806,65 @@ class SnippetManager {
         const linkPreviewToggle = document.getElementById('linkPreviewToggle');
         const summarizeToggle = document.getElementById('summarizeToggle');
         const aiProviderSelect = document.getElementById('aiProviderSelect');
+        const cloudSyncToggle = document.getElementById('cloudSyncToggle');
+        const cloudApiBaseInput = document.getElementById('cloudApiBase');
+        const cloudAuthEmailInput = document.getElementById('cloudAuthEmail');
+        const cloudApiKeyInput = document.getElementById('cloudApiKey');
+        const cloudUserIdInput = document.getElementById('cloudUserId');
         
         const language = languageSelect.value;
         const linkPreviewEnabled = linkPreviewToggle.checked;
         const summarizeEnabled = summarizeToggle ? summarizeToggle.checked : false;
         const aiProvider = aiProviderSelect ? aiProviderSelect.value : 'perplexity';
+        const cloudSyncEnabled = cloudSyncToggle ? cloudSyncToggle.checked : false;
+        const cloudApiBase = this.normalizeCloudApiBase(cloudApiBaseInput ? cloudApiBaseInput.value : this.defaultCloudApiBase) || this.defaultCloudApiBase;
+        const cloudAuthEmail = cloudAuthEmailInput ? cloudAuthEmailInput.value.trim().toLowerCase() : this.cloudAuthEmail;
+        const cloudApiKey = cloudApiKeyInput ? cloudApiKeyInput.value.trim() : '';
+        const cloudUserId = cloudUserIdInput && cloudUserIdInput.value.trim() ? cloudUserIdInput.value.trim() : 'default-user';
         
         this.translationManager.setLanguage(language);
         this.linkPreviewEnabled = linkPreviewEnabled;
         this.summarizeEnabled = summarizeEnabled;
         this.aiProvider = aiProvider;
+        this.cloudSyncEnabled = cloudSyncEnabled;
+        this.cloudApiBase = cloudApiBase;
+        this.cloudAuthEmail = cloudAuthEmail;
+        this.cloudApiKey = cloudApiKey;
+        this.cloudUserId = cloudUserId;
         
-        await this.saveSettingsToStorage(language, linkPreviewEnabled, summarizeEnabled, aiProvider);
+        await this.saveSettingsToStorage(
+            language,
+            linkPreviewEnabled,
+            summarizeEnabled,
+            aiProvider,
+            cloudSyncEnabled,
+            cloudApiBase,
+            cloudAuthEmail,
+            cloudApiKey,
+            cloudUserId
+        );
         this.updateLanguage();
         await this.renderSnippets();
         this.closeSettingsModal();
         this.showNotification(this.t('settings_saved'));
+
+        if (this.hasCloudSyncConfig()) {
+            await this.syncWithCloud({ showNotification: true, refreshUI: true });
+        }
     }
 
-    async saveSettingsToStorage(language, linkPreviewEnabled, summarizeEnabled, aiProvider) {
+    async saveSettingsToStorage(language, linkPreviewEnabled, summarizeEnabled, aiProvider, cloudSyncEnabled, cloudApiBase, cloudAuthEmail, cloudApiKey, cloudUserId) {
         try {
             await chrome.storage.local.set({ 
                 language: language,
                 linkPreviewEnabled: linkPreviewEnabled,
                 summarizeEnabled: summarizeEnabled,
-                aiProvider: aiProvider
+                aiProvider: aiProvider,
+                cloudSyncEnabled: cloudSyncEnabled,
+                cloudApiBase: cloudApiBase,
+                cloudAuthEmail: cloudAuthEmail,
+                cloudApiKey: cloudApiKey,
+                cloudUserId: cloudUserId
             });
         } catch (error) {
             console.error('Erro ao salvar configurações:', error);
@@ -1357,6 +1981,15 @@ class SnippetManager {
             this.snippets = [...newSnippets, ...this.snippets];
             
             await this.saveSnippets();
+            if (newSnippets.length > 0) {
+                for (const snippet of newSnippets) {
+                    try {
+                        await this.upsertSnippetToCloud(snippet);
+                    } catch (syncError) {
+                        console.error('Erro ao sincronizar snippet importado:', syncError);
+                    }
+                }
+            }
             await this.renderTagFilters();
             await this.renderSnippets();
             
@@ -1635,9 +2268,43 @@ class SnippetManager {
     renderLinkList(links) {
         const listItems = links.map(link => {
             const safeLink = this.escapeHtml(link);
-            return `<li><a class="link-list-item" href="${safeLink}" data-url="${safeLink}" target="_blank" rel="noopener">${safeLink}</a></li>`;
+            return `<li><a class="link-list-item" href="${safeLink}" data-url="${safeLink}" target="_blank" rel="noopener noreferrer">${safeLink}</a></li>`;
         }).join('');
         return `<ul class="link-list">${listItems}</ul>`;
+    }
+
+    sanitizeHtml(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const blockedTags = ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base'];
+
+        blockedTags.forEach(tag => {
+            doc.querySelectorAll(tag).forEach(node => node.remove());
+        });
+
+        doc.querySelectorAll('*').forEach(element => {
+            [...element.attributes].forEach(attr => {
+                const name = attr.name.toLowerCase();
+                const value = (attr.value || '').trim();
+                const lowerValue = value.toLowerCase();
+
+                if (name.startsWith('on')) {
+                    element.removeAttribute(attr.name);
+                    return;
+                }
+
+                if ((name === 'href' || name === 'src') && (lowerValue.startsWith('javascript:') || lowerValue.startsWith('data:text/html'))) {
+                    element.removeAttribute(attr.name);
+                    return;
+                }
+
+                if (name === 'target') {
+                    element.setAttribute('rel', 'noopener noreferrer');
+                }
+            });
+        });
+
+        return doc.body.innerHTML;
     }
 
     // Renderizar markdown para HTML
@@ -1652,7 +2319,8 @@ class SnippetManager {
                     smartLists: true,
                     smartypants: true
                 });
-                return marked.parse(markdownText);
+                const rawHtml = marked.parse(markdownText);
+                return this.sanitizeHtml(rawHtml);
             } else {
                 // Fallback se marked não estiver disponível
                 console.warn('Marked library not available, falling back to plain text');

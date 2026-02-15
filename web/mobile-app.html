@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Snippet Pocket</title>
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Snippet Pocket">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/icon192.png">
+    <link rel="stylesheet" href="mobile-app.css">
+</head>
+<body>
+    <main class="app">
+        <header class="topbar">
+            <h1>Snippet Pocket</h1>
+            <button id="toggleSettingsBtn" class="btn ghost" type="button">Config</button>
+        </header>
+
+        <section id="authScreen" class="panel">
+            <h2>🔐 Entrar</h2>
+            <p class="meta" style="margin-bottom: 10px;">Faça login para acessar seus snippets</p>
+            <div class="tabs">
+                <button id="authTabSignIn" class="tab active" type="button">Sign in</button>
+                <button id="authTabSignUp" class="tab" type="button">Sign up</button>
+            </div>
+
+            <form id="authSignInForm" class="auth-form-mobile">
+                <label class="field">
+                    <span>Email</span>
+                    <input id="authSignInEmail" type="email" placeholder="seu@email.com" required>
+                </label>
+                <label class="field">
+                    <span>Senha</span>
+                    <input id="authSignInPassword" type="password" placeholder="sua senha" required>
+                </label>
+                <button class="btn" type="submit">Entrar</button>
+            </form>
+
+            <form id="authSignUpForm" class="auth-form-mobile hidden">
+                <label class="field">
+                    <span>Email</span>
+                    <input id="authSignUpEmail" type="email" placeholder="seu@email.com" required>
+                </label>
+                <label class="field">
+                    <span>Senha</span>
+                    <input id="authSignUpPassword" type="password" placeholder="min 6 caracteres" required>
+                </label>
+                <button class="btn" type="submit">Criar conta</button>
+            </form>
+
+            <div id="authScreenStatus" class="meta">Não autenticado.</div>
+        </section>
+
+        <div id="appContent" class="hidden">
+        <section id="settingsPanel" class="panel hidden">
+            <h2>Configuração</h2>
+            <label class="field">
+                <span>API Base URL</span>
+                <input id="apiBaseInput" type="url" placeholder="automatico" readonly>
+            </label>
+            <label class="field">
+                <span>Email</span>
+                <input id="emailInput" type="email" placeholder="seu@email.com">
+            </label>
+            <label class="field">
+                <span>Senha</span>
+                <input id="passwordInput" type="password" placeholder="mínimo 6 caracteres">
+            </label>
+            <div class="row">
+                <button id="saveConfigBtn" class="btn" type="button">Salvar Config</button>
+                <button id="registerBtn" class="btn secondary" type="button">Cadastrar</button>
+            </div>
+            <div class="row">
+                <button id="loginBtn" class="btn secondary" type="button">Entrar</button>
+                <button id="logoutBtn" class="btn secondary" type="button">Sair</button>
+                <button id="syncBtn" class="btn secondary" type="button">Sincronizar</button>
+            </div>
+            <div id="authStatus" class="meta">Não autenticado.</div>
+        </section>
+
+        <section class="panel">
+            <h2>Salvar Link</h2>
+            <label class="field">
+                <span>URL</span>
+                <input id="urlInput" type="url" placeholder="https://...">
+            </label>
+            <label class="field">
+                <span>Título (opcional)</span>
+                <input id="titleInput" type="text" placeholder="Título">
+            </label>
+            <label class="field">
+                <span>Tags (vírgula)</span>
+                <input id="tagsInput" type="text" placeholder="trabalho, leitura">
+            </label>
+            <button id="addBtn" class="btn" type="button">Salvar Link</button>
+        </section>
+
+        <section class="panel">
+            <div class="row space-between">
+                <h2>Minha Lista</h2>
+                <span id="countBadge" class="badge">0</span>
+            </div>
+            <div class="tabs" id="tabs">
+                <button class="tab active" data-filter="all" type="button">Todos</button>
+                <button class="tab" data-filter="link" type="button">Links</button>
+                <button class="tab" data-filter="text" type="button">Textos</button>
+                <button class="tab" data-filter="markdown" type="button">Markdown</button>
+                <button class="tab" data-filter="favorites" type="button">Favoritos</button>
+                <button class="tab" data-filter="archived" type="button">Arquivados</button>
+            </div>
+            <label class="field">
+                <span>Buscar</span>
+                <input id="searchInput" type="text" placeholder="Buscar por título, URL ou tag">
+            </label>
+            <div id="syncStatus" class="meta">Sem sincronização ainda.</div>
+            <div id="listContainer" class="list"></div>
+        </section>
+        </div>
+    </main>
+
+    <div id="toast" class="toast hidden"></div>
+    <script src="mobile-app.js"></script>
+</body>
+</html>

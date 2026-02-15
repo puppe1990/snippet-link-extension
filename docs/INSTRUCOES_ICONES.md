@@ -7,9 +7,9 @@ A extensão não carrega porque os ícones PNG não existem ou estão corrompido
 
 ### Método 1: Usar o Gerador HTML (Recomendado)
 
-1. **Abra o arquivo `create_icons.html` no seu navegador**
+1. **Abra o arquivo `scripts/create_icons.html` no seu navegador**
 2. **Os ícones serão baixados automaticamente** em alguns segundos
-3. **Mova os arquivos baixados** para a pasta `icons/` do projeto:
+3. **Mova os arquivos baixados** para a pasta `extension/icons/` do projeto:
    - `icon16.png`
    - `icon32.png` 
    - `icon48.png`
@@ -20,20 +20,20 @@ A extensão não carrega porque os ícones PNG não existem ou estão corrompido
 
 Se o método acima não funcionar, você pode criar ícones simples:
 
-1. **Crie a pasta `icons/`** se não existir
+1. **Crie a pasta `extension/icons/`** se não existir
 2. **Use qualquer editor de imagem** para criar 4 arquivos PNG:
    - `icon16.png` (16x16 pixels)
    - `icon32.png` (32x32 pixels)
    - `icon48.png` (48x48 pixels)
    - `icon128.png` (128x128 pixels)
 3. **Desenhe um ícone simples** (pode ser um quadrado colorido)
-4. **Salve na pasta `icons/`**
+4. **Salve na pasta `extension/icons/`**
 
 ### Método 3: Usar Ícones Temporários
 
 1. **Baixe qualquer ícone PNG** da internet nos tamanhos necessários
 2. **Renomeie** para `icon16.png`, `icon32.png`, `icon48.png`, `icon128.png`
-3. **Coloque na pasta `icons/`**
+3. **Coloque na pasta `extension/icons/`**
 4. **Recarregue a extensão**
 
 ## Verificação
@@ -48,13 +48,16 @@ Após criar os ícones:
 
 ```
 snippet-link-extension/
-├── icons/
-│   ├── icon16.png   ✅
-│   ├── icon32.png   ✅
-│   ├── icon48.png   ✅
-│   └── icon128.png  ✅
-├── manifest.json
-├── popup.html
-├── popup.js
-└── styles.css
+├── extension/
+│   ├── icons/
+│   │   ├── icon16.png   ✅
+│   │   ├── icon32.png   ✅
+│   │   ├── icon48.png   ✅
+│   │   └── icon128.png  ✅
+│   ├── manifest.json
+│   ├── popup.html
+│   ├── popup.js
+│   └── styles.css
+└── scripts/
+    └── create_icons.html
 ```

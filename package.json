@@ -1,0 +1,16 @@
+{
+  "name": "snippet-link-extension-cloud-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Netlify Functions API for Snippet Link Manager using Turso",
+  "scripts": {
+    "dev": "netlify dev",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.15"
+  },
+  "devDependencies": {
+    "netlify-cli": "^22.2.2"
+  }
+}

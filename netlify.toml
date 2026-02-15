@@ -1,0 +1,6 @@
+[build]
+  publish = "web"
+  functions = "api/netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
