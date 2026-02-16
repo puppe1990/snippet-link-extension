@@ -927,17 +927,19 @@ body {
 }
 
 .todo-view-list .todo-checkbox {
-    width: 34px;
-    min-width: 34px;
-    height: 34px;
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-top: 0;
-    border-radius: 8px;
-    border: 1px solid #b8c8ea;
-    background: #fff;
-    font-size: 26px;
+    margin-top: 0 !important;
+    border-radius: 10px;
+    border: 1px solid #b8c8ea !important;
+    background: #fff !important;
+    font-size: 30px !important;
+    line-height: 1 !important;
+    padding: 0 !important;
 }
 
 .todo-view-list .todo-text {

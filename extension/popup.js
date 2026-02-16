@@ -2826,7 +2826,7 @@ class SnippetManager {
         const listItems = items.map((item, index) => `
             <li class="todo-item ${item.done ? 'done' : ''}">
                 <button type="button" class="todo-checkbox ${item.done ? 'checked' : ''}" data-id="${snippetId}" data-index="${index}">
-                    ${item.done ? '☑' : '☐'}
+                    ${item.done ? '✅' : '⬜'}
                 </button>
                 <span class="todo-text">${this.escapeHtml(item.text)}</span>
             </li>
