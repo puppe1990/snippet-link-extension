@@ -699,6 +699,34 @@ body {
     color: #fff;
 }
 
+.todo-view-panel {
+    max-height: min(78vh, 620px);
+    overflow-y: auto;
+}
+
+.todo-view-list {
+    margin-top: 10px;
+}
+
+.todo-view-list .todo-list {
+    gap: 10px;
+}
+
+.todo-view-list .todo-item {
+    padding: 10px;
+    border: 1px solid #dce5f4;
+    border-radius: 12px;
+    background: #f8faff;
+}
+
+.todo-view-list .todo-checkbox {
+    font-size: 20px;
+}
+
+.todo-view-list .todo-text {
+    font-size: 15px;
+}
+
 #addTodoItemBtn {
     width: 100%;
     min-height: 38px;

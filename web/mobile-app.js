@@ -8,6 +8,7 @@
         currentFilter: "all",
         sortAsc: false,
         editingSnippetId: null,
+        viewingTodoId: null,
         config: {
             apiBase: DEFAULT_API_BASE,
             email: "",
@@ -33,6 +34,11 @@
         openAddModalBtn: document.getElementById("openAddModalBtn"),
         closeAddModalBtn: document.getElementById("closeAddModalBtn"),
         addModalTitle: document.getElementById("addModalTitle"),
+        todoViewModal: document.getElementById("todoViewModal"),
+        closeTodoViewModalBtn: document.getElementById("closeTodoViewModalBtn"),
+        todoViewTitle: document.getElementById("todoViewTitle"),
+        todoViewMeta: document.getElementById("todoViewMeta"),
+        todoViewList: document.getElementById("todoViewList"),
         sortBtn: document.getElementById("sortBtn"),
         languageSelect: document.getElementById("languageSelect"),
         linkPreviewToggle: document.getElementById("linkPreviewToggle"),
@@ -546,11 +552,11 @@
 
     function getDisplayTitle(item) {
         if (item.title && item.title.trim()) return item.title.trim();
-        if (item.type !== "link") return "Sem título";
+        if (item.type !== "link") return "";
         try {
             return new URL(item.content).hostname.replace(/^www\./, "");
         } catch {
-            return "Sem título";
+            return "";
         }
     }
 
@@ -633,11 +639,12 @@
 
     async function toggleTodoItemDone(item, index) {
         try {
-            const entries = parseTodoItems(item.content);
+            const current = state.items.find((row) => row.id === item.id) || item;
+            const entries = parseTodoItems(current.content);
             if (!entries[index]) return;
             entries[index].done = !entries[index].done;
             const updated = {
-                ...item,
+                ...current,
                 content: serializeTodoItems(entries),
                 updatedAt: new Date().toISOString()
             };
@@ -649,6 +656,40 @@
         }
     }
 
+    function closeTodoViewModal() {
+        state.viewingTodoId = null;
+        if (el.todoViewList) {
+            el.todoViewList.innerHTML = "";
+        }
+        closeModal(el.todoViewModal);
+    }
+
+    function renderTodoViewModal() {
+        if (!state.viewingTodoId || !el.todoViewList) return;
+        const item = state.items.find((row) => row.id === state.viewingTodoId && row.type === "todo");
+        if (!item) {
+            closeTodoViewModal();
+            return;
+        }
+
+        if (el.todoViewTitle) {
+            el.todoViewTitle.textContent = getDisplayTitle(item) || "To-Do";
+        }
+        if (el.todoViewMeta) {
+            const entries = parseTodoItems(item.content);
+            const doneCount = entries.filter((entry) => entry.done).length;
+            el.todoViewMeta.textContent = `${doneCount}/${entries.length} concluídas`;
+        }
+        el.todoViewList.innerHTML = "";
+        el.todoViewList.appendChild(createTodoListElement(item));
+    }
+
+    function openTodoViewModal(item) {
+        state.viewingTodoId = item.id;
+        renderTodoViewModal();
+        openModal(el.todoViewModal);
+    }
+
     function createCard(item) {
         const card = document.createElement("article");
         card.className = "snippet-item";
@@ -658,10 +699,13 @@
         const header = document.createElement("div");
         header.className = "snippet-header";
 
-        const title = document.createElement("h3");
-        title.className = "snippet-title";
-        title.textContent = `${item.isFavorite ? "⭐ " : ""}${getDisplayTitle(item)}`;
-        header.appendChild(title);
+        const displayTitle = getDisplayTitle(item);
+        if (displayTitle) {
+            const title = document.createElement("h3");
+            title.className = "snippet-title";
+            title.textContent = `${item.isFavorite ? "⭐ " : ""}${displayTitle}`;
+            header.appendChild(title);
+        }
 
         const type = document.createElement("span");
         type.className = `snippet-type ${getTypeClass(item.type)}`;
@@ -721,9 +765,9 @@
             const openTodoBtn = document.createElement("button");
             openTodoBtn.className = "btn btn-small open-btn";
             openTodoBtn.type = "button";
-            openTodoBtn.textContent = "Abrir To-Do";
+            openTodoBtn.textContent = "Abrir";
             openTodoBtn.addEventListener("click", () => {
-                openAddModalForEdit(item);
+                openTodoViewModal(item);
             });
             actions.appendChild(openTodoBtn);
         }
@@ -914,6 +958,9 @@
                 }))
                 .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
             render();
+            if (!el.todoViewModal?.classList.contains("hidden")) {
+                renderTodoViewModal();
+            }
             if (el.syncStatus) {
                 el.syncStatus.textContent = `Sincronizado: ${state.items.length} itens`;
             }
@@ -1247,6 +1294,9 @@
                 resetAddModal();
             });
         }
+        if (el.closeTodoViewModalBtn) {
+            el.closeTodoViewModalBtn.addEventListener("click", () => closeTodoViewModal());
+        }
         if (el.sortBtn) {
             el.sortBtn.addEventListener("click", () => {
                 state.sortAsc = !state.sortAsc;
@@ -1395,13 +1445,16 @@
             });
         });
 
-        [el.settingsModal, el.addModal].forEach((modal) => {
+        [el.settingsModal, el.addModal, el.todoViewModal].forEach((modal) => {
             if (!modal) return;
             modal.addEventListener("click", (event) => {
                 if (event.target === modal) {
                     closeModal(modal);
                     if (modal === el.addModal) {
                         resetAddModal();
+                    }
+                    if (modal === el.todoViewModal) {
+                        closeTodoViewModal();
                     }
                 }
             });
@@ -1429,6 +1482,7 @@
         }
         closeModal(el.settingsModal);
         closeModal(el.addModal);
+        closeModal(el.todoViewModal);
 
         const media = window.matchMedia ? window.matchMedia("(display-mode: standalone)") : null;
         if (media && media.addEventListener) {
