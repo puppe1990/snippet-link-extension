@@ -10,14 +10,16 @@
     <meta name="apple-mobile-web-app-title" content="Snippet Pocket">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon192.png">
-    <link rel="stylesheet" href="mobile-app.css?v=20260216-2">
+    <link rel="stylesheet" href="mobile-app.css?v=20260216-4">
 </head>
 <body>
     <main class="container">
         <header class="header">
             <h1>Snippet Pocket</h1>
             <div class="header-actions">
-                <button id="toggleSettingsBtn" class="btn btn-secondary" type="button">Config</button>
+                <button id="toggleSettingsBtn" class="action-tile action-config" type="button">⚙️</button>
+                <button id="openAddModalBtn" class="action-tile action-new" type="button">+ Novo</button>
+                <button id="sortBtn" class="action-tile action-sort" type="button">🔄 Ordenar</button>
             </div>
         </header>
 
@@ -57,49 +59,6 @@
         </section>
 
         <div id="appContent" class="hidden">
-        <section id="settingsPanel" class="modal-content hidden">
-            <h2>Configuração</h2>
-            <label class="field">
-                <span>API Base URL</span>
-                <input id="apiBaseInput" type="url" placeholder="automatico" readonly>
-            </label>
-            <label class="field">
-                <span>Email</span>
-                <input id="emailInput" type="email" placeholder="seu@email.com">
-            </label>
-            <label class="field">
-                <span>Senha</span>
-                <input id="passwordInput" type="password" placeholder="mínimo 6 caracteres">
-            </label>
-            <div class="row">
-                <button id="saveConfigBtn" class="btn btn-primary" type="button">Salvar Config</button>
-                <button id="registerBtn" class="btn btn-secondary" type="button">Cadastrar</button>
-            </div>
-            <div class="row">
-                <button id="loginBtn" class="btn btn-secondary" type="button">Entrar</button>
-                <button id="logoutBtn" class="btn btn-secondary" type="button">Sair</button>
-                <button id="syncBtn" class="btn btn-secondary" type="button">Sincronizar</button>
-            </div>
-            <div id="authStatus" class="meta">Não autenticado.</div>
-        </section>
-
-        <section class="modal-content">
-            <h2>Salvar Link</h2>
-            <label class="field">
-                <span>URL</span>
-                <input id="urlInput" type="url" placeholder="https://...">
-            </label>
-            <label class="field">
-                <span>Título (opcional)</span>
-                <input id="titleInput" type="text" placeholder="Título">
-            </label>
-            <label class="field">
-                <span>Tags (vírgula)</span>
-                <input id="tagsInput" type="text" placeholder="trabalho, leitura">
-            </label>
-            <button id="addBtn" class="btn btn-primary" type="button">Salvar Link</button>
-        </section>
-
         <section class="modal-content">
             <div class="row space-between">
                 <h2>Minha Lista</h2>
@@ -124,7 +83,85 @@
         </div>
     </main>
 
+    <div id="settingsModal" class="modal hidden">
+        <section id="settingsPanel" class="modal-content modal-panel">
+            <div class="modal-header-row">
+                <h2>Configuração</h2>
+                <button id="closeSettingsModalBtn" class="close-modal-btn" type="button">✕</button>
+            </div>
+            <label class="field">
+                <span>🌐 Idioma</span>
+                <select id="languageSelect">
+                    <option value="pt-BR">Português (BR)</option>
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                </select>
+            </label>
+            <div class="toggle-row">
+                <span class="toggle-title">🔗 Pré-visualização de Links</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="linkPreviewToggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-title">📄 Resumo de Links</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="summarizeToggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <label class="field" id="aiProviderGroup">
+                <span>🤖 Provedor de IA</span>
+                <select id="aiProviderSelect">
+                    <option value="perplexity">Perplexity AI</option>
+                    <option value="chatgpt">ChatGPT</option>
+                </select>
+            </label>
+            <label class="field">
+                <span>Senha</span>
+                <input id="passwordInput" type="password" placeholder="mínimo 6 caracteres">
+            </label>
+            <div class="row">
+                <button id="logoutBtn" class="btn btn-secondary" type="button">Sair</button>
+                <button id="syncBtn" class="btn btn-primary" type="button">Sincronizar</button>
+            </div>
+            <div class="row">
+                <button id="saveSettingsBtn" class="btn btn-primary" type="button">Salvar Configurações</button>
+            </div>
+            <div class="row">
+                <button id="exportBtn" class="btn btn-secondary" type="button">📤 Exportar Snippets</button>
+                <button id="importBtn" class="btn btn-secondary" type="button">📥 Importar Snippets</button>
+                <input type="file" id="importFile" accept=".json" class="hidden">
+            </div>
+        </section>
+    </div>
+
+    <div id="addModal" class="modal hidden">
+        <section class="modal-content modal-panel">
+            <div class="modal-header-row">
+                <h2>Novo Link</h2>
+                <button id="closeAddModalBtn" class="close-modal-btn" type="button">✕</button>
+            </div>
+            <label class="field">
+                <span>URL</span>
+                <input id="urlInput" type="url" placeholder="https://...">
+            </label>
+            <label class="field">
+                <span>Título (opcional)</span>
+                <input id="titleInput" type="text" placeholder="Título">
+            </label>
+            <label class="field">
+                <span>Tags (vírgula)</span>
+                <input id="tagsInput" type="text" placeholder="trabalho, leitura">
+            </label>
+            <div class="row">
+                <button id="addBtn" class="btn btn-primary" type="button">Salvar Link</button>
+            </div>
+        </section>
+    </div>
+
     <div id="toast" class="toast hidden"></div>
-    <script src="mobile-app.js?v=20260216-2"></script>
+    <script src="mobile-app.js?v=20260216-5"></script>
 </body>
 </html>

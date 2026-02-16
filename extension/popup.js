@@ -12,7 +12,7 @@ class SnippetManager {
         this.draggedElement = null;
         this.draggedIndex = -1;
         this.translationManager = new TranslationManager();
-        this.summarizeEnabled = false;
+        this.summarizeEnabled = true;
         this.aiProvider = 'perplexity';
         this.cloudSyncEnabled = true;
         this.cloudApiBase = this.defaultCloudApiBase;
@@ -374,7 +374,7 @@ class SnippetManager {
             ]);
             const language = result.language || 'pt';
             const linkPreviewEnabled = result.linkPreviewEnabled !== undefined ? result.linkPreviewEnabled : true;
-            const summarizeEnabled = result.summarizeEnabled !== undefined ? result.summarizeEnabled : false;
+            const summarizeEnabled = result.summarizeEnabled !== undefined ? result.summarizeEnabled : true;
             const aiProvider = result.aiProvider || 'perplexity';
             const cloudSyncEnabled = result.cloudSyncEnabled !== undefined ? result.cloudSyncEnabled === true : true;
             const cloudApiBase = this.normalizeCloudApiBase(result.cloudApiBase || this.defaultCloudApiBase);
@@ -399,7 +399,7 @@ class SnippetManager {
             console.error('Erro ao carregar configurações:', error);
             this.translationManager.setLanguage('pt');
             this.linkPreviewEnabled = true; // Default habilitado
-            this.summarizeEnabled = false; // Default desabilitado
+            this.summarizeEnabled = true; // Default habilitado
             this.aiProvider = 'perplexity'; // Default Perplexity
             this.cloudSyncEnabled = true;
             this.cloudApiBase = this.defaultCloudApiBase;
@@ -1849,9 +1849,9 @@ class SnippetManager {
         
         const language = languageSelect.value;
         const linkPreviewEnabled = linkPreviewToggle.checked;
-        const summarizeEnabled = summarizeToggle ? summarizeToggle.checked : false;
+        const summarizeEnabled = summarizeToggle ? summarizeToggle.checked : true;
         const aiProvider = aiProviderSelect ? aiProviderSelect.value : 'perplexity';
-        const cloudSyncEnabled = cloudSyncToggle ? cloudSyncToggle.checked : false;
+        const cloudSyncEnabled = cloudSyncToggle ? cloudSyncToggle.checked : this.cloudSyncEnabled;
         const cloudApiBase = this.normalizeCloudApiBase(cloudApiBaseInput ? cloudApiBaseInput.value : this.defaultCloudApiBase) || this.defaultCloudApiBase;
         const cloudAuthEmail = cloudAuthEmailInput ? cloudAuthEmailInput.value.trim().toLowerCase() : this.cloudAuthEmail;
         const cloudApiKey = cloudApiKeyInput ? cloudApiKeyInput.value.trim() : '';

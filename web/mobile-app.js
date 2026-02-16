@@ -5,17 +5,33 @@
         items: [],
         filtered: [],
         currentFilter: "all",
+        sortAsc: false,
         config: {
             apiBase: DEFAULT_API_BASE,
             email: "",
             authToken: "",
-            authUserId: ""
+            authUserId: "",
+            language: "pt-BR",
+            linkPreviewEnabled: true,
+            summarizeEnabled: true,
+            aiProvider: "perplexity"
         }
     };
 
     const el = {
         settingsPanel: document.getElementById("settingsPanel"),
+        settingsModal: document.getElementById("settingsModal"),
         toggleSettingsBtn: document.getElementById("toggleSettingsBtn"),
+        closeSettingsModalBtn: document.getElementById("closeSettingsModalBtn"),
+        addModal: document.getElementById("addModal"),
+        openAddModalBtn: document.getElementById("openAddModalBtn"),
+        closeAddModalBtn: document.getElementById("closeAddModalBtn"),
+        sortBtn: document.getElementById("sortBtn"),
+        languageSelect: document.getElementById("languageSelect"),
+        linkPreviewToggle: document.getElementById("linkPreviewToggle"),
+        summarizeToggle: document.getElementById("summarizeToggle"),
+        aiProviderGroup: document.getElementById("aiProviderGroup"),
+        aiProviderSelect: document.getElementById("aiProviderSelect"),
         authScreen: document.getElementById("authScreen"),
         appContent: document.getElementById("appContent"),
         authTabSignIn: document.getElementById("authTabSignIn"),
@@ -35,6 +51,10 @@
         loginBtn: document.getElementById("loginBtn"),
         logoutBtn: document.getElementById("logoutBtn"),
         syncBtn: document.getElementById("syncBtn"),
+        saveSettingsBtn: document.getElementById("saveSettingsBtn"),
+        exportBtn: document.getElementById("exportBtn"),
+        importBtn: document.getElementById("importBtn"),
+        importFile: document.getElementById("importFile"),
         urlInput: document.getElementById("urlInput"),
         titleInput: document.getElementById("titleInput"),
         tagsInput: document.getElementById("tagsInput"),
@@ -75,27 +95,79 @@
             state.config.email = parsed.email || "";
             state.config.authToken = parsed.authToken || "";
             state.config.authUserId = parsed.authUserId || "";
+            state.config.language = parsed.language || "pt-BR";
+            state.config.linkPreviewEnabled = parsed.linkPreviewEnabled !== false;
+            state.config.summarizeEnabled = parsed.summarizeEnabled !== false;
+            state.config.aiProvider = parsed.aiProvider || "perplexity";
         } catch (error) {
             console.error("Erro ao carregar config:", error);
         }
     }
 
     function saveConfig() {
-        state.config.apiBase = normalizeBase(el.apiBaseInput.value);
+        if (el.apiBaseInput && el.apiBaseInput.value) {
+            state.config.apiBase = normalizeBase(el.apiBaseInput.value);
+        }
         if (!state.config.apiBase) {
             state.config.apiBase = DEFAULT_API_BASE;
         }
-        state.config.email = (el.emailInput.value || "").trim().toLowerCase();
+        if (el.emailInput && el.emailInput.value) {
+            state.config.email = (el.emailInput.value || "").trim().toLowerCase();
+        }
+        if (el.languageSelect) {
+            state.config.language = el.languageSelect.value || "pt-BR";
+        }
+        if (el.linkPreviewToggle) {
+            state.config.linkPreviewEnabled = Boolean(el.linkPreviewToggle.checked);
+        }
+        if (el.summarizeToggle) {
+            state.config.summarizeEnabled = Boolean(el.summarizeToggle.checked);
+        }
+        if (el.aiProviderSelect) {
+            state.config.aiProvider = el.aiProviderSelect.value || "perplexity";
+        }
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state.config));
+        applyLanguage();
+        updateAiProviderVisibility();
+        render();
         showToast("Configuração salva");
     }
 
     function fillConfigInputs() {
-        el.apiBaseInput.value = state.config.apiBase;
-        el.apiBaseInput.readOnly = true;
-        el.emailInput.value = state.config.email;
+        if (el.apiBaseInput) {
+            el.apiBaseInput.value = state.config.apiBase;
+            el.apiBaseInput.readOnly = true;
+        }
+        if (el.emailInput) {
+            el.emailInput.value = state.config.email;
+        }
+        if (el.languageSelect) {
+            el.languageSelect.value = state.config.language || "pt-BR";
+        }
+        if (el.linkPreviewToggle) {
+            el.linkPreviewToggle.checked = state.config.linkPreviewEnabled !== false;
+        }
+        if (el.summarizeToggle) {
+            el.summarizeToggle.checked = state.config.summarizeEnabled !== false;
+        }
+        if (el.aiProviderSelect) {
+            el.aiProviderSelect.value = state.config.aiProvider || "perplexity";
+        }
+        updateAiProviderVisibility();
+        applyLanguage();
         updateAuthStatus();
+    }
+
+    function updateAiProviderVisibility() {
+        if (!el.aiProviderGroup || !el.summarizeToggle) return;
+        el.aiProviderGroup.classList.toggle("hidden", !el.summarizeToggle.checked);
+    }
+
+    function applyLanguage() {
+        if (state.config.language) {
+            document.documentElement.lang = state.config.language;
+        }
     }
 
     function hasBaseConfig() {
@@ -104,8 +176,8 @@
 
     function updateAuthStatus() {
         if (!el.authStatus) return;
-        if (state.config.authToken && state.config.email) {
-            el.authStatus.textContent = `Autenticado: ${state.config.email}`;
+        if (state.config.authToken) {
+            el.authStatus.textContent = "Autenticado.";
         } else {
             el.authStatus.textContent = "Não autenticado.";
         }
@@ -302,7 +374,7 @@
     function formatDate(value) {
         const d = new Date(value);
         if (Number.isNaN(d.getTime())) return "-";
-        return d.toLocaleString("pt-BR");
+        return d.toLocaleString(state.config.language || "pt-BR");
     }
 
     function applyFilter() {
@@ -325,6 +397,12 @@
             const content = (item.content || "").toLowerCase();
             const tags = Array.isArray(item.tags) ? item.tags.join(" ").toLowerCase() : "";
             return !term || title.includes(term) || content.includes(term) || tags.includes(term);
+        });
+
+        state.filtered.sort((a, b) => {
+            const aTime = new Date(a.updatedAt).getTime();
+            const bTime = new Date(b.updatedAt).getTime();
+            return state.sortAsc ? aTime - bTime : bTime - aTime;
         });
     }
 
@@ -358,7 +436,11 @@
 
         const content = document.createElement("div");
         content.className = "snippet-content";
-        content.textContent = item.content;
+        if (item.type === "link" && state.config.linkPreviewEnabled === false) {
+            content.textContent = "Pré-visualização desativada.";
+        } else {
+            content.textContent = item.content;
+        }
         card.appendChild(content);
 
         const tags = document.createElement("div");
@@ -386,6 +468,15 @@
             openBtn.textContent = "Abrir";
             openBtn.addEventListener("click", () => window.open(item.content, "_blank", "noopener,noreferrer"));
             actions.appendChild(openBtn);
+
+            if (state.config.summarizeEnabled !== false) {
+                const summarizeBtn = document.createElement("button");
+                summarizeBtn.className = "btn btn-small btn-secondary";
+                summarizeBtn.type = "button";
+                summarizeBtn.textContent = "📄 Resumir";
+                summarizeBtn.addEventListener("click", () => summarizeLink(item.content));
+                actions.appendChild(summarizeBtn);
+            }
         }
 
         const favBtn = document.createElement("button");
@@ -454,6 +545,64 @@
         return card;
     }
 
+    function summarizeLink(url) {
+        const provider = state.config.aiProvider || "perplexity";
+        const prompt = `Resuma os principais pontos deste link: ${url}`;
+        const targetUrl =
+            provider === "chatgpt"
+                ? `https://chat.openai.com/?q=${encodeURIComponent(prompt)}&hints=search&temporary-chat=true`
+                : `https://www.perplexity.ai/search?q=${encodeURIComponent(prompt)}&copilot=true`;
+        window.open(targetUrl, "_blank", "noopener,noreferrer");
+    }
+
+    function exportSnippets() {
+        const payload = JSON.stringify(state.items, null, 2);
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        a.href = url;
+        a.download = `snippets-pocket-${stamp}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showToast("Export concluído");
+    }
+
+    async function importSnippetsFromFile(file) {
+        if (!file) return;
+        try {
+            const text = await file.text();
+            const parsed = JSON.parse(text);
+            const items = Array.isArray(parsed) ? parsed : parsed?.snippets;
+            if (!Array.isArray(items) || !items.length) {
+                throw new Error("Arquivo sem snippets válidos");
+            }
+            for (const raw of items) {
+                const now = new Date().toISOString();
+                const snippet = {
+                    id: String(raw.id || Date.now() + Math.random()),
+                    title: String(raw.title || ""),
+                    type: raw.type || "link",
+                    content: String(raw.content || ""),
+                    tags: Array.isArray(raw.tags) ? raw.tags : [],
+                    isFavorite: Boolean(raw.isFavorite),
+                    isArchived: Boolean(raw.isArchived),
+                    createdAt: raw.createdAt || now,
+                    updatedAt: raw.updatedAt || now
+                };
+                if (!snippet.content) continue;
+                await upsertSnippet(snippet);
+            }
+            await sync();
+            showToast("Import concluído");
+        } catch (error) {
+            console.error(error);
+            showToast("Erro ao importar");
+        }
+    }
+
     function render() {
         applyFilter();
         el.countBadge.textContent = String(state.filtered.length);
@@ -504,7 +653,7 @@
                 .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
             render();
             if (el.syncStatus) {
-                el.syncStatus.textContent = `Sincronizado: ${state.items.length} itens (${state.config.email})`;
+                el.syncStatus.textContent = `Sincronizado: ${state.items.length} itens`;
             }
             showToast("Sincronizado");
         } catch (error) {
@@ -557,12 +706,23 @@
             el.urlInput.value = "";
             el.titleInput.value = "";
             el.tagsInput.value = "";
+            closeModal(el.addModal);
             await sync();
             showToast("Link salvo");
         } catch (error) {
             console.error(error);
             showToast("Erro ao salvar");
         }
+    }
+
+    function openModal(modal) {
+        if (!modal) return;
+        modal.classList.remove("hidden");
+    }
+
+    function closeModal(modal) {
+        if (!modal) return;
+        modal.classList.add("hidden");
     }
 
     function loadSharedUrlIntoForm() {
@@ -607,8 +767,28 @@
 
     function bindEvents() {
         el.toggleSettingsBtn.addEventListener("click", () => {
-            el.settingsPanel.classList.toggle("hidden");
+            fillConfigInputs();
+            openModal(el.settingsModal);
         });
+        if (el.closeSettingsModalBtn) {
+            el.closeSettingsModalBtn.addEventListener("click", () => closeModal(el.settingsModal));
+        }
+        if (el.openAddModalBtn) {
+            el.openAddModalBtn.addEventListener("click", () => openModal(el.addModal));
+        }
+        if (el.closeAddModalBtn) {
+            el.closeAddModalBtn.addEventListener("click", () => closeModal(el.addModal));
+        }
+        if (el.sortBtn) {
+            el.sortBtn.addEventListener("click", () => {
+                state.sortAsc = !state.sortAsc;
+                render();
+                showToast(state.sortAsc ? "Ordenado: mais antigos" : "Ordenado: mais recentes");
+            });
+        }
+        if (el.summarizeToggle) {
+            el.summarizeToggle.addEventListener("change", () => updateAiProviderVisibility());
+        }
 
         if (el.authTabSignIn) {
             el.authTabSignIn.addEventListener("click", () => switchAuthScreenMode("signin"));
@@ -643,40 +823,67 @@
             });
         }
 
-        el.saveConfigBtn.addEventListener("click", () => {
-            saveConfig();
-        });
+        if (el.saveConfigBtn) {
+            el.saveConfigBtn.addEventListener("click", () => {
+                saveConfig();
+            });
+        }
 
-        el.registerBtn.addEventListener("click", async () => {
-            try {
-                await register();
-                showToast("Conta criada");
+        if (el.registerBtn) {
+            el.registerBtn.addEventListener("click", async () => {
+                try {
+                    await register();
+                    showToast("Conta criada");
+                    await sync();
+                } catch (error) {
+                    showToast(error.message || "Erro ao cadastrar");
+                }
+            });
+        }
+
+        if (el.loginBtn) {
+            el.loginBtn.addEventListener("click", async () => {
+                try {
+                    await login();
+                    showToast("Login realizado");
+                    await sync();
+                } catch (error) {
+                    showToast(error.message || "Erro no login");
+                }
+            });
+        }
+
+        if (el.logoutBtn) {
+            el.logoutBtn.addEventListener("click", async () => {
+                await logout();
+                state.items = [];
+                render();
+                showToast("Logout realizado");
+            });
+        }
+
+        if (el.syncBtn) {
+            el.syncBtn.addEventListener("click", async () => {
                 await sync();
-            } catch (error) {
-                showToast(error.message || "Erro ao cadastrar");
-            }
-        });
-
-        el.loginBtn.addEventListener("click", async () => {
-            try {
-                await login();
-                showToast("Login realizado");
-                await sync();
-            } catch (error) {
-                showToast(error.message || "Erro no login");
-            }
-        });
-
-        el.logoutBtn.addEventListener("click", async () => {
-            await logout();
-            state.items = [];
-            render();
-            showToast("Logout realizado");
-        });
-
-        el.syncBtn.addEventListener("click", async () => {
-            await sync();
-        });
+            });
+        }
+        if (el.saveSettingsBtn) {
+            el.saveSettingsBtn.addEventListener("click", () => {
+                saveConfig();
+                closeModal(el.settingsModal);
+            });
+        }
+        if (el.exportBtn) {
+            el.exportBtn.addEventListener("click", () => exportSnippets());
+        }
+        if (el.importBtn && el.importFile) {
+            el.importBtn.addEventListener("click", () => el.importFile.click());
+            el.importFile.addEventListener("change", async (event) => {
+                const file = event.target.files?.[0];
+                await importSnippetsFromFile(file);
+                event.target.value = "";
+            });
+        }
 
         el.addBtn.addEventListener("click", async () => {
             await addLink();
@@ -692,6 +899,13 @@
                 tab.classList.add("active");
                 state.currentFilter = tab.dataset.filter || "all";
                 render();
+            });
+        });
+
+        [el.settingsModal, el.addModal].forEach((modal) => {
+            if (!modal) return;
+            modal.addEventListener("click", (event) => {
+                if (event.target === modal) closeModal(modal);
             });
         });
     }
@@ -712,6 +926,8 @@
         } else {
             setAuthScreenStatus("Faça login para continuar.");
         }
+        closeModal(el.settingsModal);
+        closeModal(el.addModal);
     }
 
     function registerServiceWorker() {
