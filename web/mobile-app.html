@@ -10,24 +10,26 @@
     <meta name="apple-mobile-web-app-title" content="Snippet Pocket">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon192.png">
-    <link rel="stylesheet" href="mobile-app.css">
+    <link rel="stylesheet" href="mobile-app.css?v=20260216-2">
 </head>
 <body>
-    <main class="app">
-        <header class="topbar">
+    <main class="container">
+        <header class="header">
             <h1>Snippet Pocket</h1>
-            <button id="toggleSettingsBtn" class="btn ghost" type="button">Config</button>
+            <div class="header-actions">
+                <button id="toggleSettingsBtn" class="btn btn-secondary" type="button">Config</button>
+            </div>
         </header>
 
-        <section id="authScreen" class="panel">
+        <section id="authScreen" class="auth-card">
             <h2>🔐 Entrar</h2>
-            <p class="meta" style="margin-bottom: 10px;">Faça login para acessar seus snippets</p>
-            <div class="tabs">
-                <button id="authTabSignIn" class="tab active" type="button">Sign in</button>
-                <button id="authTabSignUp" class="tab" type="button">Sign up</button>
+            <p style="margin-bottom: 10px;">Faça login para acessar seus snippets</p>
+            <div class="auth-tabs">
+                <button id="authTabSignIn" class="auth-tab active" type="button">Sign in</button>
+                <button id="authTabSignUp" class="auth-tab" type="button">Sign up</button>
             </div>
 
-            <form id="authSignInForm" class="auth-form-mobile">
+            <form id="authSignInForm" class="auth-form">
                 <label class="field">
                     <span>Email</span>
                     <input id="authSignInEmail" type="email" placeholder="seu@email.com" required>
@@ -36,10 +38,10 @@
                     <span>Senha</span>
                     <input id="authSignInPassword" type="password" placeholder="sua senha" required>
                 </label>
-                <button class="btn" type="submit">Entrar</button>
+                <button class="btn btn-primary" type="submit">Entrar</button>
             </form>
 
-            <form id="authSignUpForm" class="auth-form-mobile hidden">
+            <form id="authSignUpForm" class="auth-form hidden">
                 <label class="field">
                     <span>Email</span>
                     <input id="authSignUpEmail" type="email" placeholder="seu@email.com" required>
@@ -48,14 +50,14 @@
                     <span>Senha</span>
                     <input id="authSignUpPassword" type="password" placeholder="min 6 caracteres" required>
                 </label>
-                <button class="btn" type="submit">Criar conta</button>
+                <button class="btn btn-primary" type="submit">Criar conta</button>
             </form>
 
             <div id="authScreenStatus" class="meta">Não autenticado.</div>
         </section>
 
         <div id="appContent" class="hidden">
-        <section id="settingsPanel" class="panel hidden">
+        <section id="settingsPanel" class="modal-content hidden">
             <h2>Configuração</h2>
             <label class="field">
                 <span>API Base URL</span>
@@ -70,18 +72,18 @@
                 <input id="passwordInput" type="password" placeholder="mínimo 6 caracteres">
             </label>
             <div class="row">
-                <button id="saveConfigBtn" class="btn" type="button">Salvar Config</button>
-                <button id="registerBtn" class="btn secondary" type="button">Cadastrar</button>
+                <button id="saveConfigBtn" class="btn btn-primary" type="button">Salvar Config</button>
+                <button id="registerBtn" class="btn btn-secondary" type="button">Cadastrar</button>
             </div>
             <div class="row">
-                <button id="loginBtn" class="btn secondary" type="button">Entrar</button>
-                <button id="logoutBtn" class="btn secondary" type="button">Sair</button>
-                <button id="syncBtn" class="btn secondary" type="button">Sincronizar</button>
+                <button id="loginBtn" class="btn btn-secondary" type="button">Entrar</button>
+                <button id="logoutBtn" class="btn btn-secondary" type="button">Sair</button>
+                <button id="syncBtn" class="btn btn-secondary" type="button">Sincronizar</button>
             </div>
             <div id="authStatus" class="meta">Não autenticado.</div>
         </section>
 
-        <section class="panel">
+        <section class="modal-content">
             <h2>Salvar Link</h2>
             <label class="field">
                 <span>URL</span>
@@ -95,33 +97,34 @@
                 <span>Tags (vírgula)</span>
                 <input id="tagsInput" type="text" placeholder="trabalho, leitura">
             </label>
-            <button id="addBtn" class="btn" type="button">Salvar Link</button>
+            <button id="addBtn" class="btn btn-primary" type="button">Salvar Link</button>
         </section>
 
-        <section class="panel">
+        <section class="modal-content">
             <div class="row space-between">
                 <h2>Minha Lista</h2>
                 <span id="countBadge" class="badge">0</span>
             </div>
             <div class="tabs" id="tabs">
-                <button class="tab active" data-filter="all" type="button">Todos</button>
-                <button class="tab" data-filter="link" type="button">Links</button>
-                <button class="tab" data-filter="text" type="button">Textos</button>
-                <button class="tab" data-filter="markdown" type="button">Markdown</button>
-                <button class="tab" data-filter="favorites" type="button">Favoritos</button>
-                <button class="tab" data-filter="archived" type="button">Arquivados</button>
+                <button class="tab-btn active" data-filter="all" type="button">Todos</button>
+                <button class="tab-btn" data-filter="link" type="button">Links</button>
+                <button class="tab-btn" data-filter="text" type="button">Textos</button>
+                <button class="tab-btn" data-filter="markdown" type="button">Markdown</button>
+                <button class="tab-btn" data-filter="favorites" type="button">Favoritos</button>
+                <button class="tab-btn" data-filter="archived" type="button">Arquivados</button>
             </div>
-            <label class="field">
-                <span>Buscar</span>
-                <input id="searchInput" type="text" placeholder="Buscar por título, URL ou tag">
-            </label>
+            <div class="search-section">
+                <input id="searchInput" class="search-input" type="text" placeholder="Buscar por título, URL ou tag">
+            </div>
             <div id="syncStatus" class="meta">Sem sincronização ainda.</div>
-            <div id="listContainer" class="list"></div>
+            <div class="snippets-container">
+                <div id="listContainer" class="snippets-list"></div>
+            </div>
         </section>
         </div>
     </main>
 
     <div id="toast" class="toast hidden"></div>
-    <script src="mobile-app.js"></script>
+    <script src="mobile-app.js?v=20260216-2"></script>
 </body>
 </html>

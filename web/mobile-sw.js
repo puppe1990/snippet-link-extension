@@ -1,5 +1,7 @@
-const CACHE_NAME = "snippet-pocket-v1";
+const CACHE_NAME = "snippet-pocket-v3";
 const APP_SHELL = [
+  "/",
+  "/index.html",
   "/mobile-app.html",
   "/mobile-app.css",
   "/mobile-app.js",
@@ -37,9 +39,27 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (request.mode === "navigate") {
+  const isAppShellAsset =
+    request.mode === "navigate" ||
+    request.destination === "document" ||
+    request.destination === "style" ||
+    request.destination === "script";
+
+  if (isAppShellAsset) {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/mobile-app.html"))
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          return caches.match("/mobile-app.html");
+        })
     );
     return;
   }
@@ -47,13 +67,13 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
-      return fetch(request)
-        .then((response) => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-          return response;
-        })
-        .catch(() => caches.match("/mobile-app.html"));
+      return fetch(request).then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      });
     })
   );
 });

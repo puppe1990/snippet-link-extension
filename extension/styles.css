@@ -1397,6 +1397,38 @@ body {
     padding: 10px;
 }
 
+.password-field {
+    position: relative;
+    width: 100%;
+}
+
+.password-field > input {
+    width: 100%;
+    padding-right: 38px !important;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    color: #64748b;
+    padding: 2px;
+}
+
+.password-toggle-btn:hover {
+    color: #1e293b;
+}
+
+.password-toggle-btn.active {
+    color: #1d4ed8;
+}
+
 .auth-status {
     margin-top: 10px;
     font-size: 12px;

@@ -43,6 +43,8 @@ class SnippetManager {
 
     // Event Listeners
     setupEventListeners() {
+        this.setupPasswordToggles();
+
         // Botões principais
         document.getElementById('addBtn').addEventListener('click', () => this.openModal());
         document.getElementById('sortBtn').addEventListener('click', async () => await this.sortSnippets());
@@ -225,6 +227,39 @@ class SnippetManager {
         });
 
         window.addEventListener('beforeunload', () => this.saveSnippetDraft());
+    }
+
+    setupPasswordToggles() {
+        const passwordInputIds = ['authSignInPassword', 'authSignUpPassword', 'cloudAuthPassword'];
+        passwordInputIds.forEach((inputId) => {
+            const input = document.getElementById(inputId);
+            if (!input || input.dataset.toggleReady === '1') return;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'password-field';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.className = 'password-toggle-btn';
+            toggleBtn.textContent = '👁';
+            toggleBtn.title = 'Mostrar senha';
+            toggleBtn.setAttribute('aria-label', 'Mostrar senha');
+
+            toggleBtn.addEventListener('click', () => {
+                const willShow = input.type === 'password';
+                input.type = willShow ? 'text' : 'password';
+                toggleBtn.textContent = willShow ? '🙈' : '👁';
+                toggleBtn.classList.toggle('active', willShow);
+                const label = willShow ? 'Ocultar senha' : 'Mostrar senha';
+                toggleBtn.title = label;
+                toggleBtn.setAttribute('aria-label', label);
+            });
+
+            wrapper.appendChild(toggleBtn);
+            input.dataset.toggleReady = '1';
+        });
     }
 
     // Gerenciamento de dados

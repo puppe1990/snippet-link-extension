@@ -40,7 +40,7 @@
         tagsInput: document.getElementById("tagsInput"),
         addBtn: document.getElementById("addBtn"),
         searchInput: document.getElementById("searchInput"),
-        listTabs: document.querySelectorAll("#tabs .tab"),
+        listTabs: document.querySelectorAll("#tabs .tab-btn"),
         authStatus: document.getElementById("authStatus"),
         syncStatus: document.getElementById("syncStatus"),
         listContainer: document.getElementById("listContainer"),
@@ -337,24 +337,32 @@
 
     function createCard(item) {
         const card = document.createElement("article");
-        card.className = "card";
+        card.className = "snippet-item";
+        if (item.isFavorite) card.classList.add("favorite-snippet");
+        if (item.isArchived) card.classList.add("archived-snippet");
+
+        const header = document.createElement("div");
+        header.className = "snippet-header";
 
         const title = document.createElement("h3");
+        title.className = "snippet-title";
         title.textContent = `${item.isFavorite ? "⭐ " : ""}${getDisplayTitle(item)}`;
-        card.appendChild(title);
+        header.appendChild(title);
+
+        const type = document.createElement("span");
+        const typeClass = item.type === "text" ? "text" : item.type === "markdown" ? "markdown" : "link";
+        type.className = `snippet-type ${typeClass}`;
+        type.textContent = getTypeLabel(item.type);
+        header.appendChild(type);
+        card.appendChild(header);
 
         const content = document.createElement("div");
-        content.className = item.type === "link" ? "url" : "snippet-text";
+        content.className = "snippet-content";
         content.textContent = item.content;
         card.appendChild(content);
 
-        const type = document.createElement("span");
-        type.className = "snippet-type";
-        type.textContent = getTypeLabel(item.type);
-        card.appendChild(type);
-
         const tags = document.createElement("div");
-        tags.className = "tags";
+        tags.className = "snippet-tags";
         (item.tags || []).forEach((tag) => {
             const tagEl = document.createElement("span");
             tagEl.className = "tag";
@@ -369,11 +377,11 @@
         card.appendChild(meta);
 
         const actions = document.createElement("div");
-        actions.className = "actions";
+        actions.className = "snippet-actions";
 
         if (item.type === "link") {
             const openBtn = document.createElement("button");
-            openBtn.className = "action";
+            openBtn.className = "btn btn-small open-btn";
             openBtn.type = "button";
             openBtn.textContent = "Abrir";
             openBtn.addEventListener("click", () => window.open(item.content, "_blank", "noopener,noreferrer"));
@@ -381,7 +389,7 @@
         }
 
         const favBtn = document.createElement("button");
-        favBtn.className = "action warn";
+        favBtn.className = `btn btn-small ${item.isFavorite ? "btn-favorite-active" : "btn-favorite"}`;
         favBtn.type = "button";
         favBtn.textContent = item.isFavorite ? "Desfavoritar" : "Favoritar";
         favBtn.addEventListener("click", async () => {
@@ -401,7 +409,7 @@
         actions.appendChild(favBtn);
 
         const archiveBtn = document.createElement("button");
-        archiveBtn.className = "action";
+        archiveBtn.className = `btn btn-small ${item.isArchived ? "btn-archive-active" : "btn-archive"}`;
         archiveBtn.type = "button";
         archiveBtn.textContent = item.isArchived ? "Desarquivar" : "Arquivar";
         archiveBtn.addEventListener("click", async () => {
@@ -421,7 +429,7 @@
         actions.appendChild(archiveBtn);
 
         const deleteBtn = document.createElement("button");
-        deleteBtn.className = "action danger";
+        deleteBtn.className = "btn btn-small btn-danger";
         deleteBtn.type = "button";
         deleteBtn.textContent = "Excluir";
         deleteBtn.addEventListener("click", async () => {
@@ -437,6 +445,12 @@
         actions.appendChild(deleteBtn);
 
         card.appendChild(actions);
+
+        const date = document.createElement("div");
+        date.className = "snippet-date";
+        date.textContent = `Atualizado: ${formatDate(item.updatedAt)}`;
+        card.appendChild(date);
+
         return card;
     }
 
@@ -444,6 +458,14 @@
         applyFilter();
         el.countBadge.textContent = String(state.filtered.length);
         el.listContainer.innerHTML = "";
+
+        if (!state.filtered.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.innerHTML = "<p>Nenhum item encontrado</p><p>Salve seu primeiro link acima.</p>";
+            el.listContainer.appendChild(empty);
+            return;
+        }
 
         state.filtered.forEach((item) => {
             el.listContainer.appendChild(createCard(item));
@@ -551,6 +573,38 @@
         if (sharedTitle) el.titleInput.value = sharedTitle;
     }
 
+    function setupPasswordToggles() {
+        const passwordInputs = [el.authSignInPassword, el.authSignUpPassword, el.passwordInput];
+        passwordInputs.forEach((input) => {
+            if (!input || input.dataset.toggleReady === "1") return;
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "password-field";
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            const toggleBtn = document.createElement("button");
+            toggleBtn.type = "button";
+            toggleBtn.className = "password-toggle-btn";
+            toggleBtn.textContent = "👁";
+            toggleBtn.title = "Mostrar senha";
+            toggleBtn.setAttribute("aria-label", "Mostrar senha");
+
+            toggleBtn.addEventListener("click", () => {
+                const willShow = input.type === "password";
+                input.type = willShow ? "text" : "password";
+                toggleBtn.textContent = willShow ? "🙈" : "👁";
+                toggleBtn.classList.toggle("active", willShow);
+                const label = willShow ? "Ocultar senha" : "Mostrar senha";
+                toggleBtn.title = label;
+                toggleBtn.setAttribute("aria-label", label);
+            });
+
+            wrapper.appendChild(toggleBtn);
+            input.dataset.toggleReady = "1";
+        });
+    }
+
     function bindEvents() {
         el.toggleSettingsBtn.addEventListener("click", () => {
             el.settingsPanel.classList.toggle("hidden");
@@ -646,6 +700,7 @@
         loadConfig();
         fillConfigInputs();
         loadSharedUrlIntoForm();
+        setupPasswordToggles();
         bindEvents();
         registerServiceWorker();
         switchAuthScreenMode("signin");
