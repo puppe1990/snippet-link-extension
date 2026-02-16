@@ -9,6 +9,7 @@ class SnippetManager {
         this.currentTagFilter = null;
         this.editingId = null;
         this.deletingId = null;
+        this.viewingTodoId = null;
         this.draggedElement = null;
         this.draggedIndex = -1;
         this.translationManager = new TranslationManager();
@@ -117,6 +118,14 @@ class SnippetManager {
         document.getElementById('closeDeleteModal').addEventListener('click', () => this.closeDeleteModal());
         document.getElementById('cancelDeleteBtn').addEventListener('click', () => this.closeDeleteModal());
         document.getElementById('confirmDeleteBtn').addEventListener('click', () => this.confirmDelete());
+        const closeTodoViewModalBtn = document.getElementById('closeTodoViewModalBtn');
+        const closeTodoViewBtn = document.getElementById('closeTodoViewBtn');
+        if (closeTodoViewModalBtn) {
+            closeTodoViewModalBtn.addEventListener('click', () => this.closeTodoViewModal());
+        }
+        if (closeTodoViewBtn) {
+            closeTodoViewBtn.addEventListener('click', () => this.closeTodoViewModal());
+        }
 
         // Modal de configurações
         document.getElementById('closeSettingsModal').addEventListener('click', () => this.closeSettingsModal());
@@ -263,6 +272,7 @@ class SnippetManager {
                 this.closeDeleteModal();
                 this.closeSettingsModal();
                 this.closeExportTypeModal();
+                this.closeTodoViewModal();
             }
         });
 
@@ -1474,7 +1484,7 @@ class SnippetManager {
                 e.stopPropagation();
                 const id = e.currentTarget.dataset.id;
                 if (!id) return;
-                this.editSnippet(id);
+                this.openTodoViewModal(id);
             });
         });
 
@@ -1880,6 +1890,63 @@ class SnippetManager {
             console.error('Erro ao sincronizar to-do:', error);
         }
         await this.renderSnippets();
+        if (this.viewingTodoId === id) {
+            this.renderTodoViewModal();
+        }
+    }
+
+    renderTodoViewModal() {
+        if (!this.viewingTodoId) {
+            return;
+        }
+        const snippet = this.snippets.find(s => s.id === this.viewingTodoId && s.type === 'todo');
+        if (!snippet) {
+            this.closeTodoViewModal();
+            return;
+        }
+
+        const titleEl = document.getElementById('todoViewModalTitle');
+        const metaEl = document.getElementById('todoViewMeta');
+        const listEl = document.getElementById('todoViewList');
+        if (!titleEl || !metaEl || !listEl) {
+            return;
+        }
+
+        titleEl.textContent = (snippet.title || '').trim() || this.t('todo_type');
+        const todoItems = this.parseTodoItems(snippet.content);
+        const doneCount = todoItems.filter(item => item.done).length;
+        metaEl.textContent = `${doneCount}/${todoItems.length}`;
+        listEl.innerHTML = this.renderTodoList(snippet.id, todoItems);
+
+        listEl.querySelectorAll('.todo-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const snippetId = e.currentTarget.dataset.id;
+                const itemIndex = Number(e.currentTarget.dataset.index);
+                if (!snippetId || Number.isNaN(itemIndex)) {
+                    return;
+                }
+                await this.toggleTodoItem(snippetId, itemIndex);
+            });
+        });
+    }
+
+    openTodoViewModal(id) {
+        const snippet = this.snippets.find(s => s.id === id && s.type === 'todo');
+        const modal = document.getElementById('todoViewModal');
+        if (!snippet || !modal) return;
+        this.viewingTodoId = id;
+        this.renderTodoViewModal();
+        modal.style.display = 'flex';
+    }
+
+    closeTodoViewModal() {
+        const modal = document.getElementById('todoViewModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        this.viewingTodoId = null;
     }
 
     async deleteSnippetById(id) {
