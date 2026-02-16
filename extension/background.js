@@ -22,6 +22,7 @@ const DEFAULT_CLOUD_API_BASE = 'https://snippet-link-pocket.netlify.app';
 chrome.runtime.onInstalled.addListener(() => {
     scheduleCloudSyncAlarm();
     syncCloudInBackground().catch(error => {
+        if (String(error.message || '') === 'subscription_required') return;
         console.error('Erro no sync inicial (onInstalled):', error);
     });
 });
@@ -29,6 +30,7 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onStartup.addListener(() => {
     scheduleCloudSyncAlarm();
     syncCloudInBackground().catch(error => {
+        if (String(error.message || '') === 'subscription_required') return;
         console.error('Erro no sync inicial (onStartup):', error);
     });
 });
@@ -39,6 +41,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     }
 
     syncCloudInBackground().catch(error => {
+        if (String(error.message || '') === 'subscription_required') return;
         console.error('Erro no sync por alarme:', error);
     });
 });
@@ -119,6 +122,10 @@ async function fetchRemoteSnippets(apiBase, apiKey, userId, authToken) {
         method: 'GET',
         headers: getCloudHeaders(apiKey, authToken)
     });
+
+    if (response.status === 402) {
+        throw new Error('subscription_required');
+    }
 
     if (!response.ok) {
         const errorText = await response.text();

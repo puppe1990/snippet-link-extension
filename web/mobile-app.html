@@ -4,19 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Snippet Pocket</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Snippet Pocket">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon192.png">
-    <link rel="stylesheet" href="mobile-app.css?v=20260216-4">
+    <link rel="stylesheet" href="mobile-app.css?v=20260216-5">
 </head>
 <body>
     <main class="container">
         <header class="header">
             <h1>Snippet Pocket</h1>
             <div class="header-actions">
+                <button id="refreshPwaBtn" class="action-tile action-refresh hidden" type="button">⟳ Atualizar</button>
                 <button id="toggleSettingsBtn" class="action-tile action-config" type="button">⚙️</button>
                 <button id="openAddModalBtn" class="action-tile action-new" type="button">+ Novo</button>
                 <button id="sortBtn" class="action-tile action-sort" type="button">🔄 Ordenar</button>
@@ -59,6 +64,15 @@
         </section>
 
         <div id="appContent" class="hidden">
+        <section id="billingCard" class="modal-content billing-card">
+            <h2 id="billingHeadline">Desbloqueie o Pro por US$ 1/mês</h2>
+            <p id="billingSubheadline">Sincronização completa e recursos avançados sem complicação.</p>
+            <div id="billingStatusText" class="meta">Status: inativa</div>
+            <div class="row">
+                <button id="billingSubscribeBtn" class="btn btn-primary" type="button">Assinar por US$ 1/mês</button>
+                <button id="billingManageBtn" class="btn btn-secondary" type="button">Gerenciar assinatura</button>
+            </div>
+        </section>
         <section class="modal-content">
             <div class="row space-between">
                 <h2>Minha Lista</h2>
@@ -69,6 +83,7 @@
                 <button class="tab-btn" data-filter="link" type="button">Links</button>
                 <button class="tab-btn" data-filter="text" type="button">Textos</button>
                 <button class="tab-btn" data-filter="markdown" type="button">Markdown</button>
+                <button class="tab-btn" data-filter="todo" type="button">To-Do</button>
                 <button class="tab-btn" data-filter="favorites" type="button">Favoritos</button>
                 <button class="tab-btn" data-filter="archived" type="button">Arquivados</button>
             </div>
@@ -140,13 +155,27 @@
     <div id="addModal" class="modal hidden">
         <section class="modal-content modal-panel">
             <div class="modal-header-row">
-                <h2>Novo Link</h2>
+                <h2 id="addModalTitle">Novo Snippet</h2>
                 <button id="closeAddModalBtn" class="close-modal-btn" type="button">✕</button>
             </div>
             <label class="field">
-                <span>URL</span>
-                <input id="urlInput" type="url" placeholder="https://...">
+                <span>Tipo</span>
+                <select id="snippetTypeInput">
+                    <option value="link">🔗 Link</option>
+                    <option value="text">📝 Texto</option>
+                    <option value="markdown">📄 Markdown</option>
+                    <option value="todo">✅ To-Do List</option>
+                </select>
             </label>
+            <label class="field" id="contentField">
+                <span id="contentFieldLabel">Conteúdo</span>
+                <textarea id="contentInput" class="content-textarea" placeholder="Digite o conteúdo..."></textarea>
+            </label>
+            <div class="field hidden" id="todoBuilderField">
+                <span>Checklist</span>
+                <div id="todoItemsContainer" class="todo-builder-list"></div>
+                <button id="addTodoItemBtn" class="btn btn-secondary" type="button">+ Tarefa</button>
+            </div>
             <label class="field">
                 <span>Título (opcional)</span>
                 <input id="titleInput" type="text" placeholder="Título">
@@ -156,12 +185,12 @@
                 <input id="tagsInput" type="text" placeholder="trabalho, leitura">
             </label>
             <div class="row">
-                <button id="addBtn" class="btn btn-primary" type="button">Salvar Link</button>
+                <button id="addBtn" class="btn btn-primary" type="button">Salvar Snippet</button>
             </div>
         </section>
     </div>
 
     <div id="toast" class="toast hidden"></div>
-    <script src="mobile-app.js?v=20260216-5"></script>
+    <script src="mobile-app.js?v=20260216-7"></script>
 </body>
 </html>

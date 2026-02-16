@@ -72,6 +72,36 @@ async function ensureSchema() {
       expires_at TEXT NOT NULL
     )
   `);
+
+  const columnsRs = await db.execute(`PRAGMA table_info(users)`);
+  const existing = new Set(columnsRs.rows.map((row) => String(row.name)));
+  const missingColumns = [
+    { name: "stripe_customer_id", sql: "TEXT" },
+    { name: "subscription_status", sql: "TEXT NOT NULL DEFAULT 'inactive'" },
+    { name: "subscription_id", sql: "TEXT" },
+    { name: "subscription_price_id", sql: "TEXT" },
+    { name: "subscription_current_period_end", sql: "TEXT" },
+    { name: "updated_at", sql: "TEXT" },
+  ];
+
+  for (const column of missingColumns) {
+    if (!existing.has(column.name)) {
+      await db.execute(`ALTER TABLE users ADD COLUMN ${column.name} ${column.sql}`);
+    }
+  }
+
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id
+    ON users (stripe_customer_id)
+  `);
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_users_subscription_status
+    ON users (subscription_status)
+  `);
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_users_subscription_id
+    ON users (subscription_id)
+  `);
 }
 
 async function getSessionUser(token) {
@@ -98,15 +128,29 @@ exports.handler = async (event) => {
       if (!userId) return jsonResponse(401, { error: "unauthorized" });
 
       const rs = await db.execute({
-        sql: `SELECT id, email, created_at FROM users WHERE id = ? LIMIT 1`,
+        sql: `
+          SELECT
+            id,
+            email,
+            created_at,
+            COALESCE(subscription_status, 'inactive') AS subscription_status,
+            subscription_current_period_end
+          FROM users
+          WHERE id = ?
+          LIMIT 1
+        `,
         args: [userId],
       });
       if (!rs.rows[0]) return jsonResponse(401, { error: "unauthorized" });
+      const subscriptionStatus = String(rs.rows[0].subscription_status || "inactive");
       return jsonResponse(200, {
         user: {
           id: rs.rows[0].id,
           email: rs.rows[0].email,
           createdAt: rs.rows[0].created_at,
+          subscription_status: subscriptionStatus,
+          entitled: subscriptionStatus === "active",
+          subscription_current_period_end: rs.rows[0].subscription_current_period_end || null,
         },
       });
     }
@@ -136,8 +180,11 @@ exports.handler = async (event) => {
       const userId = crypto.randomUUID();
       const now = new Date().toISOString();
       await db.execute({
-        sql: `INSERT INTO users (id, email, password_hash, created_at) VALUES (?, ?, ?, ?)`,
-        args: [userId, email, hashPassword(password), now],
+        sql: `
+          INSERT INTO users (id, email, password_hash, created_at, updated_at, subscription_status)
+          VALUES (?, ?, ?, ?, ?, 'inactive')
+        `,
+        args: [userId, email, hashPassword(password), now, now],
       });
 
       const token = makeToken();
@@ -147,7 +194,16 @@ exports.handler = async (event) => {
         args: [token, userId, now, expiresAt],
       });
 
-      return jsonResponse(200, { token, user: { id: userId, email } });
+      return jsonResponse(200, {
+        token,
+        user: {
+          id: userId,
+          email,
+          subscription_status: "inactive",
+          entitled: false,
+          subscription_current_period_end: null,
+        },
+      });
     }
 
     if (action === "login") {
@@ -158,7 +214,17 @@ exports.handler = async (event) => {
       }
 
       const rs = await db.execute({
-        sql: `SELECT id, email, password_hash FROM users WHERE email = ? LIMIT 1`,
+        sql: `
+          SELECT
+            id,
+            email,
+            password_hash,
+            COALESCE(subscription_status, 'inactive') AS subscription_status,
+            subscription_current_period_end
+          FROM users
+          WHERE email = ?
+          LIMIT 1
+        `,
         args: [email],
       });
       const user = rs.rows[0];
@@ -176,7 +242,13 @@ exports.handler = async (event) => {
 
       return jsonResponse(200, {
         token,
-        user: { id: String(user.id), email: String(user.email) },
+        user: {
+          id: String(user.id),
+          email: String(user.email),
+          subscription_status: String(user.subscription_status || "inactive"),
+          entitled: String(user.subscription_status || "inactive") === "active",
+          subscription_current_period_end: user.subscription_current_period_end || null,
+        },
       });
     }
 

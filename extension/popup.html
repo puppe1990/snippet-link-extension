@@ -36,12 +36,22 @@
         <header class="header">
             <h1>📝 Snippet Manager</h1>
             <div class="header-actions">
+                <button id="openMobileWebBtn" class="btn btn-secondary" title="Abrir mobile web">📱</button>
                 <button id="openInTabBtn" class="btn btn-secondary" title="Abrir em nova aba">🖥️</button>
                 <button id="settingsBtn" class="btn btn-secondary" title="Configurações">⚙️</button>
                 <button id="addBtn" class="btn btn-primary">+ Novo</button>
                 <button id="sortBtn" class="btn btn-secondary">🔄 Ordenar</button>
             </div>
         </header>
+
+        <section id="proPaywallBanner" class="pro-banner hidden">
+            <h3 id="billingHeadlineBanner">Desbloqueie o Pro por US$ 1/mês</h3>
+            <p id="billingSubheadlineBanner">Sincronização completa e recursos avançados sem complicação.</p>
+            <div class="pro-banner-actions">
+                <button id="billingSubscribeBtnBanner" class="btn btn-primary" type="button">Assinar por US$ 1/mês</button>
+                <button id="billingManageBtnBanner" class="btn btn-secondary" type="button">Gerenciar assinatura</button>
+            </div>
+        </section>
 
         <div class="search-section">
             <input type="text" id="searchInput" placeholder="🔍 Buscar snippets..." class="search-input">
@@ -52,6 +62,7 @@
             <button class="tab-btn" data-type="link">Links</button>
             <button class="tab-btn" data-type="text">Textos</button>
             <button class="tab-btn" data-type="markdown">Markdown</button>
+            <button class="tab-btn" data-type="todo">To-Do</button>
             <button class="tab-btn" data-type="favorites">Favoritos</button>
             <button class="tab-btn" data-type="archived">Arquivados</button>
         </div>
@@ -86,6 +97,7 @@
                             <option value="link">🔗 Link</option>
                             <option value="text">📝 Texto</option>
                             <option value="markdown">📄 Markdown</option>
+                            <option value="todo">✅ To-Do List</option>
                         </select>
                     </div>
                     <div class="form-group" id="linkListGroup" style="display: none;">
@@ -98,9 +110,14 @@
                             <span id="linkListDescription" class="toggle-description">Adicionar mais de um link (um por linha)</span>
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="contentGroup">
                         <label for="snippetContent">Conteúdo:</label>
                         <textarea id="snippetContent" required placeholder="Digite o link, texto ou markdown..."></textarea>
+                    </div>
+                    <div class="form-group" id="todoBuilderGroup" style="display: none;">
+                        <label id="todoBuilderLabel">Checklist:</label>
+                        <div id="todoItemsContainer" class="todo-builder-list"></div>
+                        <button type="button" id="addTodoItemBtn" class="btn btn-secondary btn-small">+ Tarefa</button>
                     </div>
                     <div class="form-group">
                         <label for="snippetTags">Tags (opcional):</label>
@@ -162,6 +179,11 @@
                         <span class="export-type-icon">📄</span>
                         <span class="export-type-label">Markdown</span>
                         <span class="export-type-description">Apenas snippets do tipo markdown</span>
+                    </button>
+                    <button class="export-type-btn" data-type="todo">
+                        <span class="export-type-icon">✅</span>
+                        <span class="export-type-label">To-Do List</span>
+                        <span class="export-type-description">Apenas snippets do tipo to-do</span>
                     </button>
                     <button class="export-type-btn" data-type="favorites">
                         <span class="export-type-icon">⭐</span>
@@ -233,6 +255,16 @@
                 <div class="form-group">
                     <label for="cloudAuthPassword" id="cloudAuthPasswordLabel">Senha:</label>
                     <input type="password" id="cloudAuthPassword" placeholder="mínimo 6 caracteres">
+                </div>
+
+                <div class="form-group billing-card">
+                    <h3 id="billingHeadline">Desbloqueie o Pro por US$ 1/mês</h3>
+                    <p id="billingSubheadline">Sincronização completa e recursos avançados sem complicação.</p>
+                    <p id="billingStatus" style="font-size: 12px; color: #666;">Status: inactive</p>
+                    <div class="import-export-section">
+                        <button id="billingSubscribeBtn" class="btn btn-primary" type="button">Assinar por US$ 1/mês</button>
+                        <button id="billingManageBtn" class="btn btn-secondary" type="button">Gerenciar assinatura</button>
+                    </div>
                 </div>
 
                 <div class="form-group">

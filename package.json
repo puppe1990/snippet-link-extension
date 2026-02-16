@@ -8,7 +8,8 @@
     "deploy": "netlify deploy --prod"
   },
   "dependencies": {
-    "@libsql/client": "^0.15.15"
+    "@libsql/client": "^0.15.15",
+    "stripe": "^20.3.1"
   },
   "devDependencies": {
     "netlify-cli": "^22.2.2"

@@ -799,6 +799,7 @@
         <header class="header">
             <h1>📝 Snippet Manager</h1>
             <div class="header-actions">
+                <button id="openMobileWebBtn" class="btn btn-secondary" title="Abrir mobile web">📱</button>
                 <button id="settingsBtn" class="btn btn-secondary" title="Configurações">⚙️</button>
                 <button id="addBtn" class="btn btn-primary">+ Novo</button>
                 <button id="sortBtn" class="btn btn-secondary">🔄 Ordenar</button>
@@ -824,6 +825,7 @@
             <button class="tab-btn" data-type="link">Links</button>
             <button class="tab-btn" data-type="text">Textos</button>
             <button class="tab-btn" data-type="markdown">Markdown</button>
+            <button class="tab-btn" data-type="todo">To-Do</button>
             <button class="tab-btn" data-type="favorites">Favoritos</button>
             <button class="tab-btn" data-type="archived">Arquivados</button>
         </div>
@@ -858,6 +860,7 @@
                             <option value="link">🔗 Link</option>
                             <option value="text">📝 Texto</option>
                             <option value="markdown">📄 Markdown</option>
+                            <option value="todo">✅ To-Do List</option>
                         </select>
                     </div>
                     <div class="form-group" id="linkListGroup" style="display: none;">
@@ -870,9 +873,14 @@
                             <span id="linkListDescription" class="toggle-description">Adicionar mais de um link (um por linha)</span>
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="contentGroup">
                         <label for="snippetContent">Conteúdo:</label>
                         <textarea id="snippetContent" required placeholder="Digite o link, texto ou markdown..."></textarea>
+                    </div>
+                    <div class="form-group" id="todoBuilderGroup" style="display: none;">
+                        <label id="todoBuilderLabel">Checklist:</label>
+                        <div id="todoItemsContainer" class="todo-builder-list"></div>
+                        <button type="button" id="addTodoItemBtn" class="btn btn-secondary btn-small">+ Tarefa</button>
                     </div>
                     <div class="form-group">
                         <label for="snippetTags">Tags (opcional):</label>
@@ -934,6 +942,11 @@
                         <span class="export-type-icon">📄</span>
                         <span class="export-type-label">Markdown</span>
                         <span class="export-type-description">Apenas snippets do tipo markdown</span>
+                    </button>
+                    <button class="export-type-btn" data-type="todo">
+                        <span class="export-type-icon">✅</span>
+                        <span class="export-type-label">To-Do List</span>
+                        <span class="export-type-description">Apenas snippets do tipo to-do</span>
                     </button>
                     <button class="export-type-btn" data-type="favorites">
                         <span class="export-type-icon">⭐</span>

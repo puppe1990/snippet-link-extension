@@ -10,6 +10,7 @@ const db = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
+const MOBILE_BYPASS_EMAIL = "matheus.puppe@gmail.com";
 
 function getHeader(headers, name) {
   if (!headers) return "";
@@ -89,6 +90,36 @@ async function ensureSchema() {
       expires_at TEXT NOT NULL
     )
   `);
+
+  const columnsRs = await db.execute(`PRAGMA table_info(users)`);
+  const existing = new Set(columnsRs.rows.map((row) => String(row.name)));
+  const missingColumns = [
+    { name: "stripe_customer_id", sql: "TEXT" },
+    { name: "subscription_status", sql: "TEXT NOT NULL DEFAULT 'inactive'" },
+    { name: "subscription_id", sql: "TEXT" },
+    { name: "subscription_price_id", sql: "TEXT" },
+    { name: "subscription_current_period_end", sql: "TEXT" },
+    { name: "updated_at", sql: "TEXT" },
+  ];
+
+  for (const column of missingColumns) {
+    if (!existing.has(column.name)) {
+      await db.execute(`ALTER TABLE users ADD COLUMN ${column.name} ${column.sql}`);
+    }
+  }
+
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id
+    ON users (stripe_customer_id)
+  `);
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_users_subscription_status
+    ON users (subscription_status)
+  `);
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_users_subscription_id
+    ON users (subscription_id)
+  `);
 }
 
 async function getAuthenticatedUserId(event) {
@@ -112,6 +143,26 @@ async function getAuthenticatedUserId(event) {
 function getLegacyApiKeyAuthorized(event) {
   const apiKey = getHeader(event.headers, "X-API-Key");
   return Boolean(apiKey && process.env.EXTENSION_API_KEY && apiKey === process.env.EXTENSION_API_KEY);
+}
+
+async function userHasEntitlement(userId) {
+  if (!userId) return false;
+  const rs = await db.execute({
+    sql: `SELECT COALESCE(subscription_status, 'inactive') AS subscription_status FROM users WHERE id = ? LIMIT 1`,
+    args: [userId],
+  });
+  if (!rs.rows[0]) return false;
+  return String(rs.rows[0].subscription_status) === "active";
+}
+
+async function userMatchesBypassEmail(userId) {
+  if (!userId) return false;
+  const rs = await db.execute({
+    sql: `SELECT email FROM users WHERE id = ? LIMIT 1`,
+    args: [userId],
+  });
+  const email = String(rs.rows?.[0]?.email || "").trim().toLowerCase();
+  return email === MOBILE_BYPASS_EMAIL;
 }
 
 exports.handler = async (event) => {
@@ -138,6 +189,23 @@ exports.handler = async (event) => {
 
     if (!authUserId && !legacyAuthorized) {
       return jsonResponse(401, { error: "unauthorized" });
+    }
+
+    if (authUserId) {
+      let entitled = await userHasEntitlement(authUserId);
+      if (!entitled) {
+        const bypassRequested = getHeader(event.headers, "X-Mobile-Bypass-Subscription") === "1";
+        if (bypassRequested) {
+          const bypassAllowed = await userMatchesBypassEmail(authUserId);
+          if (bypassAllowed) {
+            entitled = true;
+          }
+        }
+      }
+      if (!entitled) {
+        console.log("entitlement_denied", { user_id: authUserId });
+        return jsonResponse(402, { error: "subscription_required" });
+      }
     }
 
     if (event.httpMethod === "GET") {

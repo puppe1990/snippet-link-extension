@@ -22,6 +22,9 @@ class SnippetManager {
         this.cloudAuthToken = '';
         this.cloudAuthUserId = '';
         this.cloudSyncInProgress = false;
+        this.subscriptionStatus = 'inactive';
+        this.entitled = false;
+        this.subscriptionCurrentPeriodEnd = '';
         
         this.init();
     }
@@ -31,6 +34,9 @@ class SnippetManager {
         await this.loadSettings();
         this.setupEventListeners();
         await this.validateCloudSession();
+        if (this.cloudAuthToken) {
+            await this.refreshBillingStatus();
+        }
         this.updateAuthGateVisibility();
         if (this.cloudAuthToken) {
             await this.syncWithCloud({ showNotification: false, refreshUI: false });
@@ -54,6 +60,10 @@ class SnippetManager {
         const openInTabBtn = document.getElementById('openInTabBtn');
         if (openInTabBtn) {
             openInTabBtn.addEventListener('click', () => this.openInNewTab());
+        }
+        const openMobileWebBtn = document.getElementById('openMobileWebBtn');
+        if (openMobileWebBtn) {
+            openMobileWebBtn.addEventListener('click', () => this.openMobileWeb());
         }
         
         // Busca
@@ -87,6 +97,7 @@ class SnippetManager {
         document.getElementById('snippetForm').addEventListener('submit', (e) => this.handleSubmit(e));
         document.getElementById('snippetType').addEventListener('change', () => {
             this.updateLinkListVisibility();
+            this.updateTodoBuilderVisibility();
             this.saveSnippetDraft();
         });
         document.getElementById('linkListToggle').addEventListener('change', () => {
@@ -96,6 +107,11 @@ class SnippetManager {
         document.getElementById('snippetTitle').addEventListener('input', () => this.saveSnippetDraft());
         document.getElementById('snippetContent').addEventListener('input', () => this.saveSnippetDraft());
         document.getElementById('snippetTags').addEventListener('input', () => this.saveSnippetDraft());
+        document.getElementById('addTodoItemBtn').addEventListener('click', () => {
+            this.addTodoBuilderItem();
+            this.syncTodoBuilderToContent();
+            this.saveSnippetDraft();
+        });
 
         // Modal de exclusão
         document.getElementById('closeDeleteModal').addEventListener('click', () => this.closeDeleteModal());
@@ -175,6 +191,10 @@ class SnippetManager {
         const cloudRegisterBtn = document.getElementById('cloudRegisterBtn');
         const cloudLoginBtn = document.getElementById('cloudLoginBtn');
         const cloudLogoutBtn = document.getElementById('cloudLogoutBtn');
+        const billingSubscribeBtn = document.getElementById('billingSubscribeBtn');
+        const billingManageBtn = document.getElementById('billingManageBtn');
+        const billingSubscribeBtnBanner = document.getElementById('billingSubscribeBtnBanner');
+        const billingManageBtnBanner = document.getElementById('billingManageBtnBanner');
 
         if (cloudRegisterBtn) {
             cloudRegisterBtn.addEventListener('click', async () => {
@@ -189,6 +209,26 @@ class SnippetManager {
         if (cloudLogoutBtn) {
             cloudLogoutBtn.addEventListener('click', async () => {
                 await this.handleCloudLogout();
+            });
+        }
+        if (billingSubscribeBtn) {
+            billingSubscribeBtn.addEventListener('click', async () => {
+                await this.handleCreateCheckout();
+            });
+        }
+        if (billingManageBtn) {
+            billingManageBtn.addEventListener('click', async () => {
+                await this.handleCreatePortal();
+            });
+        }
+        if (billingSubscribeBtnBanner) {
+            billingSubscribeBtnBanner.addEventListener('click', async () => {
+                await this.handleCreateCheckout();
+            });
+        }
+        if (billingManageBtnBanner) {
+            billingManageBtnBanner.addEventListener('click', async () => {
+                await this.handleCreatePortal();
             });
         }
 
@@ -311,6 +351,8 @@ class SnippetManager {
             return;
         }
 
+        this.syncTodoBuilderToContent();
+
         const draft = {
             isOpen: modal.style.display === 'flex',
             editingId: this.editingId,
@@ -350,8 +392,10 @@ class SnippetManager {
         document.getElementById('snippetContent').value = draft.content || '';
         document.getElementById('snippetTags').value = draft.tags || '';
         document.getElementById('linkListToggle').checked = Boolean(draft.isLinkList);
+        this.loadTodoBuilderFromContent(draft.content || '');
 
         this.updateLinkListVisibility();
+        this.updateTodoBuilderVisibility();
         document.getElementById('snippetModal').style.display = 'flex';
         document.getElementById('snippetTitle').focus();
     }
@@ -370,7 +414,10 @@ class SnippetManager {
                 'cloudUserId',
                 'cloudAuthEmail',
                 'cloudAuthToken',
-                'cloudAuthUserId'
+                'cloudAuthUserId',
+                'subscriptionStatus',
+                'entitled',
+                'subscriptionCurrentPeriodEnd'
             ]);
             const language = result.language || 'pt';
             const linkPreviewEnabled = result.linkPreviewEnabled !== undefined ? result.linkPreviewEnabled : true;
@@ -383,6 +430,9 @@ class SnippetManager {
             const cloudAuthEmail = result.cloudAuthEmail || '';
             const cloudAuthToken = result.cloudAuthToken || '';
             const cloudAuthUserId = result.cloudAuthUserId || '';
+            const subscriptionStatus = result.subscriptionStatus || 'inactive';
+            const entitled = result.entitled === true;
+            const subscriptionCurrentPeriodEnd = result.subscriptionCurrentPeriodEnd || '';
             
             this.translationManager.setLanguage(language);
             this.linkPreviewEnabled = linkPreviewEnabled;
@@ -395,6 +445,9 @@ class SnippetManager {
             this.cloudAuthEmail = cloudAuthEmail;
             this.cloudAuthToken = cloudAuthToken;
             this.cloudAuthUserId = cloudAuthUserId;
+            this.subscriptionStatus = subscriptionStatus;
+            this.entitled = entitled;
+            this.subscriptionCurrentPeriodEnd = subscriptionCurrentPeriodEnd;
         } catch (error) {
             console.error('Erro ao carregar configurações:', error);
             this.translationManager.setLanguage('pt');
@@ -408,6 +461,9 @@ class SnippetManager {
             this.cloudAuthEmail = '';
             this.cloudAuthToken = '';
             this.cloudAuthUserId = '';
+            this.subscriptionStatus = 'inactive';
+            this.entitled = false;
+            this.subscriptionCurrentPeriodEnd = '';
         }
     }
 
@@ -487,11 +543,13 @@ class SnippetManager {
             this.cloudAuthEmail = data?.user?.email || this.cloudAuthEmail;
             this.cloudAuthUserId = data?.user?.id || this.cloudAuthUserId;
             await this.persistCloudAuth();
+            await this.refreshBillingStatus();
             return true;
         } catch {
             this.cloudAuthToken = '';
             this.cloudAuthUserId = '';
             await this.persistCloudAuth();
+            await this.refreshBillingStatus();
             return false;
         }
     }
@@ -501,6 +559,7 @@ class SnippetManager {
         this.cloudAuthUserId = data?.user?.id || '';
         this.cloudAuthToken = data?.token || '';
         await this.persistCloudAuth();
+        await this.refreshBillingStatus();
         this.updateCloudAuthStatusFromState();
         this.updateAuthGateVisibility();
     }
@@ -537,7 +596,116 @@ class SnippetManager {
         } else {
             this.setCloudAuthStatus(this.t('cloud_auth_not_logged'));
         }
+        this.updateBillingUI();
         this.updateAuthGateVisibility();
+    }
+
+    getSubscriptionStatusText(status) {
+        const key = `subscription_status_${status || 'inactive'}`;
+        const translated = this.t(key);
+        return translated === key ? this.t('subscription_status_inactive') : translated;
+    }
+
+    updateBillingUI() {
+        const statusLabel = this.getSubscriptionStatusText(this.subscriptionStatus);
+        const statusLine = `${this.t('billing_status_prefix')} ${statusLabel}`;
+        const billingStatus = document.getElementById('billingStatus');
+        const banner = document.getElementById('proPaywallBanner');
+        const hasSession = Boolean(this.cloudAuthToken);
+        const shouldShowBanner = hasSession && !this.entitled;
+
+        if (billingStatus) {
+            billingStatus.textContent = statusLine;
+        }
+        if (banner) {
+            banner.classList.toggle('hidden', !shouldShowBanner);
+        }
+    }
+
+    async persistBillingState() {
+        await chrome.storage.local.set({
+            subscriptionStatus: this.subscriptionStatus,
+            entitled: this.entitled,
+            subscriptionCurrentPeriodEnd: this.subscriptionCurrentPeriodEnd
+        });
+    }
+
+    async refreshBillingStatus() {
+        if (!this.cloudApiBase || !this.cloudAuthToken) {
+            this.subscriptionStatus = 'inactive';
+            this.entitled = false;
+            this.subscriptionCurrentPeriodEnd = '';
+            await this.persistBillingState();
+            this.updateBillingUI();
+            return;
+        }
+
+        try {
+            const endpoint = `${this.cloudApiBase}/.netlify/functions/billing`;
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                headers: this.getCloudHeaders()
+            });
+            if (!response.ok) {
+                throw new Error(`billing status ${response.status}`);
+            }
+            const data = await response.json();
+            this.subscriptionStatus = String(data?.subscription_status || 'inactive');
+            this.entitled = data?.entitled === true;
+            this.subscriptionCurrentPeriodEnd = data?.subscription_current_period_end || '';
+            await this.persistBillingState();
+        } catch {
+            this.subscriptionStatus = 'inactive';
+            this.entitled = false;
+            this.subscriptionCurrentPeriodEnd = '';
+            await this.persistBillingState();
+        } finally {
+            this.updateBillingUI();
+        }
+    }
+
+    async createBillingSession(action) {
+        if (!this.cloudApiBase || !this.cloudAuthToken) {
+            throw new Error('unauthorized');
+        }
+        const endpoint = `${this.cloudApiBase}/.netlify/functions/billing`;
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: this.getCloudHeaders(),
+            body: JSON.stringify({ action })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.error || `billing failed (${response.status})`);
+        }
+        return data;
+    }
+
+    async handleCreateCheckout() {
+        try {
+            const data = await this.createBillingSession('create_checkout');
+            if (data?.url) {
+                window.open(data.url, '_blank', 'noopener,noreferrer');
+            }
+        } catch (error) {
+            if (String(error.message || '').includes('already_subscribed')) {
+                await this.refreshBillingStatus();
+                this.showNotification(this.t('billing_already_active'));
+                return;
+            }
+            this.showNotification(`${this.t('billing_error')}: ${error.message}`);
+        }
+    }
+
+    async handleCreatePortal() {
+        try {
+            const data = await this.createBillingSession('create_portal');
+            if (data?.url) {
+                window.open(data.url, '_blank', 'noopener,noreferrer');
+            }
+        } catch (error) {
+            this.showNotification(`${this.t('billing_error')}: ${error.message}`);
+        }
     }
 
     async cloudAuthRequest(action, email, password) {
@@ -614,6 +782,7 @@ class SnippetManager {
             this.cloudAuthToken = '';
             this.cloudAuthUserId = '';
             await this.persistCloudAuth();
+            await this.refreshBillingStatus();
             this.updateCloudAuthStatusFromState();
             this.showNotification(this.t('cloud_auth_logout_success'));
         }
@@ -682,6 +851,14 @@ class SnippetManager {
             method: 'GET',
             headers: this.getCloudHeaders()
         });
+
+        if (response.status === 402) {
+            this.entitled = false;
+            this.subscriptionStatus = 'inactive';
+            await this.persistBillingState();
+            this.updateBillingUI();
+            throw new Error('subscription_required');
+        }
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -805,6 +982,16 @@ class SnippetManager {
             }
         } catch (error) {
             console.error('Erro de sincronização com nuvem:', error);
+            if (String(error.message || '') === 'subscription_required') {
+                console.log('entitlement_denied', {
+                    user_id: this.cloudAuthUserId || null,
+                    status: this.subscriptionStatus
+                });
+                if (showNotification) {
+                    this.showNotification(this.t('subscription_required_error'));
+                }
+                return;
+            }
             if (showNotification) {
                 this.showNotification(this.t('cloud_sync_error'));
             }
@@ -834,8 +1021,8 @@ class SnippetManager {
         
         // Atualizar tabs
         const tabs = document.querySelectorAll('.tab-btn');
-        const tabKeys = ['all_tab', 'links_tab', 'text_tab', 'markdown_tab', 'favorites_tab', 'archived_tab'];
-        const tabIcons = ['📋', '🔗', '📝', '📄', '⭐', '📁'];
+        const tabKeys = ['all_tab', 'links_tab', 'text_tab', 'markdown_tab', 'todo_tab', 'favorites_tab', 'archived_tab'];
+        const tabIcons = ['📋', '🔗', '📝', '📄', '✅', '⭐', '📁'];
         tabs.forEach((tab, index) => {
             // Limpar qualquer ícone existente e adicionar apenas um
             const cleanText = this.t(tabKeys[index]).replace(/^[^\w\s]*\s*/, '');
@@ -860,6 +1047,7 @@ class SnippetManager {
             <option value="link">${this.t('link_type')}</option>
             <option value="text">${this.t('text_type')}</option>
             <option value="markdown">${this.t('markdown_type')}</option>
+            <option value="todo">${this.t('todo_type')}</option>
         `;
         
         // Atualizar labels do formulário
@@ -869,6 +1057,14 @@ class SnippetManager {
         document.querySelector('label[for="snippetTags"]').textContent = this.t('tags_label');
         document.getElementById('linkListLabel').textContent = this.t('link_list_label');
         document.getElementById('linkListDescription').textContent = this.t('link_list_description');
+        document.getElementById('todoBuilderLabel').textContent = this.t('todo_builder_label');
+        document.getElementById('addTodoItemBtn').textContent = this.t('todo_add_item');
+        document.querySelectorAll('.todo-builder-remove').forEach(btn => {
+            btn.title = this.t('todo_remove_item');
+        });
+        document.querySelectorAll('.todo-builder-input').forEach(input => {
+            input.placeholder = this.t('todo_placeholder');
+        });
         
         // Atualizar botões do modal
         document.getElementById('cancelBtn').textContent = this.t('cancel_button');
@@ -908,6 +1104,14 @@ class SnippetManager {
         const cloudRegisterBtn = document.getElementById('cloudRegisterBtn');
         const cloudLoginBtn = document.getElementById('cloudLoginBtn');
         const cloudLogoutBtn = document.getElementById('cloudLogoutBtn');
+        const billingHeadline = document.getElementById('billingHeadline');
+        const billingSubheadline = document.getElementById('billingSubheadline');
+        const billingSubscribeBtn = document.getElementById('billingSubscribeBtn');
+        const billingManageBtn = document.getElementById('billingManageBtn');
+        const billingHeadlineBanner = document.getElementById('billingHeadlineBanner');
+        const billingSubheadlineBanner = document.getElementById('billingSubheadlineBanner');
+        const billingSubscribeBtnBanner = document.getElementById('billingSubscribeBtnBanner');
+        const billingManageBtnBanner = document.getElementById('billingManageBtnBanner');
         const cloudApiBaseInput = document.getElementById('cloudApiBase');
         const cloudAuthEmailInput = document.getElementById('cloudAuthEmail');
         const cloudAuthPasswordInput = document.getElementById('cloudAuthPassword');
@@ -925,6 +1129,14 @@ class SnippetManager {
         if (cloudRegisterBtn) cloudRegisterBtn.textContent = this.t('cloud_auth_register_button');
         if (cloudLoginBtn) cloudLoginBtn.textContent = this.t('cloud_auth_login_button');
         if (cloudLogoutBtn) cloudLogoutBtn.textContent = this.t('cloud_auth_logout_button');
+        if (billingHeadline) billingHeadline.textContent = this.t('billing_headline');
+        if (billingSubheadline) billingSubheadline.textContent = this.t('billing_subheadline');
+        if (billingSubscribeBtn) billingSubscribeBtn.textContent = this.t('billing_cta_subscribe');
+        if (billingManageBtn) billingManageBtn.textContent = this.t('billing_cta_manage');
+        if (billingHeadlineBanner) billingHeadlineBanner.textContent = this.t('billing_headline');
+        if (billingSubheadlineBanner) billingSubheadlineBanner.textContent = this.t('billing_subheadline');
+        if (billingSubscribeBtnBanner) billingSubscribeBtnBanner.textContent = this.t('billing_cta_subscribe');
+        if (billingManageBtnBanner) billingManageBtnBanner.textContent = this.t('billing_cta_manage');
         if (cloudApiBaseInput) cloudApiBaseInput.placeholder = this.t('cloud_api_base_placeholder');
         if (cloudAuthEmailInput) cloudAuthEmailInput.placeholder = this.t('cloud_auth_email_placeholder');
         if (cloudAuthPasswordInput) cloudAuthPasswordInput.placeholder = this.t('cloud_auth_password_placeholder');
@@ -941,9 +1153,11 @@ class SnippetManager {
         const authSignInSubmit = document.getElementById('authSignInSubmit');
         const authSignUpSubmit = document.getElementById('authSignUpSubmit');
         const authGateStatus = document.getElementById('authGateStatus');
+        const authGateSubtitle = document.getElementById('authGateSubtitle');
 
         if (authSignInTab) authSignInTab.textContent = this.t('cloud_auth_login_button');
         if (authSignUpTab) authSignUpTab.textContent = this.t('cloud_auth_register_button');
+        if (authGateSubtitle) authGateSubtitle.textContent = this.t('auth_gate_subtitle');
         if (authSignInEmail) authSignInEmail.placeholder = this.t('cloud_auth_email_placeholder');
         if (authSignInPassword) authSignInPassword.placeholder = this.t('cloud_auth_password_placeholder');
         if (authSignUpEmail) authSignUpEmail.placeholder = this.t('cloud_auth_email_placeholder');
@@ -976,8 +1190,8 @@ class SnippetManager {
             
             // Atualizar botões de tipo de exportação
             const exportTypeButtons = exportTypeModal.querySelectorAll('.export-type-btn');
-            const typeKeys = ['export_all_snippets', 'export_links', 'export_texts', 'export_markdown', 'export_favorites'];
-            const descriptionKeys = ['export_all_description', 'export_links_description', 'export_texts_description', 'export_markdown_description', 'export_favorites_description'];
+            const typeKeys = ['export_all_snippets', 'export_links', 'export_texts', 'export_markdown', 'export_todos', 'export_favorites'];
+            const descriptionKeys = ['export_all_description', 'export_links_description', 'export_texts_description', 'export_markdown_description', 'export_todos_description', 'export_favorites_description'];
             
             exportTypeButtons.forEach((btn, index) => {
                 const label = btn.querySelector('.export-type-label');
@@ -1009,7 +1223,9 @@ class SnippetManager {
             <option value="fr">${this.t('french')}</option>
         `;
         languageSelect.value = this.translationManager.getCurrentLanguage();
+        this.updateBillingUI();
         this.updateLinkListVisibility();
+        this.updateTodoBuilderVisibility();
     }
 
     // Renderização
@@ -1101,6 +1317,10 @@ class SnippetManager {
         const hasSingleLink = validLinks.length === 1 && linkItems.length === 1;
         const hasMultipleLinks = validLinks.length > 1 && linkItems.length === validLinks.length;
         const primaryLink = hasSingleLink ? validLinks[0] : '';
+        const todoItems = snippet.type === 'todo' ? this.parseTodoItems(snippet.content) : [];
+        const todoSummary = todoItems.length > 0
+            ? `${todoItems.filter(item => item.done).length}/${todoItems.length}`
+            : '';
         
         
         
@@ -1168,11 +1388,13 @@ class SnippetManager {
                     ${hasTitle ? `<h3 class="snippet-title">${displayTitle}</h3>` : ''}
                     <span class="snippet-type ${snippet.type}">${this.getSnippetTypeLabel(snippet.type)}</span>
                 </div>
-                <div class="snippet-content ${snippet.type === 'markdown' ? 'markdown-content' : ''}">${this.renderSnippetContent(snippet)}</div>
+                <div class="snippet-content ${snippet.type === 'markdown' ? 'markdown-content' : ''} ${snippet.type === 'todo' ? 'todo-content' : ''}">${this.renderSnippetContent(snippet)}</div>
+                ${snippet.type === 'todo' && todoSummary ? `<div class="todo-summary">${todoSummary}</div>` : ''}
                 ${linkPreview}
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
                     ${hasSingleLink ? `<button class="btn btn-small open-btn" data-url="${primaryLink}">${this.t('open_button')}</button>` : ''}
+                    ${snippet.type === 'todo' ? `<button class="btn btn-small open-todo-btn open-btn" data-id="${snippet.id}">${this.t('open_todo_button')}</button>` : ''}
                     ${hasMultipleLinks ? `<button class="btn btn-small open-all-btn" data-urls="${encodeURIComponent(JSON.stringify(validLinks))}">${this.t('open_all_button')}</button>` : ''}
                     <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${favoriteTooltip}">${favoriteIcon} ${favoriteText}</button>
                     ${hasSingleLink && this.summarizeEnabled ? `<button class="btn btn-small summarize-btn" data-url="${primaryLink}">${this.t('summarize_button')}</button>` : ''}
@@ -1241,7 +1463,18 @@ class SnippetManager {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const url = e.target.dataset.url;
+                if (!url) return;
                 this.openLink(url);
+            });
+        });
+
+        // Botões de abrir to-do
+        document.querySelectorAll('.open-todo-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = e.currentTarget.dataset.id;
+                if (!id) return;
+                this.editSnippet(id);
             });
         });
 
@@ -1263,10 +1496,24 @@ class SnippetManager {
             });
         });
 
+        // Checkboxes de to-do
+        document.querySelectorAll('.todo-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const snippetId = e.currentTarget.dataset.id;
+                const itemIndex = Number(e.currentTarget.dataset.index);
+                if (!snippetId || Number.isNaN(itemIndex)) {
+                    return;
+                }
+                await this.toggleTodoItem(snippetId, itemIndex);
+            });
+        });
+
         // Clique no snippet para copiar
         document.querySelectorAll('.snippet-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                if (!e.target.closest('.snippet-actions') && !e.target.closest('.drag-handle') && !e.target.closest('.link-preview') && !e.target.closest('.link-list')) {
+                if (!e.target.closest('.snippet-actions') && !e.target.closest('.drag-handle') && !e.target.closest('.link-preview') && !e.target.closest('.link-list') && !e.target.closest('.todo-list')) {
                     const id = item.dataset.id;
                     this.copySnippet(id);
                 }
@@ -1611,6 +1858,30 @@ class SnippetManager {
         }
     }
 
+    async toggleTodoItem(id, itemIndex) {
+        const snippetIndex = this.snippets.findIndex(s => s.id === id);
+        if (snippetIndex === -1 || this.snippets[snippetIndex].type !== 'todo') {
+            return;
+        }
+
+        const items = this.parseTodoItems(this.snippets[snippetIndex].content);
+        if (itemIndex < 0 || itemIndex >= items.length) {
+            return;
+        }
+
+        items[itemIndex].done = !items[itemIndex].done;
+        this.snippets[snippetIndex].content = this.serializeTodoItems(items);
+        this.snippets[snippetIndex].updatedAt = new Date().toISOString();
+
+        await this.saveSnippets();
+        try {
+            await this.upsertSnippetToCloud(this.snippets[snippetIndex]);
+        } catch (error) {
+            console.error('Erro ao sincronizar to-do:', error);
+        }
+        await this.renderSnippets();
+    }
+
     async deleteSnippetById(id) {
         const deletedAt = new Date().toISOString();
         this.snippets = this.snippets.filter(s => s.id !== id);
@@ -1686,6 +1957,12 @@ class SnippetManager {
         chrome.tabs.create({ url: chrome.runtime.getURL('fullpage.html') });
     }
 
+    openMobileWeb() {
+        const baseUrl = this.normalizeCloudApiBase(this.cloudApiBase || this.defaultCloudApiBase);
+        const mobileWebUrl = `${baseUrl}/mobile-app.html`;
+        chrome.tabs.create({ url: mobileWebUrl });
+    }
+
     async sortSnippets() {
         this.snippets.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         await this.saveSnippets();
@@ -1704,6 +1981,7 @@ class SnippetManager {
             document.getElementById('snippetTitle').value = snippet.title;
             document.getElementById('snippetType').value = snippet.type;
             document.getElementById('snippetContent').value = snippet.content;
+            this.loadTodoBuilderFromContent(snippet.content);
             document.getElementById('snippetTags').value = snippet.tags ? snippet.tags.join(', ') : '';
             const linkListToggle = document.getElementById('linkListToggle');
             if (linkListToggle) {
@@ -1717,9 +1995,12 @@ class SnippetManager {
             if (linkListToggle) {
                 linkListToggle.checked = false;
             }
+            this.clearTodoBuilder();
+            this.addTodoBuilderItem();
         }
         
         this.updateLinkListVisibility();
+        this.updateTodoBuilderVisibility();
         this.updateContentPlaceholder();
         modal.style.display = 'flex';
         document.getElementById('snippetTitle').focus();
@@ -1749,8 +2030,13 @@ class SnippetManager {
         const linkListToggle = document.getElementById('linkListToggle');
         const isLinkList = linkListToggle ? linkListToggle.checked : false;
 
+        if (formData.type === 'todo') {
+            this.syncTodoBuilderToContent();
+            formData.content = document.getElementById('snippetContent').value;
+        }
+
         // Validação básica
-        if (!formData.content.trim()) {
+        if (formData.type !== 'todo' && !formData.content.trim()) {
             this.showNotification(this.t('content_required'));
             return;
         }
@@ -1777,6 +2063,15 @@ class SnippetManager {
                 }
                 formData.content = formData.content.trim();
             }
+        }
+
+        if (formData.type === 'todo') {
+            const normalizedTodo = this.normalizeTodoContent(formData.content);
+            if (!normalizedTodo) {
+                this.showNotification(this.t('todo_required'));
+                return;
+            }
+            formData.content = normalizedTodo;
         }
 
         if (this.editingId) {
@@ -2241,6 +2536,41 @@ class SnippetManager {
         return { items, invalid };
     }
 
+    parseTodoItems(content) {
+        if (!content) return [];
+        return content
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(line => line)
+            .map(line => {
+                const markdownMatch = line.match(/^[-*]\s*\[( |x|X)\]\s*(.+)$/);
+                if (markdownMatch) {
+                    return {
+                        done: markdownMatch[1].toLowerCase() === 'x',
+                        text: markdownMatch[2].trim()
+                    };
+                }
+
+                return { done: false, text: line };
+            })
+            .filter(item => item.text);
+    }
+
+    serializeTodoItems(items) {
+        return items
+            .filter(item => item && item.text)
+            .map(item => `- [${item.done ? 'x' : ' '}] ${item.text}`)
+            .join('\n');
+    }
+
+    normalizeTodoContent(content) {
+        const items = this.parseTodoItems(content);
+        if (items.length === 0) {
+            return '';
+        }
+        return this.serializeTodoItems(items);
+    }
+
     isLinkListContent(content) {
         const { items, invalid } = this.getValidLinkList(content);
         return items.length > 1 && invalid.length === 0;
@@ -2250,16 +2580,124 @@ class SnippetManager {
         const typeSelect = document.getElementById('snippetType');
         const linkListGroup = document.getElementById('linkListGroup');
         const linkListToggle = document.getElementById('linkListToggle');
+        const contentInput = document.getElementById('snippetContent');
+        const contentGroup = document.getElementById('contentGroup');
         if (!typeSelect || !linkListGroup) {
             return;
         }
 
         const isLink = typeSelect.value === 'link';
+        const isTodo = typeSelect.value === 'todo';
         linkListGroup.style.display = isLink ? 'block' : 'none';
         if (!isLink && linkListToggle) {
             linkListToggle.checked = false;
         }
+        if (contentGroup) {
+            contentGroup.style.display = isTodo ? 'none' : 'block';
+        }
+        if (contentInput) {
+            contentInput.required = !isTodo;
+        }
         this.updateContentPlaceholder();
+    }
+
+    updateTodoBuilderVisibility() {
+        const typeSelect = document.getElementById('snippetType');
+        const todoBuilderGroup = document.getElementById('todoBuilderGroup');
+        if (!typeSelect || !todoBuilderGroup) {
+            return;
+        }
+
+        const isTodo = typeSelect.value === 'todo';
+        todoBuilderGroup.style.display = isTodo ? 'block' : 'none';
+
+        if (isTodo) {
+            const hasItems = this.getTodoBuilderItems().length > 0;
+            if (!hasItems) {
+                this.loadTodoBuilderFromContent(document.getElementById('snippetContent').value || '');
+            }
+            if (this.getTodoBuilderItems().length === 0) {
+                this.addTodoBuilderItem(undefined, false);
+            }
+            this.syncTodoBuilderToContent();
+        }
+    }
+
+    addTodoBuilderItem(item = { done: false, text: '' }, shouldFocus = true) {
+        const container = document.getElementById('todoItemsContainer');
+        if (!container) return;
+
+        const row = document.createElement('div');
+        row.className = 'todo-builder-item';
+        row.innerHTML = `
+            <input type="checkbox" class="todo-builder-check" ${item.done ? 'checked' : ''}>
+            <input type="text" class="todo-builder-input" value="${this.escapeHtml(item.text || '')}" placeholder="${this.t('todo_placeholder')}">
+            <button type="button" class="btn btn-danger btn-small todo-builder-remove" title="${this.t('todo_remove_item')}">×</button>
+        `;
+
+        const check = row.querySelector('.todo-builder-check');
+        const input = row.querySelector('.todo-builder-input');
+        const remove = row.querySelector('.todo-builder-remove');
+
+        check.addEventListener('change', () => {
+            this.syncTodoBuilderToContent();
+            this.saveSnippetDraft();
+        });
+        input.addEventListener('input', () => {
+            this.syncTodoBuilderToContent();
+            this.saveSnippetDraft();
+        });
+        remove.addEventListener('click', () => {
+            row.remove();
+            if (container.children.length === 0) {
+                this.addTodoBuilderItem(undefined, false);
+            }
+            this.syncTodoBuilderToContent();
+            this.saveSnippetDraft();
+        });
+
+        container.appendChild(row);
+        if (shouldFocus) {
+            input.focus();
+        }
+    }
+
+    clearTodoBuilder() {
+        const container = document.getElementById('todoItemsContainer');
+        if (!container) return;
+        container.innerHTML = '';
+    }
+
+    getTodoBuilderItems() {
+        const container = document.getElementById('todoItemsContainer');
+        if (!container) return [];
+
+        return Array.from(container.querySelectorAll('.todo-builder-item')).map(row => ({
+            done: row.querySelector('.todo-builder-check')?.checked === true,
+            text: (row.querySelector('.todo-builder-input')?.value || '').trim()
+        }));
+    }
+
+    syncTodoBuilderToContent() {
+        const typeSelect = document.getElementById('snippetType');
+        const contentInput = document.getElementById('snippetContent');
+        if (!typeSelect || !contentInput || typeSelect.value !== 'todo') {
+            return;
+        }
+
+        const normalized = this.serializeTodoItems(
+            this.getTodoBuilderItems().filter(item => item.text)
+        );
+        contentInput.value = normalized;
+    }
+
+    loadTodoBuilderFromContent(content) {
+        const items = this.parseTodoItems(content || '');
+        this.clearTodoBuilder();
+        if (items.length === 0) {
+            return;
+        }
+        items.forEach(item => this.addTodoBuilderItem(item, false));
     }
 
     updateContentPlaceholder() {
@@ -2272,6 +2710,8 @@ class SnippetManager {
 
         if (typeSelect.value === 'link' && linkListToggle && linkListToggle.checked) {
             contentInput.placeholder = this.t('link_list_placeholder');
+        } else if (typeSelect.value === 'todo') {
+            contentInput.placeholder = this.t('todo_placeholder');
         } else {
             contentInput.placeholder = this.t('content_placeholder');
         }
@@ -2293,6 +2733,13 @@ class SnippetManager {
             }
         }
 
+        if (snippet.type === 'todo') {
+            const items = this.parseTodoItems(snippet.content);
+            if (items.length > 0) {
+                return this.renderTodoList(snippet.id, items);
+            }
+        }
+
         if (snippet.type === 'markdown') {
             return this.renderMarkdown(snippet.content);
         } else {
@@ -2306,6 +2753,19 @@ class SnippetManager {
             return `<li><a class="link-list-item" href="${safeLink}" data-url="${safeLink}" target="_blank" rel="noopener noreferrer">${safeLink}</a></li>`;
         }).join('');
         return `<ul class="link-list">${listItems}</ul>`;
+    }
+
+    renderTodoList(snippetId, items) {
+        const listItems = items.map((item, index) => `
+            <li class="todo-item ${item.done ? 'done' : ''}">
+                <button type="button" class="todo-checkbox ${item.done ? 'checked' : ''}" data-id="${snippetId}" data-index="${index}">
+                    ${item.done ? '☑' : '☐'}
+                </button>
+                <span class="todo-text">${this.escapeHtml(item.text)}</span>
+            </li>
+        `).join('');
+
+        return `<ul class="todo-list">${listItems}</ul>`;
     }
 
     sanitizeHtml(html) {
@@ -2376,6 +2836,8 @@ class SnippetManager {
                 return this.t('text_type');
             case 'markdown':
                 return this.t('markdown_type');
+            case 'todo':
+                return this.t('todo_type');
             default:
                 return type;
         }
