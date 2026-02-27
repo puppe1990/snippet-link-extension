@@ -34,6 +34,11 @@
     --ui-tag-size: 11px;
     --ui-date-size: 11px;
     --ui-actions-gap: 7px;
+    --ui-scroll-track: rgba(148, 163, 184, 0.22);
+    --ui-scroll-thumb-a: #95a1b3;
+    --ui-scroll-thumb-b: #7f8da2;
+    --ui-scroll-thumb-hover-a: #7d8aa0;
+    --ui-scroll-thumb-hover-b: #67758c;
 }
 
 .btn {
@@ -111,6 +116,47 @@
     display: flex;
     gap: 6px;
     overflow-x: auto;
+}
+
+/* Shared colorful scrollbar */
+.snippets-container,
+.modal-body,
+.content-view-body,
+.todo-view-panel {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ui-scroll-thumb-a) var(--ui-scroll-track);
+}
+
+.snippets-container::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar,
+.content-view-body::-webkit-scrollbar,
+.todo-view-panel::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.snippets-container::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track,
+.content-view-body::-webkit-scrollbar-track,
+.todo-view-panel::-webkit-scrollbar-track {
+    background: var(--ui-scroll-track);
+    border-radius: 999px;
+}
+
+.snippets-container::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb,
+.content-view-body::-webkit-scrollbar-thumb,
+.todo-view-panel::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--ui-scroll-thumb-a) 0%, var(--ui-scroll-thumb-b) 100%);
+    border-radius: 999px;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+.snippets-container::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover,
+.content-view-body::-webkit-scrollbar-thumb:hover,
+.todo-view-panel::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--ui-scroll-thumb-hover-a) 0%, var(--ui-scroll-thumb-hover-b) 100%);
 }
 
 .snippets-container {

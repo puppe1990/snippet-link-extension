@@ -22,6 +22,11 @@ html {
     --danger: #d7264f;
     --warning: #f6b40f;
     --success: #22a362;
+    --ui-scroll-track: rgba(148, 163, 184, 0.24);
+    --ui-scroll-thumb-a: #95a1b3;
+    --ui-scroll-thumb-b: #7f8da2;
+    --ui-scroll-thumb-hover-a: #7d8aa0;
+    --ui-scroll-thumb-hover-b: #67758c;
 }
 
 body {
@@ -41,6 +46,11 @@ body.is-pro {
         radial-gradient(1200px 620px at -12% -16%, #f4cf6b 0%, transparent 46%),
         radial-gradient(900px 560px at 108% 8%, #7f5ae8 0%, transparent 48%),
         linear-gradient(162deg, #101d3a 0%, #1d3159 42%, #173a57 100%);
+    --ui-scroll-track: rgba(184, 169, 137, 0.34);
+    --ui-scroll-thumb-a: #9f8b62;
+    --ui-scroll-thumb-b: #7d7393;
+    --ui-scroll-thumb-hover-a: #8d7a54;
+    --ui-scroll-thumb-hover-b: #6d6384;
 }
 
 body.is-pro .header {
@@ -63,8 +73,8 @@ body.is-pro .billing-card {
 }
 
 .header {
-    position: sticky;
-    top: max(8px, env(safe-area-inset-top, 0px));
+    position: relative;
+    top: 0;
     z-index: 12;
     margin-bottom: 14px;
     background: linear-gradient(135deg, rgba(74, 103, 255, 0.74) 0%, rgba(111, 55, 224, 0.72) 100%);
@@ -622,7 +632,7 @@ body.is-pro .billing-card {
     }
 }
 
-@media (min-width: 700px) {
+@media (min-width: 1100px) {
     .container {
         max-width: 980px;
         margin: 0 auto;
@@ -630,6 +640,8 @@ body.is-pro .billing-card {
     }
 
     .header {
+        position: sticky;
+        top: max(8px, env(safe-area-inset-top, 0px));
         border-radius: 28px;
         padding: 18px;
         align-items: center;
