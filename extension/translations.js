@@ -16,6 +16,8 @@ const translations = {
         'todo_tab': 'To-Do',
         'empty_state_title': '📋 Nenhum snippet encontrado',
         'empty_state_subtitle': 'Clique em "Novo" para adicionar seu primeiro snippet!',
+        'snippets_loading': 'Carregando snippets...',
+        'snippets_loading_subtitle': 'Aguarde um instante.',
         
         // Tag filter
         'tags_filter_title': '🏷️ Filtrar por Tags:',
@@ -190,6 +192,8 @@ const translations = {
         'todo_tab': 'To-Do',
         'empty_state_title': '📋 No snippets found',
         'empty_state_subtitle': 'Click "New" to add your first snippet!',
+        'snippets_loading': 'Loading snippets...',
+        'snippets_loading_subtitle': 'Please wait a moment.',
         
         // Tag filter
         'tags_filter_title': '🏷️ Filter by Tags:',
@@ -364,6 +368,8 @@ const translations = {
         'todo_tab': 'To-Do',
         'empty_state_title': '📋 Aucun snippet trouvé',
         'empty_state_subtitle': 'Cliquez sur "Nouveau" pour ajouter votre premier snippet !',
+        'snippets_loading': 'Chargement des snippets...',
+        'snippets_loading_subtitle': 'Veuillez patienter un instant.',
         
         // Tag filter
         'tags_filter_title': '🏷️ Filtrer par Tags :',
