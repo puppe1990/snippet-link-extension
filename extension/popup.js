@@ -24,14 +24,17 @@ class SnippetManager {
         this.cloudAuthToken = '';
         this.cloudAuthUserId = '';
         this.cloudSyncInProgress = false;
+        this.isSnippetsLoading = false;
         this.subscriptionStatus = 'inactive';
         this.entitled = false;
         this.subscriptionCurrentPeriodEnd = '';
+        this.uiCore = window.SnippetUiCore || null;
         
         this.init();
     }
 
     async init() {
+        this.setSnippetsLoading(true);
         await this.loadSnippets();
         await this.loadSettings();
         this.setupEventListeners();
@@ -46,6 +49,7 @@ class SnippetManager {
         this.updateLanguage();
         await this.restoreSnippetDraft();
         await this.renderTagFilters();
+        this.setSnippetsLoading(false);
         await this.renderSnippets();
     }
 
@@ -948,6 +952,9 @@ class SnippetManager {
         }
 
         this.cloudSyncInProgress = true;
+        if (refreshUI) {
+            this.setSnippetsLoading(true);
+        }
 
         try {
             const remoteSnippets = await this.fetchCloudSnippets();
@@ -998,6 +1005,7 @@ class SnippetManager {
 
             if (refreshUI) {
                 await this.renderTagFilters();
+                this.setSnippetsLoading(false);
                 await this.renderSnippets();
             }
 
@@ -1021,6 +1029,9 @@ class SnippetManager {
             }
         } finally {
             this.cloudSyncInProgress = false;
+            if (refreshUI && this.isSnippetsLoading) {
+                this.setSnippetsLoading(false);
+            }
         }
     }
 
@@ -1059,6 +1070,9 @@ class SnippetManager {
             <p>${this.t('empty_state_title')}</p>
             <p>${this.t('empty_state_subtitle')}</p>
         `;
+        if (this.isSnippetsLoading) {
+            this.renderSnippetsLoading();
+        }
         
         // Atualizar modal de snippet
         document.getElementById('snippetTitle').placeholder = this.t('title_placeholder');
@@ -1265,9 +1279,39 @@ class SnippetManager {
     }
 
     // Renderização
+    setSnippetsLoading(isLoading) {
+        this.isSnippetsLoading = Boolean(isLoading);
+        if (this.isSnippetsLoading) {
+            this.renderSnippetsLoading();
+        }
+    }
+
+    renderSnippetsLoading() {
+        const container = document.getElementById('snippetsList');
+        const emptyState = document.getElementById('emptyState');
+        if (!container || !emptyState) {
+            return;
+        }
+
+        container.style.display = 'block';
+        emptyState.style.display = 'none';
+        container.innerHTML = `
+            <div class="snippets-loading" role="status" aria-live="polite">
+                <div class="snippets-loading-spinner"></div>
+                <p class="snippets-loading-title">${this.t('snippets_loading')}</p>
+                <p class="snippets-loading-subtitle">${this.t('snippets_loading_subtitle')}</p>
+            </div>
+        `;
+    }
+
     async renderSnippets() {
         const container = document.getElementById('snippetsList');
         const emptyState = document.getElementById('emptyState');
+
+        if (this.isSnippetsLoading) {
+            this.renderSnippetsLoading();
+            return;
+        }
         
         const filteredSnippets = this.getFilteredSnippets();
         
@@ -1337,27 +1381,92 @@ class SnippetManager {
     async createSnippetHTML(snippet) {
         const tags = snippet.tags ? snippet.tags.map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('') : '';
         const date = new Date(snippet.createdAt).toLocaleDateString(this.translationManager.getLocale());
-        const hasTitle = snippet.title && snippet.title.trim();
-        const displayTitle = hasTitle ? this.escapeHtml(snippet.title.trim()) : '';
-        const favoriteIcon = snippet.isFavorite ? '⭐' : '☆';
-        const favoriteClass = snippet.isFavorite ? 'btn-favorite-active' : 'btn-favorite';
-        const favoriteText = snippet.isFavorite ? this.t('favorite_active_button') : this.t('favorite_button');
-        const favoriteTooltip = snippet.isFavorite ? this.t('remove_favorite_tooltip') : this.t('add_favorite_tooltip');
-        
-        const archiveIcon = snippet.isArchived ? '📂' : '📁';
-        const archiveClass = snippet.isArchived ? 'btn-archive-active' : 'btn-archive';
-        const archiveText = snippet.isArchived ? this.t('unarchive_button') : this.t('archive_button');
-        const archiveTooltip = snippet.isArchived ? this.t('unarchive_tooltip') : this.t('archive_tooltip');
-        const linkItems = snippet.type === 'link' ? this.getLinkList(snippet.content) : [];
-        const validLinks = linkItems.filter(item => this.isValidUrl(item));
-        const hasSingleLink = validLinks.length === 1 && linkItems.length === 1;
-        const hasMultipleLinks = validLinks.length > 1 && linkItems.length === validLinks.length;
-        const primaryLink = hasSingleLink ? validLinks[0] : '';
+        const headerElement = this.uiCore?.createSnippetHeaderElement
+            ? this.uiCore.createSnippetHeaderElement(snippet, {
+                document,
+                getTypeLabel: (type) => this.getSnippetTypeLabel(type),
+                fallbackLinkHost: false,
+                favoriteTitlePrefix: ''
+            })
+            : null;
+        const headerHtml = headerElement
+            ? headerElement.outerHTML
+            : `<div class="snippet-header"><span class="snippet-type ${snippet.type}">${this.getSnippetTypeLabel(snippet.type)}</span></div>`;
+        const descriptorResult = this.uiCore?.getSnippetActionDescriptors
+            ? this.uiCore.getSnippetActionDescriptors(snippet, {
+                summarizeEnabled: this.summarizeEnabled,
+                includeOpenAll: true,
+                includeSummarize: true,
+                includeEdit: true,
+                includeDelete: true
+            })
+            : null;
+        const actionState = descriptorResult?.actionState || (this.uiCore?.getSnippetActionState
+            ? this.uiCore.getSnippetActionState(snippet, { summarizeEnabled: this.summarizeEnabled })
+            : {
+                canShowFullContent: snippet.type === 'link' || snippet.type === 'text',
+                canOpenSingleLink: false,
+                canOpenAllLinks: false,
+                canSummarizeLink: false,
+                primaryLink: '',
+                validLinks: []
+            });
+        const actionDescriptors = descriptorResult?.descriptors || [];
+        const hasSingleLink = actionState.canOpenSingleLink;
+        const primaryLink = actionState.primaryLink;
         const todoItems = snippet.type === 'todo' ? this.parseTodoItems(snippet.content) : [];
         const todoSummary = todoItems.length > 0
             ? `${todoItems.filter(item => item.done).length}/${todoItems.length}`
             : '';
-        const canShowFullContent = snippet.type === 'link' || snippet.type === 'text';
+        const canShowFullContent = actionState.canShowFullContent;
+        const metaText = this.uiCore?.getSnippetMetaText
+            ? this.uiCore.getSnippetMetaText(
+                { ...snippet, updatedAt: snippet.createdAt, isArchived: false },
+                {
+                    formatDate: () => date,
+                    updatedAtPrefix: this.t('created_at'),
+                    archivedSuffix: ''
+                }
+            )
+            : `${this.t('created_at')} ${date}`;
+        const actionButtons = actionDescriptors.length
+            ? actionDescriptors.map((descriptor) => {
+                switch (descriptor.id) {
+                    case 'open_link':
+                        return `<button class="btn btn-small open-btn" data-url="${this.escapeHtml(descriptor.url || '')}">${this.t('open_button')}</button>`;
+                    case 'open_todo':
+                        return `<button class="btn btn-small open-todo-btn open-btn" data-id="${snippet.id}">${this.t('open_todo_button')}</button>`;
+                    case 'open_all_links':
+                        return `<button class="btn btn-small open-all-btn" data-urls="${encodeURIComponent(JSON.stringify(descriptor.urls || []))}">${this.t('open_all_button')}</button>`;
+                    case 'show_content':
+                        return `<button class="btn btn-small show-content-btn" data-id="${snippet.id}">${this.t('show_button')}</button>`;
+                    case 'favorite_toggle': {
+                        const favoriteIcon = snippet.isFavorite ? '⭐' : '☆';
+                        const favoriteClass = snippet.isFavorite ? 'btn-favorite-active' : 'btn-favorite';
+                        const favoriteText = snippet.isFavorite ? this.t('favorite_active_button') : this.t('favorite_button');
+                        const favoriteTooltip = snippet.isFavorite ? this.t('remove_favorite_tooltip') : this.t('add_favorite_tooltip');
+                        return `<button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${favoriteTooltip}">${favoriteIcon} ${favoriteText}</button>`;
+                    }
+                    case 'summarize_link':
+                        return `<button class="btn btn-small summarize-btn" data-url="${this.escapeHtml(descriptor.url || '')}">${this.t('summarize_button')}</button>`;
+                    case 'archive_toggle': {
+                        const archiveIcon = snippet.isArchived ? '📂' : '📁';
+                        const archiveClass = snippet.isArchived ? 'btn-archive-active' : 'btn-archive';
+                        const archiveText = snippet.isArchived ? this.t('unarchive_button') : this.t('archive_button');
+                        const archiveTooltip = snippet.isArchived ? this.t('unarchive_tooltip') : this.t('archive_tooltip');
+                        return `<button class="btn btn-small ${archiveClass} archive-btn" data-id="${snippet.id}" title="${archiveTooltip}">${archiveIcon} ${archiveText}</button>`;
+                    }
+                    case 'copy_content':
+                        return `<button class="btn btn-small copy-btn" data-id="${snippet.id}">${this.t('copy_button')}</button>`;
+                    case 'edit_snippet':
+                        return `<button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">${this.t('edit_button')}</button>`;
+                    case 'delete_snippet':
+                        return `<button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">${this.t('delete_button')}</button>`;
+                    default:
+                        return '';
+                }
+            }).filter(Boolean).join('')
+            : '';
         
         
         
@@ -1421,27 +1530,15 @@ class SnippetManager {
         return `
             <div class="snippet-item ${snippet.isFavorite ? 'favorite-snippet' : ''} ${snippet.isArchived ? 'archived-snippet' : ''}" data-id="${snippet.id}" draggable="true">
                 <div class="drag-handle">⋮⋮</div>
-                <div class="snippet-header">
-                    ${hasTitle ? `<h3 class="snippet-title">${displayTitle}</h3>` : ''}
-                    <span class="snippet-type ${snippet.type}">${this.getSnippetTypeLabel(snippet.type)}</span>
-                </div>
+                ${headerHtml}
                 <div class="snippet-content ${snippet.type === 'markdown' ? 'markdown-content' : ''} ${snippet.type === 'todo' ? 'todo-content' : ''} ${canShowFullContent ? 'snippet-content-preview' : ''}">${this.renderSnippetContent(snippet)}</div>
                 ${snippet.type === 'todo' && todoSummary ? `<div class="todo-summary">${todoSummary}</div>` : ''}
                 ${linkPreview}
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
                 <div class="snippet-actions">
-                    ${hasSingleLink ? `<button class="btn btn-small open-btn" data-url="${primaryLink}">${this.t('open_button')}</button>` : ''}
-                    ${snippet.type === 'todo' ? `<button class="btn btn-small open-todo-btn open-btn" data-id="${snippet.id}">${this.t('open_todo_button')}</button>` : ''}
-                    ${hasMultipleLinks ? `<button class="btn btn-small open-all-btn" data-urls="${encodeURIComponent(JSON.stringify(validLinks))}">${this.t('open_all_button')}</button>` : ''}
-                    ${canShowFullContent ? `<button class="btn btn-small show-content-btn" data-id="${snippet.id}">${this.t('show_button')}</button>` : ''}
-                    <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${favoriteTooltip}">${favoriteIcon} ${favoriteText}</button>
-                    ${hasSingleLink && this.summarizeEnabled ? `<button class="btn btn-small summarize-btn" data-url="${primaryLink}">${this.t('summarize_button')}</button>` : ''}
-                    <button class="btn btn-small ${archiveClass} archive-btn" data-id="${snippet.id}" title="${archiveTooltip}">${archiveIcon} ${archiveText}</button>
-                    <button class="btn btn-small copy-btn" data-id="${snippet.id}">${this.t('copy_button')}</button>
-                    <button class="btn btn-small btn-primary edit-btn" data-id="${snippet.id}">${this.t('edit_button')}</button>
-                    <button class="btn btn-small btn-danger delete-btn" data-id="${snippet.id}">${this.t('delete_button')}</button>
+                    ${actionButtons}
                 </div>
-                <div class="snippet-date">${this.t('created_at')} ${date}</div>
+                <div class="snippet-date">${this.escapeHtml(metaText)}</div>
             </div>
         `;
     }
@@ -2924,24 +3021,10 @@ class SnippetManager {
     }
 
     getSnippetPreview(content) {
-        const raw = String(content || '').replace(/\r/g, '');
-        const lines = raw
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line.length > 0);
-        if (lines.length === 0) {
-            return '';
+        if (this.uiCore?.getPreviewText) {
+            return this.uiCore.getPreviewText(content, 120);
         }
-
-        const firstLine = lines[0];
-        const maxLength = 120;
-        if (firstLine.length > maxLength) {
-            return `${firstLine.slice(0, maxLength).trimEnd()}...`;
-        }
-        if (lines.length > 1) {
-            return `${firstLine}...`;
-        }
-        return firstLine;
+        return String(content || '');
     }
 
     renderLinkList(links) {

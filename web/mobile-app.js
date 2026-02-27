@@ -532,6 +532,7 @@
         countBadge: document.getElementById("countBadge"),
         toast: document.getElementById("toast")
     };
+    const uiCore = window.SnippetUiCore || {};
 
     function showToast(message) {
         el.toast.textContent = message;
@@ -1154,13 +1155,11 @@
     }
 
     function getDisplayTitle(item) {
-        if (item.title && item.title.trim()) return item.title.trim();
-        if (item.type !== "link") return "";
-        try {
-            return new URL(item.content).hostname.replace(/^www\./, "");
-        } catch {
-            return "";
+        if (typeof uiCore.getDisplayTitle === "function") {
+            return uiCore.getDisplayTitle(item, { fallbackLinkHost: true });
         }
+        if (item.title && item.title.trim()) return item.title.trim();
+        return "";
     }
 
     function formatDate(value) {
@@ -1207,10 +1206,10 @@
     }
 
     function getTypeClass(type) {
-        if (type === "text") return "text";
-        if (type === "markdown") return "markdown";
-        if (type === "todo") return "todo";
-        return "link";
+        if (typeof uiCore.getTypeClass === "function") {
+            return uiCore.getTypeClass(type);
+        }
+        return type === "text" ? "text" : type === "markdown" ? "markdown" : type === "todo" ? "todo" : "link";
     }
 
     function createTodoListElement(item) {
@@ -1302,21 +1301,10 @@
     }
 
     function getContentPreview(content) {
-        const raw = String(content || "").replace(/\r/g, "");
-        const lines = raw
-            .split("\n")
-            .map((line) => line.trim())
-            .filter((line) => line.length > 0);
-        if (!lines.length) return "";
-        const firstLine = lines[0];
-        const maxLength = 120;
-        if (firstLine.length > maxLength) {
-            return `${firstLine.slice(0, maxLength).trimEnd()}...`;
+        if (typeof uiCore.getPreviewText === "function") {
+            return uiCore.getPreviewText(content, 120);
         }
-        if (lines.length > 1) {
-            return `${firstLine}...`;
-        }
-        return firstLine;
+        return String(content || "");
     }
 
     function renderContentViewModal() {
@@ -1378,22 +1366,17 @@
         if (item.isFavorite) card.classList.add("favorite-snippet");
         if (item.isArchived) card.classList.add("archived-snippet");
 
-        const header = document.createElement("div");
-        header.className = "snippet-header";
-
-        const displayTitle = getDisplayTitle(item);
-        if (displayTitle) {
-            const title = document.createElement("h3");
-            title.className = "snippet-title";
-            title.textContent = `${item.isFavorite ? "⭐ " : ""}${displayTitle}`;
-            header.appendChild(title);
+        const header = typeof uiCore.createSnippetHeaderElement === "function"
+            ? uiCore.createSnippetHeaderElement(item, {
+                document,
+                getTypeLabel,
+                fallbackLinkHost: true,
+                favoriteTitlePrefix: "⭐ "
+            })
+            : null;
+        if (header) {
+            card.appendChild(header);
         }
-
-        const type = document.createElement("span");
-        type.className = `snippet-type ${getTypeClass(item.type)}`;
-        type.textContent = getTypeLabel(item.type);
-        header.appendChild(type);
-        card.appendChild(header);
 
         const content = document.createElement("div");
         content.className = "snippet-content";
@@ -1420,124 +1403,148 @@
 
         const meta = document.createElement("div");
         meta.className = "meta";
-        meta.textContent = `${t("updated_at_prefix")} ${formatDate(item.updatedAt)}${item.isArchived ? ` • ${t("archived_suffix")}` : ""}`;
+        meta.textContent = typeof uiCore.getSnippetMetaText === "function"
+            ? uiCore.getSnippetMetaText(item, {
+                formatDate,
+                updatedAtPrefix: t("updated_at_prefix"),
+                archivedSuffix: t("archived_suffix")
+            })
+            : `${t("updated_at_prefix")} ${formatDate(item.updatedAt)}${item.isArchived ? ` • ${t("archived_suffix")}` : ""}`;
         card.appendChild(meta);
 
         const actions = document.createElement("div");
         actions.className = "snippet-actions";
-
-        if (item.type === "link") {
-            const openBtn = document.createElement("button");
-            openBtn.className = "btn btn-small open-btn";
-            openBtn.type = "button";
-            openBtn.textContent = t("open_btn");
-            openBtn.addEventListener("click", () => window.open(item.content, "_blank", "noopener,noreferrer"));
-            actions.appendChild(openBtn);
-
-            if (state.config.summarizeEnabled !== false) {
-                const summarizeBtn = document.createElement("button");
-                summarizeBtn.className = "btn btn-small btn-secondary";
-                summarizeBtn.type = "button";
-                summarizeBtn.textContent = t("summarize_btn");
-                summarizeBtn.addEventListener("click", () => summarizeLink(item.content));
-                actions.appendChild(summarizeBtn);
-            }
-        }
-
-        if (item.type === "todo") {
-            const openTodoBtn = document.createElement("button");
-            openTodoBtn.className = "btn btn-small open-btn";
-            openTodoBtn.type = "button";
-            openTodoBtn.textContent = t("open_btn");
-            openTodoBtn.addEventListener("click", () => {
-                openTodoViewModal(item);
+        const descriptorResult = typeof uiCore.getSnippetActionDescriptors === "function"
+            ? uiCore.getSnippetActionDescriptors(item, {
+                summarizeEnabled: state.config.summarizeEnabled !== false,
+                includeOpenAll: false,
+                includeSummarize: true,
+                includeEdit: true,
+                includeDelete: true
+            })
+            : null;
+        const actionState = descriptorResult?.actionState || (typeof uiCore.getSnippetActionState === "function"
+            ? uiCore.getSnippetActionState(item, { summarizeEnabled: state.config.summarizeEnabled !== false })
+            : {
+                canOpenSingleLink: item.type === "link",
+                canSummarizeLink: item.type === "link" && state.config.summarizeEnabled !== false,
+                canOpenTodo: item.type === "todo",
+                canShowFullContent: item.type === "text" || item.type === "link",
+                primaryLink: item.content
             });
-            actions.appendChild(openTodoBtn);
-        }
+        const actionDescriptors = descriptorResult?.descriptors || [];
 
-        if (item.type === "text" || item.type === "link") {
-            const showBtn = document.createElement("button");
-            showBtn.className = "btn btn-small btn-primary";
-            showBtn.type = "button";
-            showBtn.textContent = t("show_btn");
-            showBtn.addEventListener("click", () => openContentViewModal(item));
-            actions.appendChild(showBtn);
-        }
+        actionDescriptors.forEach((descriptor) => {
+            let btn = null;
 
-        const favBtn = document.createElement("button");
-        favBtn.className = `btn btn-small ${item.isFavorite ? "btn-favorite-active" : "btn-favorite"}`;
-        favBtn.type = "button";
-        favBtn.textContent = item.isFavorite ? t("unfavorite_btn") : t("favorite_btn");
-        favBtn.addEventListener("click", async () => {
-            try {
-                const updated = {
-                    ...item,
-                    isFavorite: !item.isFavorite,
-                    updatedAt: new Date().toISOString()
-                };
-                await upsertSnippet(updated);
-                await sync();
-            } catch (error) {
-                console.error(error);
-                showToast(t("toast_favorite_error"));
+            switch (descriptor.id) {
+                case "open_link":
+                    btn = document.createElement("button");
+                    btn.className = "btn btn-small open-btn";
+                    btn.type = "button";
+                    btn.textContent = t("open_btn");
+                    btn.addEventListener("click", () => window.open(descriptor.url || actionState.primaryLink, "_blank", "noopener,noreferrer"));
+                    break;
+                case "open_todo":
+                    btn = document.createElement("button");
+                    btn.className = "btn btn-small open-btn";
+                    btn.type = "button";
+                    btn.textContent = t("open_btn");
+                    btn.addEventListener("click", () => openTodoViewModal(item));
+                    break;
+                case "show_content":
+                    btn = document.createElement("button");
+                    btn.className = "btn btn-small btn-primary";
+                    btn.type = "button";
+                    btn.textContent = t("show_btn");
+                    btn.addEventListener("click", () => openContentViewModal(item));
+                    break;
+                case "favorite_toggle":
+                    btn = document.createElement("button");
+                    btn.className = `btn btn-small ${item.isFavorite ? "btn-favorite-active" : "btn-favorite"}`;
+                    btn.type = "button";
+                    btn.textContent = item.isFavorite ? t("unfavorite_btn") : t("favorite_btn");
+                    btn.addEventListener("click", async () => {
+                        try {
+                            const updated = {
+                                ...item,
+                                isFavorite: !item.isFavorite,
+                                updatedAt: new Date().toISOString()
+                            };
+                            await upsertSnippet(updated);
+                            await sync();
+                        } catch (error) {
+                            console.error(error);
+                            showToast(t("toast_favorite_error"));
+                        }
+                    });
+                    break;
+                case "summarize_link":
+                    btn = document.createElement("button");
+                    btn.className = "btn btn-small btn-secondary";
+                    btn.type = "button";
+                    btn.textContent = t("summarize_btn");
+                    btn.addEventListener("click", () => summarizeLink(descriptor.url || actionState.primaryLink));
+                    break;
+                case "archive_toggle":
+                    btn = document.createElement("button");
+                    btn.className = `btn btn-small ${item.isArchived ? "btn-archive-active" : "btn-archive"}`;
+                    btn.type = "button";
+                    btn.textContent = item.isArchived ? t("unarchive_btn") : t("archive_btn");
+                    btn.addEventListener("click", async () => {
+                        try {
+                            const updated = {
+                                ...item,
+                                isArchived: !item.isArchived,
+                                updatedAt: new Date().toISOString()
+                            };
+                            await upsertSnippet(updated);
+                            await sync();
+                        } catch (error) {
+                            console.error(error);
+                            showToast(t("toast_archive_error"));
+                        }
+                    });
+                    break;
+                case "copy_content":
+                    btn = document.createElement("button");
+                    btn.className = "btn btn-small btn-secondary";
+                    btn.type = "button";
+                    btn.textContent = t("copy_btn");
+                    btn.addEventListener("click", async () => {
+                        const copied = await copyToClipboard(item.content);
+                        showToast(copied ? t("toast_copy_success") : t("toast_copy_error"));
+                    });
+                    break;
+                case "edit_snippet":
+                    btn = document.createElement("button");
+                    btn.className = "btn btn-small btn-primary";
+                    btn.type = "button";
+                    btn.textContent = t("edit_btn");
+                    btn.addEventListener("click", () => openAddModalForEdit(item));
+                    break;
+                case "delete_snippet":
+                    btn = document.createElement("button");
+                    btn.className = "btn btn-small btn-danger";
+                    btn.type = "button";
+                    btn.textContent = t("delete_btn");
+                    btn.addEventListener("click", async () => {
+                        if (!window.confirm(t("confirm_delete"))) return;
+                        try {
+                            await removeSnippet(item.id);
+                            await sync();
+                        } catch (error) {
+                            console.error(error);
+                            showToast(t("toast_delete_error"));
+                        }
+                    });
+                    break;
+                default:
+                    break;
             }
-        });
-        actions.appendChild(favBtn);
 
-        const archiveBtn = document.createElement("button");
-        archiveBtn.className = `btn btn-small ${item.isArchived ? "btn-archive-active" : "btn-archive"}`;
-        archiveBtn.type = "button";
-        archiveBtn.textContent = item.isArchived ? t("unarchive_btn") : t("archive_btn");
-        archiveBtn.addEventListener("click", async () => {
-            try {
-                const updated = {
-                    ...item,
-                    isArchived: !item.isArchived,
-                    updatedAt: new Date().toISOString()
-                };
-                await upsertSnippet(updated);
-                await sync();
-            } catch (error) {
-                console.error(error);
-                showToast(t("toast_archive_error"));
-            }
+            if (btn) actions.appendChild(btn);
         });
-        actions.appendChild(archiveBtn);
-
-        const copyBtn = document.createElement("button");
-        copyBtn.className = "btn btn-small btn-secondary";
-        copyBtn.type = "button";
-        copyBtn.textContent = t("copy_btn");
-        copyBtn.addEventListener("click", async () => {
-            const copied = await copyToClipboard(item.content);
-            showToast(copied ? t("toast_copy_success") : t("toast_copy_error"));
-        });
-        actions.appendChild(copyBtn);
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "btn btn-small btn-primary";
-        editBtn.type = "button";
-        editBtn.textContent = t("edit_btn");
-        editBtn.addEventListener("click", () => {
-            openAddModalForEdit(item);
-        });
-        actions.appendChild(editBtn);
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "btn btn-small btn-danger";
-        deleteBtn.type = "button";
-        deleteBtn.textContent = t("delete_btn");
-        deleteBtn.addEventListener("click", async () => {
-            if (!window.confirm(t("confirm_delete"))) return;
-            try {
-                await removeSnippet(item.id);
-                await sync();
-            } catch (error) {
-                console.error(error);
-                showToast(t("toast_delete_error"));
-            }
-        });
-        actions.appendChild(deleteBtn);
 
         card.appendChild(actions);
         return card;

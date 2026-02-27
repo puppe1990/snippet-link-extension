@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Snippet Link Manager</title>
+    <link rel="stylesheet" href="ui-core.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -36,11 +37,11 @@
         <header class="header">
             <h1>📝 Snippet Manager</h1>
             <div class="header-actions">
-                <button id="openMobileWebBtn" class="btn btn-secondary" title="Abrir mobile web">📱</button>
-                <button id="openInTabBtn" class="btn btn-secondary" title="Abrir em nova aba">🖥️</button>
-                <button id="settingsBtn" class="btn btn-secondary" title="Configurações">⚙️</button>
-                <button id="addBtn" class="btn btn-primary">+ Novo</button>
-                <button id="sortBtn" class="btn btn-secondary">🔄 Ordenar</button>
+                <button id="openMobileWebBtn" class="btn action-tile action-refresh" title="Abrir mobile web">📱</button>
+                <button id="openInTabBtn" class="btn action-tile action-sync" title="Abrir em nova aba">🖥️</button>
+                <button id="settingsBtn" class="btn action-tile action-config" title="Configurações">⚙️</button>
+                <button id="addBtn" class="btn action-tile action-new">+ Novo</button>
+                <button id="sortBtn" class="btn action-tile action-sort">🔄 Ordenar</button>
             </div>
         </header>
 
@@ -334,6 +335,7 @@
     </div>
 
     <script src="marked.min.js"></script>
+    <script src="ui-core.js"></script>
     <script src="translations.js"></script>
     <script src="popup.js"></script>
 </body>
