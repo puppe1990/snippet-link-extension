@@ -639,6 +639,7 @@ class SnippetManager {
         const statusLine = `${this.t('billing_status_prefix')} ${statusLabel}`;
         const billingStatus = document.getElementById('billingStatus');
         const banner = document.getElementById('proPaywallBanner');
+        const settingsBillingCard = document.querySelector('#settingsModal .billing-card');
         const hasSession = Boolean(this.cloudAuthToken);
         const shouldShowBanner = hasSession && !this.entitled;
         const isPremium = hasSession && this.entitled;
@@ -648,6 +649,9 @@ class SnippetManager {
         }
         if (banner) {
             banner.classList.toggle('hidden', !shouldShowBanner);
+        }
+        if (settingsBillingCard) {
+            settingsBillingCard.classList.toggle('hidden', isPremium);
         }
         document.body.classList.toggle('is-pro', isPremium);
     }
