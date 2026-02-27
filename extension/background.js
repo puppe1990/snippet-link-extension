@@ -103,7 +103,7 @@ function toCloudSnippet(snippet, userId) {
     };
 }
 
-function getCloudHeaders(apiKey, authToken) {
+function getCloudHeaders(apiKey, authToken, authEmail) {
     const headers = {
         'Content-Type': 'application/json'
     };
@@ -115,12 +115,12 @@ function getCloudHeaders(apiKey, authToken) {
     return headers;
 }
 
-async function fetchRemoteSnippets(apiBase, apiKey, userId, authToken) {
+async function fetchRemoteSnippets(apiBase, apiKey, userId, authToken, authEmail) {
     const userQuery = authToken ? '' : `?userId=${encodeURIComponent(userId)}`;
     const endpoint = `${apiBase}/.netlify/functions/snippets${userQuery}`;
     const response = await fetch(endpoint, {
         method: 'GET',
-        headers: getCloudHeaders(apiKey, authToken)
+        headers: getCloudHeaders(apiKey, authToken, authEmail)
     });
 
     if (response.status === 402) {
@@ -139,11 +139,11 @@ async function fetchRemoteSnippets(apiBase, apiKey, userId, authToken) {
     return data.map(fromCloudSnippet);
 }
 
-async function upsertRemoteSnippet(apiBase, apiKey, authToken, payload) {
+async function upsertRemoteSnippet(apiBase, apiKey, authToken, authEmail, payload) {
     const endpoint = `${apiBase}/.netlify/functions/snippets`;
     const response = await fetch(endpoint, {
         method: 'POST',
-        headers: getCloudHeaders(apiKey, authToken),
+        headers: getCloudHeaders(apiKey, authToken, authEmail),
         body: JSON.stringify(payload)
     });
 
@@ -159,6 +159,7 @@ async function syncCloudInBackground() {
         'cloudApiBase',
         'cloudApiKey',
         'cloudUserId',
+        'cloudAuthEmail',
         'cloudAuthToken',
         'cloudAuthUserId',
         'snippets'
@@ -168,6 +169,7 @@ async function syncCloudInBackground() {
     const cloudApiBase = normalizeCloudApiBase(settings.cloudApiBase || DEFAULT_CLOUD_API_BASE);
     const cloudApiKey = settings.cloudApiKey || '';
     const cloudUserId = settings.cloudUserId || 'default-user';
+    const cloudAuthEmail = settings.cloudAuthEmail || '';
     const cloudAuthToken = settings.cloudAuthToken || '';
     const cloudAuthUserId = settings.cloudAuthUserId || '';
 
@@ -176,7 +178,7 @@ async function syncCloudInBackground() {
     }
 
     const localSnippets = Array.isArray(settings.snippets) ? settings.snippets : [];
-    const remoteSnippets = await fetchRemoteSnippets(cloudApiBase, cloudApiKey, cloudUserId, cloudAuthToken);
+    const remoteSnippets = await fetchRemoteSnippets(cloudApiBase, cloudApiKey, cloudUserId, cloudAuthToken, cloudAuthEmail);
 
     const localById = new Map(localSnippets.map(snippet => [snippet.id, snippet]));
     const remoteById = new Map(remoteSnippets.map(snippet => [snippet.id, snippet]));
@@ -220,7 +222,7 @@ async function syncCloudInBackground() {
 
     for (const snippet of toUpload) {
         try {
-            await upsertRemoteSnippet(cloudApiBase, cloudApiKey, cloudAuthToken, toCloudSnippet(snippet, cloudAuthUserId || cloudUserId));
+            await upsertRemoteSnippet(cloudApiBase, cloudApiKey, cloudAuthToken, cloudAuthEmail, toCloudSnippet(snippet, cloudAuthUserId || cloudUserId));
         } catch (error) {
             console.error('Falha ao enviar snippet no sync em background:', error);
         }

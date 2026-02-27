@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-title" content="Snippet Pocket">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon192.png">
-    <link rel="stylesheet" href="mobile-app.css?v=20260216-6">
+    <link rel="stylesheet" href="mobile-app.css?v=20260227-8">
 </head>
 <body>
     <main class="container">
@@ -22,6 +22,7 @@
             <h1>Snippet Pocket</h1>
             <div class="header-actions">
                 <button id="refreshPwaBtn" class="action-tile action-refresh hidden" type="button">⟳ Atualizar</button>
+                <button id="quickSyncBtn" class="action-tile action-sync" type="button">☁ Sincronizar</button>
                 <button id="toggleSettingsBtn" class="action-tile action-config" type="button">⚙️</button>
                 <button id="openAddModalBtn" class="action-tile action-new" type="button">+ Novo</button>
                 <button id="sortBtn" class="action-tile action-sort" type="button">🔄 Ordenar</button>
@@ -142,6 +143,9 @@
                 <button id="syncBtn" class="btn btn-primary" type="button">Sincronizar</button>
             </div>
             <div class="row">
+                <button id="settingsManageSubscriptionBtn" class="btn btn-secondary hidden" type="button">Gerenciar assinatura</button>
+            </div>
+            <div class="row">
                 <button id="saveSettingsBtn" class="btn btn-primary" type="button">Salvar Configurações</button>
             </div>
             <div class="row">
@@ -202,6 +206,6 @@
     </div>
 
     <div id="toast" class="toast hidden"></div>
-    <script src="mobile-app.js?v=20260216-8"></script>
+    <script src="mobile-app.js?v=20260227-10"></script>
 </body>
 </html>

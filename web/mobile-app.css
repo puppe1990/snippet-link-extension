@@ -31,6 +31,18 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+body.is-pro {
+    background:
+        radial-gradient(1200px 620px at -12% -16%, #f8d36b 0%, transparent 46%),
+        radial-gradient(900px 560px at 108% 8%, #5bc18f 0%, transparent 48%),
+        linear-gradient(162deg, #152a4c 0%, #213d6b 42%, #1e4f6f 100%);
+}
+
+body.is-pro .header {
+    background: linear-gradient(135deg, rgba(33, 63, 116, 0.82) 0%, rgba(35, 104, 92, 0.78) 100%);
+    box-shadow: 0 22px 42px rgba(9, 28, 44, 0.42);
+}
+
 .container {
     min-height: 100vh;
     width: 100%;
@@ -103,6 +115,49 @@ body {
 .action-refresh {
     min-width: 128px;
     background: linear-gradient(140deg, #2c63ff 0%, #2454dd 100%);
+}
+
+.action-sync {
+    min-width: 132px;
+    background: linear-gradient(140deg, #0f9f7a 0%, #1178c9 100%);
+}
+
+.action-sync.is-loading {
+    filter: saturate(0.9) brightness(0.95);
+    position: relative;
+    padding-left: 36px;
+}
+
+.action-sync.is-success {
+    background: linear-gradient(140deg, #1fbf71 0%, #0f9763 100%);
+}
+
+.action-sync.is-error {
+    background: linear-gradient(140deg, #ef5e44 0%, #c8372f 100%);
+}
+
+.action-sync.is-locked {
+    background: linear-gradient(140deg, #9f6a12 0%, #7a4c08 100%);
+}
+
+.action-sync.is-loading::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    margin-top: -7px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    animation: sync-spin 0.75s linear infinite;
+}
+
+@keyframes sync-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .auth-card,

@@ -34,8 +34,13 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Não cachear API de sync
-  if (url.pathname.includes("/.netlify/functions/snippets")) {
+  // Never apply cache strategies to non-GET requests.
+  if (request.method !== "GET") {
+    return;
+  }
+
+  // Do not cache API responses.
+  if (url.pathname.startsWith("/.netlify/functions/")) {
     return;
   }
 

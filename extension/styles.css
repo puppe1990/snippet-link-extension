@@ -1693,3 +1693,316 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* Pocket visual theme overrides for Snippet Manager */
+:root {
+    --bg-1: #0b1226;
+    --bg-2: #18284f;
+    --bg-3: #2647a7;
+    --surface: rgba(255, 255, 255, 0.94);
+    --surface-soft: rgba(255, 255, 255, 0.82);
+    --border: rgba(102, 126, 234, 0.2);
+    --text: #16213d;
+    --muted: #5e6e92;
+    --primary: #3657ff;
+    --primary-2: #5d3df1;
+    --success: #22a362;
+    --warning: #f6b40f;
+    --danger: #d7264f;
+}
+
+body {
+    font-family: "Manrope", "Avenir Next", "SF Pro Display", "Segoe UI", sans-serif !important;
+    color: var(--text) !important;
+    width: 420px !important;
+    height: 620px !important;
+    background:
+        radial-gradient(920px 440px at -8% -18%, #40b5ff 0%, transparent 46%),
+        radial-gradient(760px 420px at 108% 8%, #5f6df7 0%, transparent 44%),
+        linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 44%, var(--bg-3) 100%) !important;
+}
+
+.container {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 10px !important;
+    gap: 10px;
+}
+
+.header {
+    border-radius: 24px !important;
+    padding: 14px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 10px !important;
+    background: linear-gradient(135deg, rgba(74, 103, 255, 0.74) 0%, rgba(111, 55, 224, 0.72) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 18px 38px rgba(7, 17, 45, 0.36) !important;
+}
+
+.header h1 {
+    font-size: 28px !important;
+    line-height: 1 !important;
+    letter-spacing: -0.03em !important;
+    font-weight: 800 !important;
+}
+
+.header-actions {
+    gap: 8px !important;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.header-actions .btn {
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border-radius: 14px !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    font-size: 13px !important;
+    min-height: 44px !important;
+    padding: 0 12px !important;
+    box-shadow: 0 10px 18px rgba(8, 12, 30, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.26) !important;
+}
+
+#settingsBtn {
+    min-width: 50px !important;
+    background: linear-gradient(140deg, #4d6fff 0%, #3750de 100%) !important;
+}
+
+#addBtn {
+    min-width: 102px !important;
+    background: linear-gradient(140deg, #2db869 0%, #169c8a 100%) !important;
+}
+
+#sortBtn {
+    min-width: 112px !important;
+    background: linear-gradient(140deg, #ff9d1c 0%, #f2671e 100%) !important;
+}
+
+#openMobileWebBtn {
+    min-width: 50px !important;
+    background: linear-gradient(140deg, #2c63ff 0%, #2454dd 100%) !important;
+}
+
+#openInTabBtn {
+    min-width: 50px !important;
+    background: linear-gradient(140deg, #0f9f7a 0%, #1178c9 100%) !important;
+}
+
+.search-section,
+.tabs,
+.snippets-container {
+    background: var(--surface-soft) !important;
+    border: 1px solid rgba(255, 255, 255, 0.52) !important;
+    border-radius: 18px !important;
+}
+
+.search-section {
+    padding: 12px !important;
+}
+
+.search-input {
+    border: 1.5px solid #dbe4f5 !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    color: var(--text) !important;
+}
+
+.search-input:focus {
+    border-color: #5570f3 !important;
+    box-shadow: 0 0 0 4px rgba(85, 112, 243, 0.16) !important;
+}
+
+.tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 7px !important;
+}
+
+.tab-btn {
+    border-radius: 12px !important;
+    border: 1px solid transparent !important;
+    color: #44567e !important;
+    font-weight: 700 !important;
+    min-width: max-content;
+    flex: 0 0 auto !important;
+    padding: 10px 12px !important;
+}
+
+.tab-btn.active {
+    color: #fff !important;
+    border-bottom-color: transparent !important;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%) !important;
+}
+
+.snippets-container {
+    padding: 10px !important;
+    box-shadow: 0 24px 50px rgba(4, 12, 35, 0.14);
+}
+
+.snippet-item {
+    border-radius: 16px !important;
+    border: 1px solid #dce6f7 !important;
+    background: #fff !important;
+    box-shadow: 0 10px 24px rgba(13, 25, 52, 0.08) !important;
+}
+
+.snippet-item:hover {
+    border-color: #6383ff !important;
+    box-shadow: 0 14px 30px rgba(31, 58, 117, 0.18) !important;
+}
+
+.snippet-type.link {
+    background: #e8f1ff !important;
+    color: #2f63d8 !important;
+}
+
+.snippet-type.text {
+    background: #f2ecff !important;
+    color: #6a35cb !important;
+}
+
+.snippet-type.todo {
+    background: #e9f8ef !important;
+    color: #1c8b54 !important;
+}
+
+.snippet-type.markdown {
+    background: #e8f7f2 !important;
+    color: #0b9b6e !important;
+}
+
+.tag {
+    background: #ecf3ff !important;
+    color: #315185 !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%) !important;
+    color: #fff !important;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #4b5f89 0%, #324673 100%) !important;
+    color: #fff !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef5e44 0%, #c8372f 100%) !important;
+    color: #fff !important;
+}
+
+.modal {
+    background: rgba(3, 8, 24, 0.62) !important;
+    backdrop-filter: blur(7px) !important;
+}
+
+.modal-content {
+    background: var(--surface) !important;
+    border: 1px solid rgba(255, 255, 255, 0.58) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 24px 50px rgba(4, 12, 35, 0.22) !important;
+}
+
+.modal-header {
+    border-radius: 22px 22px 0 0 !important;
+    background: linear-gradient(135deg, rgba(74, 103, 255, 0.86) 0%, rgba(111, 55, 224, 0.84) 100%) !important;
+}
+
+.modal-actions {
+    background: rgba(244, 248, 255, 0.8) !important;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+.auth-form input {
+    border: 1.5px solid #dbe4f5 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.auth-form input:focus {
+    border-color: #5570f3 !important;
+    box-shadow: 0 0 0 4px rgba(85, 112, 243, 0.16) !important;
+}
+
+.auth-gate {
+    background: rgba(3, 8, 24, 0.72) !important;
+}
+
+.auth-card {
+    background: var(--surface) !important;
+    border: 1px solid rgba(255, 255, 255, 0.62) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 24px 50px rgba(4, 12, 35, 0.22) !important;
+}
+
+.auth-tab {
+    border-radius: 12px !important;
+    background: #f6f9ff !important;
+    color: #455a7f !important;
+}
+
+.auth-tab.active {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%) !important;
+    border-color: transparent !important;
+    color: #fff !important;
+}
+
+.pro-banner {
+    border-radius: 18px;
+    border: 1px solid #f8d57a !important;
+    background: linear-gradient(135deg, #fff4d2 0%, #ffe7b3 100%) !important;
+    color: #15213f !important;
+    margin: 0 0 10px;
+}
+
+.pro-banner p {
+    color: #44567e !important;
+}
+
+.pro-banner .btn-primary {
+    color: #fff !important;
+}
+
+.billing-card {
+    background: linear-gradient(135deg, #fff4d2 0%, #ffe7b3 100%) !important;
+    border-color: #f8d57a !important;
+    border-radius: 16px !important;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary) !important;
+}
+
+/* Keep snippet action options always visible like Pocket */
+.snippet-actions {
+    opacity: 1 !important;
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 10px !important;
+    margin-top: 10px;
+}
+
+.snippet-item:hover .snippet-actions {
+    opacity: 1 !important;
+}
+
+.snippet-actions .btn {
+    border-radius: 16px !important;
+    min-height: 44px !important;
+    padding: 0 18px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+}
+
+.snippet-actions .btn-small {
+    font-size: 13px !important;
+    padding: 0 18px !important;
+}

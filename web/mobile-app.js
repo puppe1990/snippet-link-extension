@@ -2,6 +2,428 @@
     const STORAGE_KEY = "snippet_pocket_mobile_config_v2";
     const DEFAULT_API_BASE = window.location.origin;
     const MOBILE_BYPASS_EMAIL = "matheus.puppe@gmail.com";
+    const i18n = {
+        "pt-BR": {
+            app_title: "Snippet Pocket",
+            refresh_btn: "⟳ Atualizar",
+            settings_btn: "⚙️",
+            new_btn: "+ Novo",
+            sort_btn: "🔄 Ordenar",
+            auth_screen_title: "🔐 Entrar",
+            auth_screen_subtitle: "Faça login para acessar seus snippets",
+            auth_tab_sign_in: "Sign in",
+            auth_tab_sign_up: "Sign up",
+            email_label: "Email",
+            password_label: "Senha",
+            email_placeholder: "seu@email.com",
+            password_signin_placeholder: "sua senha",
+            password_signup_placeholder: "min 6 caracteres",
+            auth_sign_in_submit: "Entrar",
+            auth_sign_up_submit: "Criar conta",
+            auth_not_authenticated: "Não autenticado.",
+            billing_headline: "Desbloqueie o Pro por US$ 1/mês",
+            billing_subheadline: "Sincronização completa e recursos avançados sem complicação.",
+            billing_subscribe_btn: "Assinar por US$ 1/mês",
+            billing_manage_btn: "Gerenciar assinatura",
+            billing_status_prefix: "Status:",
+            billing_status_bypass: "bypass ativo",
+            subscription_active: "ativa",
+            subscription_trialing: "em teste",
+            subscription_past_due: "pagamento pendente",
+            subscription_canceled: "cancelada",
+            subscription_inactive: "inativa",
+            list_title: "Minha Lista",
+            tab_all: "Todos",
+            tab_link: "Links",
+            tab_text: "Textos",
+            tab_markdown: "Markdown",
+            tab_todo: "To-Do",
+            tab_favorites: "Favoritos",
+            tab_archived: "Arquivados",
+            search_placeholder: "Buscar por título, URL ou tag",
+            sync_status_initial: "Sem sincronização ainda.",
+            settings_title: "Configuração",
+            language_label: "🌐 Idioma",
+            link_preview_label: "🔗 Pré-visualização de Links",
+            summarize_label: "📄 Resumo de Links",
+            ai_provider_label: "🤖 Provedor de IA",
+            settings_password_placeholder: "mínimo 6 caracteres",
+            logout_btn: "Sair",
+            save_settings_btn: "Salvar Configurações",
+            export_btn: "📤 Exportar Snippets",
+            import_btn: "📥 Importar Snippets",
+            new_snippet_title: "Novo Snippet",
+            edit_snippet_title: "Editar Snippet",
+            snippet_type_label: "Tipo",
+            type_link: "🔗 Link",
+            type_text: "📝 Texto",
+            type_markdown: "📄 Markdown",
+            type_todo: "✅ To-Do List",
+            content_label: "Conteúdo",
+            content_placeholder: "Digite o conteúdo...",
+            checklist_label: "Checklist",
+            add_task_btn: "+ Tarefa",
+            title_optional_label: "Título (opcional)",
+            title_placeholder: "Título",
+            tags_label: "Tags (vírgula)",
+            tags_placeholder: "trabalho, leitura",
+            save_snippet_btn: "Salvar Snippet",
+            update_snippet_btn: "Atualizar Snippet",
+            todo_view_title: "To-Do",
+            quick_sync_btn: "☁ Sincronizar",
+            quick_sync_loading: "☁ Sincronizando...",
+            quick_sync_success: "✅ Sincronizado",
+            quick_sync_locked: "🔒 Pro necessária",
+            quick_sync_error: "⚠ Erro no sync",
+            sync_btn: "Sincronizar",
+            syncing: "Sincronizando...",
+            sync_status_incomplete: "Configuração incompleta.",
+            sync_status_unauthenticated: "Não autenticado.",
+            sync_status_synced: "Sincronizado: {{count}} itens",
+            sync_status_subscription_required: "Assinatura Pro necessária para sincronizar.",
+            sync_status_error: "Erro de sync: {{error}}",
+            settings_saved: "Configuração salva",
+            toast_configure_api: "Configure a API Base URL",
+            toast_login_to_sync: "Faça login para sincronizar",
+            toast_synced: "Sincronizado",
+            toast_subscription_required: "Assinatura Pro necessária",
+            toast_sync_error: "Erro ao sincronizar",
+            toast_login_to_save: "Faça login para salvar",
+            toast_todo_update_error: "Erro ao atualizar tarefa",
+            toast_favorite_error: "Erro ao favoritar",
+            toast_archive_error: "Erro ao arquivar",
+            toast_copy_success: "Snippet copiado",
+            toast_copy_error: "Erro ao copiar",
+            toast_delete_error: "Erro ao excluir",
+            toast_export_done: "Export concluído",
+            toast_import_done: "Import concluído",
+            toast_import_error: "Erro ao importar",
+            toast_add_task_required: "Adicione ao menos uma tarefa",
+            toast_enter_url: "Informe uma URL",
+            toast_enter_content: "Informe o conteúdo",
+            toast_invalid_url: "URL inválida",
+            toast_snippet_updated: "Snippet atualizado",
+            toast_snippet_saved: "Snippet salvo",
+            toast_save_error: "Erro ao salvar",
+            toast_checkout_error: "Erro no checkout: {{error}}",
+            toast_portal_error: "Erro no portal: {{error}}",
+            toast_refreshed: "Atualizado",
+            toast_refresh_error: "Erro ao atualizar",
+            toast_sorted_oldest: "Ordenado: mais antigos",
+            toast_sorted_newest: "Ordenado: mais recentes",
+            toast_account_created: "Conta criada",
+            toast_register_error: "Erro ao cadastrar",
+            toast_login_success: "Login realizado",
+            toast_login_error: "Erro no login",
+            toast_logout_success: "Logout realizado",
+            auth_error_login: "Erro no login",
+            auth_error_register: "Erro no cadastro",
+            auth_gate_continue: "Faça login para continuar.",
+            auth_status_logged_in: "Autenticado.",
+            auth_status_not_logged_in: "Não autenticado.",
+            content_label_url: "URL",
+            todo_task_placeholder: "Digite uma tarefa...",
+            todo_remove_task: "Excluir tarefa",
+            link_preview_disabled: "Pré-visualização desativada.",
+            updated_at_prefix: "Atualizado:",
+            archived_suffix: "Arquivado",
+            open_btn: "Abrir",
+            summarize_btn: "📄 Resumir",
+            favorite_btn: "Favoritar",
+            unfavorite_btn: "Desfavoritar",
+            archive_btn: "Arquivar",
+            unarchive_btn: "Desarquivar",
+            copy_btn: "Copiar",
+            edit_btn: "Editar",
+            delete_btn: "Excluir",
+            confirm_delete: "Excluir este snippet?",
+            empty_title: "Nenhum item encontrado",
+            empty_subtitle: "Salve seu primeiro link acima.",
+            todo_done_counter: "{{done}}/{{total}} concluídas",
+            show_password: "Mostrar senha",
+            hide_password: "Ocultar senha"
+        },
+        en: {
+            app_title: "Snippet Pocket",
+            refresh_btn: "⟳ Refresh",
+            settings_btn: "⚙️",
+            new_btn: "+ New",
+            sort_btn: "🔄 Sort",
+            auth_screen_title: "🔐 Sign in",
+            auth_screen_subtitle: "Sign in to access your snippets",
+            auth_tab_sign_in: "Sign in",
+            auth_tab_sign_up: "Sign up",
+            email_label: "Email",
+            password_label: "Password",
+            email_placeholder: "you@email.com",
+            password_signin_placeholder: "your password",
+            password_signup_placeholder: "min 6 characters",
+            auth_sign_in_submit: "Sign in",
+            auth_sign_up_submit: "Create account",
+            auth_not_authenticated: "Not authenticated.",
+            billing_headline: "Unlock Pro for US$1/month",
+            billing_subheadline: "Full sync and advanced features without complexity.",
+            billing_subscribe_btn: "Subscribe for US$1/month",
+            billing_manage_btn: "Manage subscription",
+            billing_status_prefix: "Status:",
+            billing_status_bypass: "bypass active",
+            subscription_active: "active",
+            subscription_trialing: "trialing",
+            subscription_past_due: "past due",
+            subscription_canceled: "canceled",
+            subscription_inactive: "inactive",
+            list_title: "My List",
+            tab_all: "All",
+            tab_link: "Links",
+            tab_text: "Texts",
+            tab_markdown: "Markdown",
+            tab_todo: "To-Do",
+            tab_favorites: "Favorites",
+            tab_archived: "Archived",
+            search_placeholder: "Search by title, URL or tag",
+            sync_status_initial: "No sync yet.",
+            settings_title: "Settings",
+            language_label: "🌐 Language",
+            link_preview_label: "🔗 Link Preview",
+            summarize_label: "📄 Link Summaries",
+            ai_provider_label: "🤖 AI Provider",
+            settings_password_placeholder: "minimum 6 characters",
+            logout_btn: "Sign out",
+            save_settings_btn: "Save Settings",
+            export_btn: "📤 Export Snippets",
+            import_btn: "📥 Import Snippets",
+            new_snippet_title: "New Snippet",
+            edit_snippet_title: "Edit Snippet",
+            snippet_type_label: "Type",
+            type_link: "🔗 Link",
+            type_text: "📝 Text",
+            type_markdown: "📄 Markdown",
+            type_todo: "✅ To-Do List",
+            content_label: "Content",
+            content_placeholder: "Type the content...",
+            checklist_label: "Checklist",
+            add_task_btn: "+ Task",
+            title_optional_label: "Title (optional)",
+            title_placeholder: "Title",
+            tags_label: "Tags (comma separated)",
+            tags_placeholder: "work, reading",
+            save_snippet_btn: "Save Snippet",
+            update_snippet_btn: "Update Snippet",
+            todo_view_title: "To-Do",
+            quick_sync_btn: "☁ Sync",
+            quick_sync_loading: "☁ Syncing...",
+            quick_sync_success: "✅ Synced",
+            quick_sync_locked: "🔒 Pro required",
+            quick_sync_error: "⚠ Sync error",
+            sync_btn: "Sync",
+            syncing: "Syncing...",
+            sync_status_incomplete: "Configuration incomplete.",
+            sync_status_unauthenticated: "Not authenticated.",
+            sync_status_synced: "Synced: {{count}} items",
+            sync_status_subscription_required: "Pro subscription required to sync.",
+            sync_status_error: "Sync error: {{error}}",
+            settings_saved: "Settings saved",
+            toast_configure_api: "Configure API Base URL",
+            toast_login_to_sync: "Sign in to sync",
+            toast_synced: "Synced",
+            toast_subscription_required: "Pro subscription required",
+            toast_sync_error: "Sync failed",
+            toast_login_to_save: "Sign in to save",
+            toast_todo_update_error: "Failed to update task",
+            toast_favorite_error: "Failed to favorite",
+            toast_archive_error: "Failed to archive",
+            toast_copy_success: "Snippet copied",
+            toast_copy_error: "Copy failed",
+            toast_delete_error: "Failed to delete",
+            toast_export_done: "Export completed",
+            toast_import_done: "Import completed",
+            toast_import_error: "Import failed",
+            toast_add_task_required: "Add at least one task",
+            toast_enter_url: "Enter a URL",
+            toast_enter_content: "Enter content",
+            toast_invalid_url: "Invalid URL",
+            toast_snippet_updated: "Snippet updated",
+            toast_snippet_saved: "Snippet saved",
+            toast_save_error: "Failed to save",
+            toast_checkout_error: "Checkout error: {{error}}",
+            toast_portal_error: "Portal error: {{error}}",
+            toast_refreshed: "Updated",
+            toast_refresh_error: "Update error",
+            toast_sorted_oldest: "Sorted: oldest first",
+            toast_sorted_newest: "Sorted: newest first",
+            toast_account_created: "Account created",
+            toast_register_error: "Sign up failed",
+            toast_login_success: "Signed in",
+            toast_login_error: "Sign in failed",
+            toast_logout_success: "Signed out",
+            auth_error_login: "Sign in error",
+            auth_error_register: "Sign up error",
+            auth_gate_continue: "Sign in to continue.",
+            auth_status_logged_in: "Authenticated.",
+            auth_status_not_logged_in: "Not authenticated.",
+            content_label_url: "URL",
+            todo_task_placeholder: "Type a task...",
+            todo_remove_task: "Remove task",
+            link_preview_disabled: "Preview disabled.",
+            updated_at_prefix: "Updated:",
+            archived_suffix: "Archived",
+            open_btn: "Open",
+            summarize_btn: "📄 Summarize",
+            favorite_btn: "Favorite",
+            unfavorite_btn: "Unfavorite",
+            archive_btn: "Archive",
+            unarchive_btn: "Unarchive",
+            copy_btn: "Copy",
+            edit_btn: "Edit",
+            delete_btn: "Delete",
+            confirm_delete: "Delete this snippet?",
+            empty_title: "No items found",
+            empty_subtitle: "Save your first link above.",
+            todo_done_counter: "{{done}}/{{total}} done",
+            show_password: "Show password",
+            hide_password: "Hide password"
+        },
+        fr: {
+            app_title: "Snippet Pocket",
+            refresh_btn: "⟳ Actualiser",
+            settings_btn: "⚙️",
+            new_btn: "+ Nouveau",
+            sort_btn: "🔄 Trier",
+            auth_screen_title: "🔐 Se connecter",
+            auth_screen_subtitle: "Connectez-vous pour accéder à vos snippets",
+            auth_tab_sign_in: "Sign in",
+            auth_tab_sign_up: "Sign up",
+            email_label: "Email",
+            password_label: "Mot de passe",
+            email_placeholder: "votre@email.com",
+            password_signin_placeholder: "votre mot de passe",
+            password_signup_placeholder: "min 6 caractères",
+            auth_sign_in_submit: "Se connecter",
+            auth_sign_up_submit: "Créer un compte",
+            auth_not_authenticated: "Non authentifié.",
+            billing_headline: "Débloquez Pro pour 1 US$/mois",
+            billing_subheadline: "Synchronisation complète et fonctionnalités avancées sans complexité.",
+            billing_subscribe_btn: "S’abonner pour 1 US$/mois",
+            billing_manage_btn: "Gérer l’abonnement",
+            billing_status_prefix: "Statut :",
+            billing_status_bypass: "bypass actif",
+            subscription_active: "active",
+            subscription_trialing: "essai",
+            subscription_past_due: "paiement en retard",
+            subscription_canceled: "annulée",
+            subscription_inactive: "inactive",
+            list_title: "Ma liste",
+            tab_all: "Tous",
+            tab_link: "Liens",
+            tab_text: "Textes",
+            tab_markdown: "Markdown",
+            tab_todo: "To-Do",
+            tab_favorites: "Favoris",
+            tab_archived: "Archivés",
+            search_placeholder: "Rechercher par titre, URL ou tag",
+            sync_status_initial: "Aucune synchronisation pour le moment.",
+            settings_title: "Configuration",
+            language_label: "🌐 Langue",
+            link_preview_label: "🔗 Aperçu des liens",
+            summarize_label: "📄 Résumé des liens",
+            ai_provider_label: "🤖 Fournisseur IA",
+            settings_password_placeholder: "minimum 6 caractères",
+            logout_btn: "Se déconnecter",
+            save_settings_btn: "Enregistrer les paramètres",
+            export_btn: "📤 Exporter les snippets",
+            import_btn: "📥 Importer des snippets",
+            new_snippet_title: "Nouveau snippet",
+            edit_snippet_title: "Modifier le snippet",
+            snippet_type_label: "Type",
+            type_link: "🔗 Lien",
+            type_text: "📝 Texte",
+            type_markdown: "📄 Markdown",
+            type_todo: "✅ To-Do List",
+            content_label: "Contenu",
+            content_placeholder: "Saisissez le contenu...",
+            checklist_label: "Checklist",
+            add_task_btn: "+ Tâche",
+            title_optional_label: "Titre (optionnel)",
+            title_placeholder: "Titre",
+            tags_label: "Tags (séparés par des virgules)",
+            tags_placeholder: "travail, lecture",
+            save_snippet_btn: "Enregistrer le snippet",
+            update_snippet_btn: "Mettre à jour le snippet",
+            todo_view_title: "To-Do",
+            quick_sync_btn: "☁ Synchroniser",
+            quick_sync_loading: "☁ Synchronisation...",
+            quick_sync_success: "✅ Synchronisé",
+            quick_sync_locked: "🔒 Pro requis",
+            quick_sync_error: "⚠ Erreur de sync",
+            sync_btn: "Synchroniser",
+            syncing: "Synchronisation...",
+            sync_status_incomplete: "Configuration incomplète.",
+            sync_status_unauthenticated: "Non authentifié.",
+            sync_status_synced: "Synchronisé : {{count}} éléments",
+            sync_status_subscription_required: "Abonnement Pro requis pour synchroniser.",
+            sync_status_error: "Erreur de sync : {{error}}",
+            settings_saved: "Configuration enregistrée",
+            toast_configure_api: "Configurez l’URL API de base",
+            toast_login_to_sync: "Connectez-vous pour synchroniser",
+            toast_synced: "Synchronisé",
+            toast_subscription_required: "Abonnement Pro requis",
+            toast_sync_error: "Erreur de synchronisation",
+            toast_login_to_save: "Connectez-vous pour enregistrer",
+            toast_todo_update_error: "Échec de mise à jour de la tâche",
+            toast_favorite_error: "Échec de mise en favori",
+            toast_archive_error: "Échec d’archivage",
+            toast_copy_success: "Snippet copié",
+            toast_copy_error: "Échec de copie",
+            toast_delete_error: "Échec de suppression",
+            toast_export_done: "Export terminé",
+            toast_import_done: "Import terminé",
+            toast_import_error: "Échec de l’import",
+            toast_add_task_required: "Ajoutez au moins une tâche",
+            toast_enter_url: "Saisissez une URL",
+            toast_enter_content: "Saisissez le contenu",
+            toast_invalid_url: "URL invalide",
+            toast_snippet_updated: "Snippet mis à jour",
+            toast_snippet_saved: "Snippet enregistré",
+            toast_save_error: "Échec de l’enregistrement",
+            toast_checkout_error: "Erreur de checkout : {{error}}",
+            toast_portal_error: "Erreur du portail : {{error}}",
+            toast_refreshed: "Mis à jour",
+            toast_refresh_error: "Erreur de mise à jour",
+            toast_sorted_oldest: "Trié : plus anciens d’abord",
+            toast_sorted_newest: "Trié : plus récents d’abord",
+            toast_account_created: "Compte créé",
+            toast_register_error: "Échec de l’inscription",
+            toast_login_success: "Connexion réussie",
+            toast_login_error: "Échec de connexion",
+            toast_logout_success: "Déconnecté",
+            auth_error_login: "Erreur de connexion",
+            auth_error_register: "Erreur d’inscription",
+            auth_gate_continue: "Connectez-vous pour continuer.",
+            auth_status_logged_in: "Authentifié.",
+            auth_status_not_logged_in: "Non authentifié.",
+            content_label_url: "URL",
+            todo_task_placeholder: "Saisissez une tâche...",
+            todo_remove_task: "Supprimer la tâche",
+            link_preview_disabled: "Aperçu désactivé.",
+            updated_at_prefix: "Mis à jour :",
+            archived_suffix: "Archivé",
+            open_btn: "Ouvrir",
+            summarize_btn: "📄 Résumer",
+            favorite_btn: "Favoriser",
+            unfavorite_btn: "Retirer favori",
+            archive_btn: "Archiver",
+            unarchive_btn: "Désarchiver",
+            copy_btn: "Copier",
+            edit_btn: "Modifier",
+            delete_btn: "Supprimer",
+            confirm_delete: "Supprimer ce snippet ?",
+            empty_title: "Aucun élément trouvé",
+            empty_subtitle: "Enregistrez votre premier lien ci-dessus.",
+            todo_done_counter: "{{done}}/{{total}} terminées",
+            show_password: "Afficher le mot de passe",
+            hide_password: "Masquer le mot de passe"
+        }
+    };
     const state = {
         items: [],
         filtered: [],
@@ -39,6 +461,7 @@
         todoViewTitle: document.getElementById("todoViewTitle"),
         todoViewMeta: document.getElementById("todoViewMeta"),
         todoViewList: document.getElementById("todoViewList"),
+        quickSyncBtn: document.getElementById("quickSyncBtn"),
         sortBtn: document.getElementById("sortBtn"),
         languageSelect: document.getElementById("languageSelect"),
         linkPreviewToggle: document.getElementById("linkPreviewToggle"),
@@ -88,6 +511,7 @@
         billingStatusText: document.getElementById("billingStatusText"),
         billingSubscribeBtn: document.getElementById("billingSubscribeBtn"),
         billingManageBtn: document.getElementById("billingManageBtn"),
+        settingsManageSubscriptionBtn: document.getElementById("settingsManageSubscriptionBtn"),
         listContainer: document.getElementById("listContainer"),
         countBadge: document.getElementById("countBadge"),
         toast: document.getElementById("toast")
@@ -98,6 +522,56 @@
         el.toast.classList.remove("hidden");
         clearTimeout(showToast._timeout);
         showToast._timeout = setTimeout(() => el.toast.classList.add("hidden"), 2500);
+    }
+
+    function getLocale() {
+        const raw = String(state.config.language || "pt-BR");
+        if (i18n[raw]) return raw;
+        const short = raw.toLowerCase().split("-")[0];
+        if (short === "pt") return "pt-BR";
+        if (short === "en") return "en";
+        if (short === "fr") return "fr";
+        return "pt-BR";
+    }
+
+    function t(key, vars = {}) {
+        const locale = getLocale();
+        const dict = i18n[locale] || i18n["pt-BR"];
+        const template = dict[key] || i18n["pt-BR"][key] || key;
+        return String(template).replace(/\{\{(\w+)\}\}/g, (_, name) =>
+            Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : ""
+        );
+    }
+
+    function setQuickSyncFeedback(status) {
+        if (!el.quickSyncBtn) return;
+        clearTimeout(setQuickSyncFeedback._timeout);
+        el.quickSyncBtn.classList.remove("is-loading", "is-success", "is-error", "is-locked");
+
+        if (status === "loading") {
+            el.quickSyncBtn.classList.add("is-loading");
+            el.quickSyncBtn.textContent = t("quick_sync_loading");
+            return;
+        }
+        if (status === "success") {
+            el.quickSyncBtn.classList.add("is-success");
+            el.quickSyncBtn.textContent = t("quick_sync_success");
+        } else if (status === "locked") {
+            el.quickSyncBtn.classList.add("is-locked");
+            el.quickSyncBtn.textContent = t("quick_sync_locked");
+        } else if (status === "error") {
+            el.quickSyncBtn.classList.add("is-error");
+            el.quickSyncBtn.textContent = t("quick_sync_error");
+        } else {
+            el.quickSyncBtn.textContent = t("quick_sync_btn");
+            return;
+        }
+
+        setQuickSyncFeedback._timeout = setTimeout(() => {
+            if (!el.quickSyncBtn) return;
+            el.quickSyncBtn.classList.remove("is-loading", "is-success", "is-error", "is-locked");
+            el.quickSyncBtn.textContent = t("quick_sync_btn");
+        }, 2300);
     }
 
     async function copyToClipboard(text) {
@@ -136,7 +610,7 @@
     }
 
     function shouldBypassSubscription() {
-        return (state.config.email || "").trim().toLowerCase() === MOBILE_BYPASS_EMAIL;
+        return false;
     }
 
     function parseTags(value) {
@@ -227,7 +701,7 @@
         updateAiProviderVisibility();
         render();
         updateBillingUI();
-        showToast("Configuração salva");
+        showToast(t("settings_saved"));
     }
 
     function fillConfigInputs() {
@@ -265,6 +739,108 @@
         if (state.config.language) {
             document.documentElement.lang = state.config.language;
         }
+        document.title = t("app_title");
+        const headerTitle = document.querySelector(".header h1");
+        if (headerTitle) headerTitle.textContent = t("app_title");
+        if (el.refreshPwaBtn && !el.refreshPwaBtn.disabled) el.refreshPwaBtn.textContent = t("refresh_btn");
+        if (el.toggleSettingsBtn) el.toggleSettingsBtn.textContent = t("settings_btn");
+        if (el.openAddModalBtn) el.openAddModalBtn.textContent = t("new_btn");
+        if (el.sortBtn) el.sortBtn.textContent = t("sort_btn");
+
+        const authTitle = document.querySelector("#authScreen h2");
+        const authSubtitle = document.querySelector("#authScreen p");
+        if (authTitle) authTitle.textContent = t("auth_screen_title");
+        if (authSubtitle) authSubtitle.textContent = t("auth_screen_subtitle");
+        if (el.authTabSignIn) el.authTabSignIn.textContent = t("auth_tab_sign_in");
+        if (el.authTabSignUp) el.authTabSignUp.textContent = t("auth_tab_sign_up");
+        if (el.authSignInEmail) el.authSignInEmail.placeholder = t("email_placeholder");
+        if (el.authSignInPassword) el.authSignInPassword.placeholder = t("password_signin_placeholder");
+        if (el.authSignUpEmail) el.authSignUpEmail.placeholder = t("email_placeholder");
+        if (el.authSignUpPassword) el.authSignUpPassword.placeholder = t("password_signup_placeholder");
+        const authSignInLabels = el.authSignInForm?.querySelectorAll("label span");
+        const authSignUpLabels = el.authSignUpForm?.querySelectorAll("label span");
+        if (authSignInLabels?.[0]) authSignInLabels[0].textContent = t("email_label");
+        if (authSignInLabels?.[1]) authSignInLabels[1].textContent = t("password_label");
+        if (authSignUpLabels?.[0]) authSignUpLabels[0].textContent = t("email_label");
+        if (authSignUpLabels?.[1]) authSignUpLabels[1].textContent = t("password_label");
+        const authSignInSubmit = el.authSignInForm?.querySelector('button[type="submit"]');
+        const authSignUpSubmit = el.authSignUpForm?.querySelector('button[type="submit"]');
+        if (authSignInSubmit) authSignInSubmit.textContent = t("auth_sign_in_submit");
+        if (authSignUpSubmit) authSignUpSubmit.textContent = t("auth_sign_up_submit");
+        if (!state.config.authToken && el.authScreenStatus) {
+            el.authScreenStatus.textContent = t("auth_not_authenticated");
+        }
+
+        if (el.billingHeadline) el.billingHeadline.textContent = t("billing_headline");
+        if (el.billingSubheadline) el.billingSubheadline.textContent = t("billing_subheadline");
+        if (el.billingSubscribeBtn) el.billingSubscribeBtn.textContent = t("billing_subscribe_btn");
+        if (el.billingManageBtn) el.billingManageBtn.textContent = t("billing_manage_btn");
+        if (el.settingsManageSubscriptionBtn) el.settingsManageSubscriptionBtn.textContent = t("billing_manage_btn");
+
+        const listTitle = document.querySelector(".modal-content .row.space-between h2");
+        if (listTitle) listTitle.textContent = t("list_title");
+        const tabMap = {
+            all: "tab_all",
+            link: "tab_link",
+            text: "tab_text",
+            markdown: "tab_markdown",
+            todo: "tab_todo",
+            favorites: "tab_favorites",
+            archived: "tab_archived"
+        };
+        el.listTabs.forEach((tab) => {
+            const key = tabMap[tab.dataset.filter || "all"];
+            if (key) tab.textContent = t(key);
+        });
+        if (el.searchInput) el.searchInput.placeholder = t("search_placeholder");
+        if (el.syncBtn && !el.syncBtn.disabled) {
+            el.syncBtn.textContent = t("sync_btn");
+        }
+        if (el.quickSyncBtn && !el.quickSyncBtn.disabled) {
+            el.quickSyncBtn.textContent = t("quick_sync_btn");
+        }
+        const initialSyncLabels = Object.values(i18n).map((dict) => dict.sync_status_initial);
+        if (el.syncStatus && (!el.syncStatus.textContent || initialSyncLabels.includes(el.syncStatus.textContent.trim()))) {
+            el.syncStatus.textContent = t("sync_status_initial");
+        }
+
+        const settingsTitle = document.querySelector("#settingsPanel .modal-header-row h2");
+        if (settingsTitle) settingsTitle.textContent = t("settings_title");
+        const settingsLabels = document.querySelectorAll("#settingsPanel .field > span");
+        if (settingsLabels[0]) settingsLabels[0].textContent = t("language_label");
+        if (settingsLabels[1]) settingsLabels[1].textContent = t("ai_provider_label");
+        if (settingsLabels[2]) settingsLabels[2].textContent = t("password_label");
+        const toggleTitles = document.querySelectorAll("#settingsPanel .toggle-title");
+        if (toggleTitles[0]) toggleTitles[0].textContent = t("link_preview_label");
+        if (toggleTitles[1]) toggleTitles[1].textContent = t("summarize_label");
+        if (el.passwordInput) el.passwordInput.placeholder = t("settings_password_placeholder");
+        if (el.logoutBtn) el.logoutBtn.textContent = t("logout_btn");
+        if (el.saveSettingsBtn) el.saveSettingsBtn.textContent = t("save_settings_btn");
+        if (el.exportBtn) el.exportBtn.textContent = t("export_btn");
+        if (el.importBtn) el.importBtn.textContent = t("import_btn");
+
+        if (el.addModalTitle && !state.editingSnippetId) el.addModalTitle.textContent = t("new_snippet_title");
+        const addModalSpans = document.querySelectorAll("#addModal .field > span");
+        if (addModalSpans[0]) addModalSpans[0].textContent = t("snippet_type_label");
+        if (addModalSpans[1]) addModalSpans[1].textContent = t("content_label");
+        if (addModalSpans[2]) addModalSpans[2].textContent = t("checklist_label");
+        if (addModalSpans[3]) addModalSpans[3].textContent = t("title_optional_label");
+        if (addModalSpans[4]) addModalSpans[4].textContent = t("tags_label");
+        const optionLink = el.snippetTypeInput?.querySelector('option[value="link"]');
+        const optionText = el.snippetTypeInput?.querySelector('option[value="text"]');
+        const optionMarkdown = el.snippetTypeInput?.querySelector('option[value="markdown"]');
+        const optionTodo = el.snippetTypeInput?.querySelector('option[value="todo"]');
+        if (optionLink) optionLink.textContent = t("type_link");
+        if (optionText) optionText.textContent = t("type_text");
+        if (optionMarkdown) optionMarkdown.textContent = t("type_markdown");
+        if (optionTodo) optionTodo.textContent = t("type_todo");
+        if (el.contentFieldLabel) el.contentFieldLabel.textContent = t("content_label");
+        if (el.contentInput && (!el.snippetTypeInput || el.snippetTypeInput.value !== "link")) el.contentInput.placeholder = t("content_placeholder");
+        if (el.addTodoItemBtn) el.addTodoItemBtn.textContent = t("add_task_btn");
+        if (el.titleInput) el.titleInput.placeholder = t("title_placeholder");
+        if (el.tagsInput) el.tagsInput.placeholder = t("tags_placeholder");
+        if (el.addBtn) el.addBtn.textContent = state.editingSnippetId ? t("update_snippet_btn") : t("save_snippet_btn");
+        if (el.todoViewTitle && !state.viewingTodoId) el.todoViewTitle.textContent = t("todo_view_title");
     }
 
     function hasBaseConfig() {
@@ -274,33 +850,41 @@
     function updateAuthStatus() {
         if (!el.authStatus) return;
         if (state.config.authToken) {
-            el.authStatus.textContent = "Autenticado.";
+            el.authStatus.textContent = t("auth_status_logged_in");
         } else {
-            el.authStatus.textContent = "Não autenticado.";
+            el.authStatus.textContent = t("auth_status_not_logged_in");
         }
     }
 
     function subscriptionLabel(status) {
-        if (status === "active") return "ativa";
-        if (status === "trialing") return "em teste";
-        if (status === "past_due") return "pagamento pendente";
-        if (status === "canceled") return "cancelada";
-        return "inativa";
+        if (status === "active") return t("subscription_active");
+        if (status === "trialing") return t("subscription_trialing");
+        if (status === "past_due") return t("subscription_past_due");
+        if (status === "canceled") return t("subscription_canceled");
+        return t("subscription_inactive");
     }
 
     function updateBillingUI() {
         if (!el.billingStatusText) return;
+        const hasSession = Boolean(state.config.authToken);
+        const isPro = state.config.entitled === true;
+        document.body.classList.toggle("is-pro", hasSession && isPro);
+
+        if (el.settingsManageSubscriptionBtn) {
+            el.settingsManageSubscriptionBtn.classList.toggle("hidden", !(hasSession && isPro));
+        }
+
         if (shouldBypassSubscription()) {
-            el.billingStatusText.textContent = "Status: bypass ativo";
+            el.billingStatusText.textContent = `${t("billing_status_prefix")} ${t("billing_status_bypass")}`;
             if (el.billingCard) {
                 el.billingCard.classList.add("hidden");
             }
             return;
         }
         const statusText = subscriptionLabel(state.config.subscriptionStatus || "inactive");
-        el.billingStatusText.textContent = `Status: ${statusText}`;
+        el.billingStatusText.textContent = `${t("billing_status_prefix")} ${statusText}`;
         if (el.billingCard) {
-            el.billingCard.classList.toggle("hidden", !state.config.authToken);
+            el.billingCard.classList.toggle("hidden", !hasSession || isPro);
         }
     }
 
@@ -405,7 +989,7 @@
             base["X-Mobile-Bypass-Subscription"] = "1";
         }
         if (authRequired && !state.config.authToken) {
-            throw new Error("Faça login para continuar");
+            throw new Error(t("auth_gate_continue"));
         }
         return base;
     }
@@ -426,7 +1010,7 @@
 
     async function register(credentials = null) {
         if (!hasBaseConfig()) {
-            showToast("Configure a API Base URL");
+            showToast(t("toast_configure_api"));
             return;
         }
         const emailSource = credentials?.email ?? el.emailInput.value ?? "";
@@ -441,12 +1025,12 @@
         await refreshBillingStatus();
         updateAuthStatus();
         updateAuthScreenVisibility();
-        setAuthScreenStatus("Conta criada com sucesso");
+        setAuthScreenStatus(t("toast_account_created"));
     }
 
     async function login(credentials = null) {
         if (!hasBaseConfig()) {
-            showToast("Configure a API Base URL");
+            showToast(t("toast_configure_api"));
             return;
         }
         const emailSource = credentials?.email ?? el.emailInput.value ?? "";
@@ -461,7 +1045,7 @@
         await refreshBillingStatus();
         updateAuthStatus();
         updateAuthScreenVisibility();
-        setAuthScreenStatus("Login realizado");
+        setAuthScreenStatus(t("toast_login_success"));
     }
 
     async function logout() {
@@ -492,7 +1076,7 @@
         updateAuthStatus();
         updateAuthScreenVisibility();
         updateBillingUI();
-        setAuthScreenStatus("Não autenticado.");
+        setAuthScreenStatus(t("auth_not_authenticated"));
     }
 
     function legacyHeaders() {
@@ -652,7 +1236,7 @@
             await sync();
         } catch (error) {
             console.error(error);
-            showToast("Erro ao atualizar tarefa");
+            showToast(t("toast_todo_update_error"));
         }
     }
 
@@ -673,12 +1257,12 @@
         }
 
         if (el.todoViewTitle) {
-            el.todoViewTitle.textContent = getDisplayTitle(item) || "To-Do";
+            el.todoViewTitle.textContent = getDisplayTitle(item) || t("todo_view_title");
         }
         if (el.todoViewMeta) {
             const entries = parseTodoItems(item.content);
             const doneCount = entries.filter((entry) => entry.done).length;
-            el.todoViewMeta.textContent = `${doneCount}/${entries.length} concluídas`;
+            el.todoViewMeta.textContent = t("todo_done_counter", { done: doneCount, total: entries.length });
         }
         el.todoViewList.innerHTML = "";
         el.todoViewList.appendChild(createTodoListElement(item));
@@ -716,7 +1300,7 @@
         const content = document.createElement("div");
         content.className = "snippet-content";
         if (item.type === "link" && state.config.linkPreviewEnabled === false) {
-            content.textContent = "Pré-visualização desativada.";
+            content.textContent = t("link_preview_disabled");
         } else if (item.type === "todo") {
             content.classList.add("todo-content");
             content.appendChild(createTodoListElement(item));
@@ -737,7 +1321,7 @@
 
         const meta = document.createElement("div");
         meta.className = "meta";
-        meta.textContent = `Atualizado: ${formatDate(item.updatedAt)}${item.isArchived ? " • Arquivado" : ""}`;
+        meta.textContent = `${t("updated_at_prefix")} ${formatDate(item.updatedAt)}${item.isArchived ? ` • ${t("archived_suffix")}` : ""}`;
         card.appendChild(meta);
 
         const actions = document.createElement("div");
@@ -747,7 +1331,7 @@
             const openBtn = document.createElement("button");
             openBtn.className = "btn btn-small open-btn";
             openBtn.type = "button";
-            openBtn.textContent = "Abrir";
+            openBtn.textContent = t("open_btn");
             openBtn.addEventListener("click", () => window.open(item.content, "_blank", "noopener,noreferrer"));
             actions.appendChild(openBtn);
 
@@ -755,7 +1339,7 @@
                 const summarizeBtn = document.createElement("button");
                 summarizeBtn.className = "btn btn-small btn-secondary";
                 summarizeBtn.type = "button";
-                summarizeBtn.textContent = "📄 Resumir";
+                summarizeBtn.textContent = t("summarize_btn");
                 summarizeBtn.addEventListener("click", () => summarizeLink(item.content));
                 actions.appendChild(summarizeBtn);
             }
@@ -765,7 +1349,7 @@
             const openTodoBtn = document.createElement("button");
             openTodoBtn.className = "btn btn-small open-btn";
             openTodoBtn.type = "button";
-            openTodoBtn.textContent = "Abrir";
+            openTodoBtn.textContent = t("open_btn");
             openTodoBtn.addEventListener("click", () => {
                 openTodoViewModal(item);
             });
@@ -775,7 +1359,7 @@
         const favBtn = document.createElement("button");
         favBtn.className = `btn btn-small ${item.isFavorite ? "btn-favorite-active" : "btn-favorite"}`;
         favBtn.type = "button";
-        favBtn.textContent = item.isFavorite ? "Desfavoritar" : "Favoritar";
+        favBtn.textContent = item.isFavorite ? t("unfavorite_btn") : t("favorite_btn");
         favBtn.addEventListener("click", async () => {
             try {
                 const updated = {
@@ -787,7 +1371,7 @@
                 await sync();
             } catch (error) {
                 console.error(error);
-                showToast("Erro ao favoritar");
+                showToast(t("toast_favorite_error"));
             }
         });
         actions.appendChild(favBtn);
@@ -795,7 +1379,7 @@
         const archiveBtn = document.createElement("button");
         archiveBtn.className = `btn btn-small ${item.isArchived ? "btn-archive-active" : "btn-archive"}`;
         archiveBtn.type = "button";
-        archiveBtn.textContent = item.isArchived ? "Desarquivar" : "Arquivar";
+        archiveBtn.textContent = item.isArchived ? t("unarchive_btn") : t("archive_btn");
         archiveBtn.addEventListener("click", async () => {
             try {
                 const updated = {
@@ -807,7 +1391,7 @@
                 await sync();
             } catch (error) {
                 console.error(error);
-                showToast("Erro ao arquivar");
+                showToast(t("toast_archive_error"));
             }
         });
         actions.appendChild(archiveBtn);
@@ -815,17 +1399,17 @@
         const copyBtn = document.createElement("button");
         copyBtn.className = "btn btn-small btn-secondary";
         copyBtn.type = "button";
-        copyBtn.textContent = "Copiar";
+        copyBtn.textContent = t("copy_btn");
         copyBtn.addEventListener("click", async () => {
             const copied = await copyToClipboard(item.content);
-            showToast(copied ? "Snippet copiado" : "Erro ao copiar");
+            showToast(copied ? t("toast_copy_success") : t("toast_copy_error"));
         });
         actions.appendChild(copyBtn);
 
         const editBtn = document.createElement("button");
         editBtn.className = "btn btn-small btn-primary";
         editBtn.type = "button";
-        editBtn.textContent = "Editar";
+        editBtn.textContent = t("edit_btn");
         editBtn.addEventListener("click", () => {
             openAddModalForEdit(item);
         });
@@ -834,15 +1418,15 @@
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "btn btn-small btn-danger";
         deleteBtn.type = "button";
-        deleteBtn.textContent = "Excluir";
+        deleteBtn.textContent = t("delete_btn");
         deleteBtn.addEventListener("click", async () => {
-            if (!window.confirm("Excluir este snippet?")) return;
+            if (!window.confirm(t("confirm_delete"))) return;
             try {
                 await removeSnippet(item.id);
                 await sync();
             } catch (error) {
                 console.error(error);
-                showToast("Erro ao excluir");
+                showToast(t("toast_delete_error"));
             }
         });
         actions.appendChild(deleteBtn);
@@ -873,7 +1457,7 @@
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-        showToast("Export concluído");
+        showToast(t("toast_export_done"));
     }
 
     async function importSnippetsFromFile(file) {
@@ -902,10 +1486,10 @@
                 await upsertSnippet(snippet);
             }
             await sync();
-            showToast("Import concluído");
+            showToast(t("toast_import_done"));
         } catch (error) {
             console.error(error);
-            showToast("Erro ao importar");
+            showToast(t("toast_import_error"));
         }
     }
 
@@ -917,7 +1501,12 @@
         if (!state.filtered.length) {
             const empty = document.createElement("div");
             empty.className = "empty-state";
-            empty.innerHTML = "<p>Nenhum item encontrado</p><p>Salve seu primeiro link acima.</p>";
+            const emptyTitle = document.createElement("p");
+            emptyTitle.textContent = t("empty_title");
+            const emptySubtitle = document.createElement("p");
+            emptySubtitle.textContent = t("empty_subtitle");
+            empty.appendChild(emptyTitle);
+            empty.appendChild(emptySubtitle);
             el.listContainer.appendChild(empty);
             return;
         }
@@ -928,18 +1517,37 @@
     }
 
     async function sync() {
-        if (!hasBaseConfig()) {
-            showToast("Configure a API Base URL");
-            if (el.syncStatus) {
-                el.syncStatus.textContent = "Configuração incompleta.";
+        const setSyncButtonsLoading = (isLoading) => {
+            if (el.syncBtn) {
+                el.syncBtn.disabled = isLoading;
+                el.syncBtn.textContent = isLoading ? t("syncing") : t("sync_btn");
             }
+            if (el.quickSyncBtn) {
+                el.quickSyncBtn.disabled = isLoading;
+            }
+        };
+
+        let quickSyncResult = "error";
+        setSyncButtonsLoading(true);
+        setQuickSyncFeedback("loading");
+        if (!hasBaseConfig()) {
+            showToast(t("toast_configure_api"));
+            if (el.syncStatus) {
+                el.syncStatus.textContent = t("sync_status_incomplete");
+            }
+            quickSyncResult = "error";
+            setSyncButtonsLoading(false);
+            setQuickSyncFeedback(quickSyncResult);
             return;
         }
         if (!state.config.authToken) {
-            showToast("Faça login para sincronizar");
+            showToast(t("toast_login_to_sync"));
             if (el.syncStatus) {
-                el.syncStatus.textContent = "Não autenticado.";
+                el.syncStatus.textContent = t("sync_status_unauthenticated");
             }
+            quickSyncResult = "error";
+            setSyncButtonsLoading(false);
+            setQuickSyncFeedback(quickSyncResult);
             return;
         }
         try {
@@ -962,9 +1570,10 @@
                 renderTodoViewModal();
             }
             if (el.syncStatus) {
-                el.syncStatus.textContent = `Sincronizado: ${state.items.length} itens`;
+                el.syncStatus.textContent = t("sync_status_synced", { count: state.items.length });
             }
-            showToast("Sincronizado");
+            showToast(t("toast_synced"));
+            quickSyncResult = "success";
         } catch (error) {
             console.error(error);
             if (String(error.message || "") === "subscription_required") {
@@ -973,15 +1582,20 @@
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state.config));
                 updateBillingUI();
                 if (el.syncStatus) {
-                    el.syncStatus.textContent = "Assinatura Pro necessária para sincronizar.";
+                    el.syncStatus.textContent = t("sync_status_subscription_required");
                 }
-                showToast("Assinatura Pro necessária");
+                showToast(t("toast_subscription_required"));
+                quickSyncResult = "locked";
                 return;
             }
             if (el.syncStatus) {
-                el.syncStatus.textContent = `Erro de sync: ${error.message}`;
+                el.syncStatus.textContent = t("sync_status_error", { error: error.message });
             }
-            showToast("Erro ao sincronizar");
+            showToast(t("toast_sync_error"));
+            quickSyncResult = "error";
+        } finally {
+            setSyncButtonsLoading(false);
+            setQuickSyncFeedback(quickSyncResult);
         }
     }
 
@@ -1011,14 +1625,14 @@
         const input = document.createElement("input");
         input.type = "text";
         input.className = "todo-builder-input";
-        input.placeholder = "Digite uma tarefa...";
+        input.placeholder = t("todo_task_placeholder");
         input.value = item.text || "";
 
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "btn btn-danger todo-builder-remove";
         remove.textContent = "×";
-        remove.title = "Excluir tarefa";
+        remove.title = t("todo_remove_task");
 
         check.addEventListener("change", syncTodoBuilderToContent);
         input.addEventListener("input", syncTodoBuilderToContent);
@@ -1064,10 +1678,10 @@
             el.contentField.classList.toggle("hidden", isTodo);
         }
         if (el.contentFieldLabel) {
-            el.contentFieldLabel.textContent = type === "link" ? "URL" : "Conteúdo";
+            el.contentFieldLabel.textContent = type === "link" ? t("content_label_url") : t("content_label");
         }
         if (el.contentInput) {
-            el.contentInput.placeholder = type === "link" ? "https://..." : "Digite o conteúdo...";
+            el.contentInput.placeholder = type === "link" ? "https://..." : t("content_placeholder");
         }
 
         if (isTodo) {
@@ -1087,16 +1701,16 @@
         if (el.contentInput) el.contentInput.value = "";
         if (el.titleInput) el.titleInput.value = "";
         if (el.tagsInput) el.tagsInput.value = "";
-        if (el.addModalTitle) el.addModalTitle.textContent = "Novo Snippet";
-        if (el.addBtn) el.addBtn.textContent = "Salvar Snippet";
+        if (el.addModalTitle) el.addModalTitle.textContent = t("new_snippet_title");
+        if (el.addBtn) el.addBtn.textContent = t("save_snippet_btn");
         clearTodoBuilder();
         updateAddModalByType();
     }
 
     function openAddModalForEdit(item) {
         state.editingSnippetId = item.id;
-        if (el.addModalTitle) el.addModalTitle.textContent = "Editar Snippet";
-        if (el.addBtn) el.addBtn.textContent = "Atualizar Snippet";
+        if (el.addModalTitle) el.addModalTitle.textContent = t("edit_snippet_title");
+        if (el.addBtn) el.addBtn.textContent = t("update_snippet_btn");
         if (el.snippetTypeInput) el.snippetTypeInput.value = item.type || "link";
         if (el.contentInput) el.contentInput.value = item.content || "";
         if (el.titleInput) el.titleInput.value = item.title || "";
@@ -1109,11 +1723,11 @@
 
     async function addSnippet() {
         if (!hasBaseConfig()) {
-            showToast("Configure a API Base URL");
+            showToast(t("toast_configure_api"));
             return;
         }
         if (!state.config.authToken) {
-            showToast("Faça login para salvar");
+            showToast(t("toast_login_to_save"));
             return;
         }
 
@@ -1124,11 +1738,11 @@
             syncTodoBuilderToContent();
             content = normalizeTodoContent(el.contentInput?.value || "");
             if (!content) {
-                showToast("Adicione ao menos uma tarefa");
+                showToast(t("toast_add_task_required"));
                 return;
             }
         } else if (!content) {
-            showToast(type === "link" ? "Informe uma URL" : "Informe o conteúdo");
+            showToast(type === "link" ? t("toast_enter_url") : t("toast_enter_content"));
             return;
         }
 
@@ -1136,7 +1750,7 @@
             try {
                 new URL(content);
             } catch {
-                showToast("URL inválida");
+                showToast(t("toast_invalid_url"));
                 return;
             }
         }
@@ -1171,10 +1785,10 @@
             resetAddModal();
             closeModal(el.addModal);
             await sync();
-            showToast(existing ? "Snippet atualizado" : "Snippet salvo");
+            showToast(existing ? t("toast_snippet_updated") : t("toast_snippet_saved"));
         } catch (error) {
             console.error(error);
-            showToast("Erro ao salvar");
+            showToast(t("toast_save_error"));
         }
     }
 
@@ -1185,7 +1799,7 @@
                 window.open(data.url, "_blank", "noopener,noreferrer");
             }
         } catch (error) {
-            showToast(`Erro no checkout: ${error.message}`);
+            showToast(t("toast_checkout_error", { error: error.message }));
         }
     }
 
@@ -1196,7 +1810,7 @@
                 window.open(data.url, "_blank", "noopener,noreferrer");
             }
         } catch (error) {
-            showToast(`Erro no portal: ${error.message}`);
+            showToast(t("toast_portal_error", { error: error.message }));
         }
     }
 
@@ -1213,10 +1827,10 @@
             } else {
                 render();
             }
-            showToast("Atualizado");
+            showToast(t("toast_refreshed"));
         } catch (error) {
             console.error(error);
-            showToast("Erro ao atualizar");
+            showToast(t("toast_refresh_error"));
         }
     }
 
@@ -1256,15 +1870,15 @@
             toggleBtn.type = "button";
             toggleBtn.className = "password-toggle-btn";
             toggleBtn.textContent = "👁";
-            toggleBtn.title = "Mostrar senha";
-            toggleBtn.setAttribute("aria-label", "Mostrar senha");
+            toggleBtn.title = t("show_password");
+            toggleBtn.setAttribute("aria-label", t("show_password"));
 
             toggleBtn.addEventListener("click", () => {
                 const willShow = input.type === "password";
                 input.type = willShow ? "text" : "password";
                 toggleBtn.textContent = willShow ? "🙈" : "👁";
                 toggleBtn.classList.toggle("active", willShow);
-                const label = willShow ? "Ocultar senha" : "Mostrar senha";
+                const label = willShow ? t("hide_password") : t("show_password");
                 toggleBtn.title = label;
                 toggleBtn.setAttribute("aria-label", label);
             });
@@ -1301,7 +1915,7 @@
             el.sortBtn.addEventListener("click", () => {
                 state.sortAsc = !state.sortAsc;
                 render();
-                showToast(state.sortAsc ? "Ordenado: mais antigos" : "Ordenado: mais recentes");
+                showToast(state.sortAsc ? t("toast_sorted_oldest") : t("toast_sorted_newest"));
             });
         }
         if (el.refreshPwaBtn) {
@@ -1328,7 +1942,7 @@
                     await login({ email, password });
                     await sync();
                 } catch (error) {
-                    setAuthScreenStatus(error.message || "Erro no login");
+                    setAuthScreenStatus(error.message || t("auth_error_login"));
                 }
             });
         }
@@ -1341,7 +1955,7 @@
                     await register({ email, password });
                     await sync();
                 } catch (error) {
-                    setAuthScreenStatus(error.message || "Erro no cadastro");
+                    setAuthScreenStatus(error.message || t("auth_error_register"));
                 }
             });
         }
@@ -1356,10 +1970,10 @@
             el.registerBtn.addEventListener("click", async () => {
                 try {
                     await register();
-                    showToast("Conta criada");
+                    showToast(t("toast_account_created"));
                     await sync();
                 } catch (error) {
-                    showToast(error.message || "Erro ao cadastrar");
+                    showToast(error.message || t("toast_register_error"));
                 }
             });
         }
@@ -1368,10 +1982,10 @@
             el.loginBtn.addEventListener("click", async () => {
                 try {
                     await login();
-                    showToast("Login realizado");
+                    showToast(t("toast_login_success"));
                     await sync();
                 } catch (error) {
-                    showToast(error.message || "Erro no login");
+                    showToast(error.message || t("toast_login_error"));
                 }
             });
         }
@@ -1381,12 +1995,17 @@
                 await logout();
                 state.items = [];
                 render();
-                showToast("Logout realizado");
+                showToast(t("toast_logout_success"));
             });
         }
 
         if (el.syncBtn) {
             el.syncBtn.addEventListener("click", async () => {
+                await sync();
+            });
+        }
+        if (el.quickSyncBtn) {
+            el.quickSyncBtn.addEventListener("click", async () => {
                 await sync();
             });
         }
@@ -1397,6 +2016,11 @@
         }
         if (el.billingManageBtn) {
             el.billingManageBtn.addEventListener("click", async () => {
+                await openPortal();
+            });
+        }
+        if (el.settingsManageSubscriptionBtn) {
+            el.settingsManageSubscriptionBtn.addEventListener("click", async () => {
                 await openPortal();
             });
         }
@@ -1478,7 +2102,7 @@
         if (hasBaseConfig() && state.config.authToken) {
             await sync();
         } else {
-            setAuthScreenStatus("Faça login para continuar.");
+            setAuthScreenStatus(t("auth_gate_continue"));
         }
         closeModal(el.settingsModal);
         closeModal(el.addModal);

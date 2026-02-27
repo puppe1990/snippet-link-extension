@@ -44,6 +44,27 @@ function requireEnv(name) {
   }
 }
 
+function normalizeBaseUrl(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function getMobileAppUrl() {
+  return `${normalizeBaseUrl(process.env.APP_BASE_URL)}/mobile-app.html`;
+}
+
+function toIsoFromUnix(seconds) {
+  if (!seconds || !Number.isFinite(Number(seconds))) return null;
+  return new Date(Number(seconds) * 1000).toISOString();
+}
+
+function mapStripeStatus(status) {
+  if (status === "active") return "active";
+  if (status === "trialing") return "trialing";
+  if (status === "canceled") return "canceled";
+  if (["past_due", "unpaid", "incomplete", "incomplete_expired"].includes(status)) return "past_due";
+  return "inactive";
+}
+
 async function ensureSchema() {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS users (
@@ -129,9 +150,83 @@ async function updateStripeCustomerId(userId, customerId) {
   });
 }
 
+async function updateSubscriptionState(userId, data) {
+  await db.execute({
+    sql: `
+      UPDATE users
+      SET
+        subscription_status = ?,
+        subscription_id = ?,
+        subscription_price_id = ?,
+        subscription_current_period_end = ?,
+        updated_at = ?
+      WHERE id = ?
+    `,
+    args: [
+      data.subscriptionStatus,
+      data.subscriptionId || null,
+      data.priceId || null,
+      data.currentPeriodEnd || null,
+      new Date().toISOString(),
+      String(userId),
+    ],
+  });
+}
+
+async function refreshSubscriptionStateFromStripe(stripe, user) {
+  if (!user?.stripe_customer_id) {
+    return {
+      subscriptionStatus: String(user?.subscription_status || "inactive"),
+      subscriptionId: null,
+      priceId: null,
+      currentPeriodEnd: user?.subscription_current_period_end || null,
+    };
+  }
+
+  const list = await stripe.subscriptions.list({
+    customer: String(user.stripe_customer_id),
+    status: "all",
+    limit: 10,
+  });
+
+  const subscriptions = Array.isArray(list?.data) ? list.data : [];
+  if (!subscriptions.length) {
+    return {
+      subscriptionStatus: "inactive",
+      subscriptionId: null,
+      priceId: null,
+      currentPeriodEnd: null,
+    };
+  }
+
+  subscriptions.sort((a, b) => Number(b.created || 0) - Number(a.created || 0));
+  const latest = subscriptions[0];
+  const periodEnd =
+    latest.current_period_end ||
+    latest?.items?.data?.[0]?.current_period_end ||
+    null;
+  return {
+    subscriptionStatus: mapStripeStatus(String(latest.status || "inactive")),
+    subscriptionId: latest.id || null,
+    priceId: latest?.items?.data?.[0]?.price?.id || null,
+    currentPeriodEnd: toIsoFromUnix(periodEnd),
+  };
+}
+
 async function ensureStripeCustomer(stripe, user) {
   if (user.stripe_customer_id) {
-    return String(user.stripe_customer_id);
+    const existingId = String(user.stripe_customer_id);
+    try {
+      await stripe.customers.retrieve(existingId);
+      return existingId;
+    } catch (error) {
+      const code = String(error?.code || "");
+      const statusCode = Number(error?.statusCode || 0);
+      const shouldRecreate = code === "resource_missing" || statusCode === 404;
+      if (!shouldRecreate) {
+        throw error;
+      }
+    }
   }
 
   const customer = await stripe.customers.create({
@@ -165,11 +260,28 @@ exports.handler = async (event) => {
     }
 
     if (event.httpMethod === "GET") {
-      const subscriptionStatus = String(user.subscription_status || "inactive");
+      let subscriptionStatus = String(user.subscription_status || "inactive");
+      let subscriptionCurrentPeriodEnd = user.subscription_current_period_end || null;
+
+      if (process.env.STRIPE_SECRET_KEY) {
+        try {
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+          const refreshed = await refreshSubscriptionStateFromStripe(stripe, user);
+          subscriptionStatus = refreshed.subscriptionStatus;
+          subscriptionCurrentPeriodEnd = refreshed.currentPeriodEnd;
+          await updateSubscriptionState(userId, refreshed);
+        } catch (stripeSyncError) {
+          console.log("billing_stripe_refresh_failed", {
+            user_id: userId,
+            error: stripeSyncError.message,
+          });
+        }
+      }
+
       return jsonResponse(200, {
         subscription_status: subscriptionStatus,
         entitled: subscriptionStatus === "active",
-        subscription_current_period_end: user.subscription_current_period_end || null,
+        subscription_current_period_end: subscriptionCurrentPeriodEnd,
       });
     }
 
@@ -193,12 +305,13 @@ exports.handler = async (event) => {
       }
 
       const customerId = await ensureStripeCustomer(stripe, user);
+      const mobileAppUrl = getMobileAppUrl();
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         customer: customerId,
         line_items: [{ price: process.env.STRIPE_PRICE_ID_MONTHLY_USD_1, quantity: 1 }],
-        success_url: `${process.env.APP_BASE_URL}/web/mobile-app.html?billing=success`,
-        cancel_url: `${process.env.APP_BASE_URL}/web/mobile-app.html?billing=cancel`,
+        success_url: `${mobileAppUrl}?billing=success`,
+        cancel_url: `${mobileAppUrl}?billing=cancel`,
         metadata: {
           user_id: String(user.id),
         },
@@ -218,9 +331,10 @@ exports.handler = async (event) => {
         return jsonResponse(404, { error: "stripe_customer_not_found" });
       }
 
+      const mobileAppUrl = getMobileAppUrl();
       const portal = await stripe.billingPortal.sessions.create({
         customer: String(user.stripe_customer_id),
-        return_url: `${process.env.APP_BASE_URL}/web/mobile-app.html`,
+        return_url: mobileAppUrl,
       });
 
       console.log("portal_opened", {

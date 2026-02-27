@@ -152,11 +152,45 @@ Variáveis de ambiente no Netlify:
 - `TURSO_DATABASE_URL`
 - `TURSO_AUTH_TOKEN`
 - `EXTENSION_API_KEY` (fallback para clientes legados sem login)
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_ID_MONTHLY_USD_1`
+- `APP_BASE_URL` (ex.: `https://seu-site.netlify.app`)
 
 Deploy:
 
 ```bash
 npm run deploy
+```
+
+### 2.1 Configurar pagamento no Stripe
+
+1. Crie um produto no Stripe (ex.: `Snippet Pocket Pro`).
+2. Crie um preço recorrente mensal de `US$ 1.00`.
+3. Copie o `price_id` (`price_...`) e salve em `STRIPE_PRICE_ID_MONTHLY_USD_1`.
+4. Defina no Netlify:
+   - `STRIPE_SECRET_KEY=sk_live_...` (ou `sk_test_...` em sandbox)
+   - `APP_BASE_URL=https://seu-site.netlify.app`
+5. Crie o endpoint de webhook no Stripe:
+   - URL: `https://seu-site.netlify.app/.netlify/functions/stripe-webhook`
+   - Eventos:
+     - `checkout.session.completed`
+     - `customer.subscription.updated`
+     - `customer.subscription.deleted`
+     - `invoice.payment_failed`
+6. Copie o webhook signing secret (`whsec_...`) para `STRIPE_WEBHOOK_SECRET` no Netlify.
+
+Comandos úteis com Stripe CLI (ambiente local):
+
+```bash
+# login
+stripe login
+
+# listar preços e pegar o price_...
+stripe prices list --limit 10
+
+# encaminhar webhooks para netlify dev
+stripe listen --events checkout.session.completed,customer.subscription.updated,customer.subscription.deleted,invoice.payment_failed --forward-to http://localhost:8888/.netlify/functions/stripe-webhook
 ```
 
 ### 3. Configurar a extensão
