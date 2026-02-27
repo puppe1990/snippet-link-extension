@@ -10,6 +10,7 @@ class SnippetManager {
         this.editingId = null;
         this.deletingId = null;
         this.viewingTodoId = null;
+        this.viewingContentId = null;
         this.draggedElement = null;
         this.draggedIndex = -1;
         this.translationManager = new TranslationManager();
@@ -125,6 +126,18 @@ class SnippetManager {
         }
         if (closeTodoViewBtn) {
             closeTodoViewBtn.addEventListener('click', () => this.closeTodoViewModal());
+        }
+        const closeContentViewModalBtn = document.getElementById('closeContentViewModalBtn');
+        const closeContentViewBtn = document.getElementById('closeContentViewBtn');
+        const copyContentViewBtn = document.getElementById('copyContentViewBtn');
+        if (closeContentViewModalBtn) {
+            closeContentViewModalBtn.addEventListener('click', () => this.closeContentViewModal());
+        }
+        if (closeContentViewBtn) {
+            closeContentViewBtn.addEventListener('click', () => this.closeContentViewModal());
+        }
+        if (copyContentViewBtn) {
+            copyContentViewBtn.addEventListener('click', () => this.copyContentFromViewModal());
         }
 
         // Modal de configurações
@@ -273,6 +286,7 @@ class SnippetManager {
                 this.closeSettingsModal();
                 this.closeExportTypeModal();
                 this.closeTodoViewModal();
+                this.closeContentViewModal();
             }
         });
 
@@ -1086,6 +1100,18 @@ class SnippetManager {
         document.querySelector('#deleteModal .delete-warning').textContent = this.t('delete_warning');
         document.getElementById('cancelDeleteBtn').textContent = this.t('cancel_button');
         document.getElementById('confirmDeleteBtn').textContent = this.t('delete_button');
+        const contentViewModalTitle = document.getElementById('contentViewModalTitle');
+        if (contentViewModalTitle) {
+            contentViewModalTitle.textContent = this.t('content_view_title');
+        }
+        const closeContentViewBtn = document.getElementById('closeContentViewBtn');
+        if (closeContentViewBtn) {
+            closeContentViewBtn.textContent = this.t('close_button');
+        }
+        const copyContentViewBtn = document.getElementById('copyContentViewBtn');
+        if (copyContentViewBtn) {
+            copyContentViewBtn.textContent = this.t('copy_button');
+        }
         
         // Atualizar modal de configurações
         document.querySelector('#settingsModal .modal-header h2').textContent = this.t('settings_title');
@@ -1331,6 +1357,7 @@ class SnippetManager {
         const todoSummary = todoItems.length > 0
             ? `${todoItems.filter(item => item.done).length}/${todoItems.length}`
             : '';
+        const canShowFullContent = snippet.type === 'link' || snippet.type === 'text';
         
         
         
@@ -1398,7 +1425,7 @@ class SnippetManager {
                     ${hasTitle ? `<h3 class="snippet-title">${displayTitle}</h3>` : ''}
                     <span class="snippet-type ${snippet.type}">${this.getSnippetTypeLabel(snippet.type)}</span>
                 </div>
-                <div class="snippet-content ${snippet.type === 'markdown' ? 'markdown-content' : ''} ${snippet.type === 'todo' ? 'todo-content' : ''}">${this.renderSnippetContent(snippet)}</div>
+                <div class="snippet-content ${snippet.type === 'markdown' ? 'markdown-content' : ''} ${snippet.type === 'todo' ? 'todo-content' : ''} ${canShowFullContent ? 'snippet-content-preview' : ''}">${this.renderSnippetContent(snippet)}</div>
                 ${snippet.type === 'todo' && todoSummary ? `<div class="todo-summary">${todoSummary}</div>` : ''}
                 ${linkPreview}
                 ${tags ? `<div class="snippet-tags">${tags}</div>` : ''}
@@ -1406,6 +1433,7 @@ class SnippetManager {
                     ${hasSingleLink ? `<button class="btn btn-small open-btn" data-url="${primaryLink}">${this.t('open_button')}</button>` : ''}
                     ${snippet.type === 'todo' ? `<button class="btn btn-small open-todo-btn open-btn" data-id="${snippet.id}">${this.t('open_todo_button')}</button>` : ''}
                     ${hasMultipleLinks ? `<button class="btn btn-small open-all-btn" data-urls="${encodeURIComponent(JSON.stringify(validLinks))}">${this.t('open_all_button')}</button>` : ''}
+                    ${canShowFullContent ? `<button class="btn btn-small show-content-btn" data-id="${snippet.id}">${this.t('show_button')}</button>` : ''}
                     <button class="btn btn-small ${favoriteClass} favorite-btn" data-id="${snippet.id}" title="${favoriteTooltip}">${favoriteIcon} ${favoriteText}</button>
                     ${hasSingleLink && this.summarizeEnabled ? `<button class="btn btn-small summarize-btn" data-url="${primaryLink}">${this.t('summarize_button')}</button>` : ''}
                     <button class="btn btn-small ${archiveClass} archive-btn" data-id="${snippet.id}" title="${archiveTooltip}">${archiveIcon} ${archiveText}</button>
@@ -1488,6 +1516,15 @@ class SnippetManager {
             });
         });
 
+        document.querySelectorAll('.show-content-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = e.currentTarget.dataset.id;
+                if (!id) return;
+                this.openContentViewModal(id);
+            });
+        });
+
         // Botões de abrir todos os links
         document.querySelectorAll('.open-all-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1548,6 +1585,15 @@ class SnippetManager {
 
         // Links dentro de listas
         document.querySelectorAll('.link-list-item').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const url = e.currentTarget.dataset.url;
+                this.openLink(url);
+            });
+        });
+
+        document.querySelectorAll('.content-view-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1947,6 +1993,72 @@ class SnippetManager {
             modal.style.display = 'none';
         }
         this.viewingTodoId = null;
+    }
+
+    openContentViewModal(id) {
+        const snippet = this.snippets.find(s => s.id === id && (s.type === 'link' || s.type === 'text'));
+        const modal = document.getElementById('contentViewModal');
+        const titleEl = document.getElementById('contentViewModalTitle');
+        const bodyEl = document.getElementById('contentViewBody');
+        if (!snippet || !modal || !titleEl || !bodyEl) {
+            return;
+        }
+
+        const displayTitle = (snippet.title || '').trim() || this.t('content_view_title');
+        titleEl.textContent = displayTitle;
+        bodyEl.innerHTML = this.renderFullContent(snippet);
+
+        bodyEl.querySelectorAll('.content-view-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = e.currentTarget.dataset.url;
+                this.openLink(url);
+            });
+        });
+
+        this.viewingContentId = id;
+        modal.style.display = 'flex';
+    }
+
+    closeContentViewModal() {
+        const modal = document.getElementById('contentViewModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        this.viewingContentId = null;
+    }
+
+    copyContentFromViewModal() {
+        if (!this.viewingContentId) {
+            return;
+        }
+        const snippet = this.snippets.find(s => s.id === this.viewingContentId);
+        if (!snippet) {
+            return;
+        }
+        navigator.clipboard.writeText(snippet.content || '').then(() => {
+            this.showNotification(this.t('snippet_copied'));
+        }).catch(() => {
+            this.showNotification(this.t('copy_error'));
+        });
+    }
+
+    renderFullContent(snippet) {
+        if (snippet.type === 'link') {
+            const links = this.getLinkList(snippet.content);
+            if (links.length > 0) {
+                const linksHtml = links.map((link) => {
+                    const safeLink = this.escapeHtml(link);
+                    if (this.isValidUrl(link)) {
+                        return `<li><a class="content-view-link" href="${safeLink}" data-url="${safeLink}" target="_blank" rel="noopener noreferrer">${safeLink}</a></li>`;
+                    }
+                    return `<li><span>${safeLink}</span></li>`;
+                }).join('');
+                return `<ul class="content-view-list">${linksHtml}</ul>`;
+            }
+        }
+
+        return `<pre class="content-view-text">${this.escapeHtml(snippet.content || '')}</pre>`;
     }
 
     async deleteSnippetById(id) {
@@ -2794,10 +2906,7 @@ class SnippetManager {
     // Renderizar conteúdo do snippet baseado no tipo
     renderSnippetContent(snippet) {
         if (snippet.type === 'link') {
-            const { items, invalid } = this.getValidLinkList(snippet.content);
-            if (items.length > 1 && invalid.length === 0) {
-                return this.renderLinkList(items);
-            }
+            return `<span class="snippet-preview-text">${this.escapeHtml(this.getSnippetPreview(snippet.content))}</span>`;
         }
 
         if (snippet.type === 'todo') {
@@ -2810,8 +2919,29 @@ class SnippetManager {
         if (snippet.type === 'markdown') {
             return this.renderMarkdown(snippet.content);
         } else {
-            return this.escapeHtml(snippet.content);
+            return `<span class="snippet-preview-text">${this.escapeHtml(this.getSnippetPreview(snippet.content))}</span>`;
         }
+    }
+
+    getSnippetPreview(content) {
+        const raw = String(content || '').replace(/\r/g, '');
+        const lines = raw
+            .split('\n')
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0);
+        if (lines.length === 0) {
+            return '';
+        }
+
+        const firstLine = lines[0];
+        const maxLength = 120;
+        if (firstLine.length > maxLength) {
+            return `${firstLine.slice(0, maxLength).trimEnd()}...`;
+        }
+        if (lines.length > 1) {
+            return `${firstLine}...`;
+        }
+        return firstLine;
     }
 
     renderLinkList(links) {

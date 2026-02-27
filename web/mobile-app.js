@@ -134,12 +134,15 @@
             archive_btn: "Arquivar",
             unarchive_btn: "Desarquivar",
             copy_btn: "Copiar",
+            show_btn: "Mostrar",
             edit_btn: "Editar",
             delete_btn: "Excluir",
             confirm_delete: "Excluir este snippet?",
             empty_title: "Nenhum item encontrado",
             empty_subtitle: "Salve seu primeiro link acima.",
             todo_done_counter: "{{done}}/{{total}} concluídas",
+            content_view_title: "Conteúdo completo",
+            close_btn: "Fechar",
             show_password: "Mostrar senha",
             hide_password: "Ocultar senha"
         },
@@ -274,12 +277,15 @@
             archive_btn: "Archive",
             unarchive_btn: "Unarchive",
             copy_btn: "Copy",
+            show_btn: "Show",
             edit_btn: "Edit",
             delete_btn: "Delete",
             confirm_delete: "Delete this snippet?",
             empty_title: "No items found",
             empty_subtitle: "Save your first link above.",
             todo_done_counter: "{{done}}/{{total}} done",
+            content_view_title: "Full content",
+            close_btn: "Close",
             show_password: "Show password",
             hide_password: "Hide password"
         },
@@ -414,12 +420,15 @@
             archive_btn: "Archiver",
             unarchive_btn: "Désarchiver",
             copy_btn: "Copier",
+            show_btn: "Afficher",
             edit_btn: "Modifier",
             delete_btn: "Supprimer",
             confirm_delete: "Supprimer ce snippet ?",
             empty_title: "Aucun élément trouvé",
             empty_subtitle: "Enregistrez votre premier lien ci-dessus.",
             todo_done_counter: "{{done}}/{{total}} terminées",
+            content_view_title: "Contenu complet",
+            close_btn: "Fermer",
             show_password: "Afficher le mot de passe",
             hide_password: "Masquer le mot de passe"
         }
@@ -431,6 +440,7 @@
         sortAsc: false,
         editingSnippetId: null,
         viewingTodoId: null,
+        viewingContentId: null,
         config: {
             apiBase: DEFAULT_API_BASE,
             email: "",
@@ -461,6 +471,12 @@
         todoViewTitle: document.getElementById("todoViewTitle"),
         todoViewMeta: document.getElementById("todoViewMeta"),
         todoViewList: document.getElementById("todoViewList"),
+        contentViewModal: document.getElementById("contentViewModal"),
+        closeContentViewModalBtn: document.getElementById("closeContentViewModalBtn"),
+        closeContentViewBtn: document.getElementById("closeContentViewBtn"),
+        copyContentViewBtn: document.getElementById("copyContentViewBtn"),
+        contentViewTitle: document.getElementById("contentViewTitle"),
+        contentViewBody: document.getElementById("contentViewBody"),
         quickSyncBtn: document.getElementById("quickSyncBtn"),
         sortBtn: document.getElementById("sortBtn"),
         languageSelect: document.getElementById("languageSelect"),
@@ -841,6 +857,9 @@
         if (el.tagsInput) el.tagsInput.placeholder = t("tags_placeholder");
         if (el.addBtn) el.addBtn.textContent = state.editingSnippetId ? t("update_snippet_btn") : t("save_snippet_btn");
         if (el.todoViewTitle && !state.viewingTodoId) el.todoViewTitle.textContent = t("todo_view_title");
+        if (el.contentViewTitle && !state.viewingContentId) el.contentViewTitle.textContent = t("content_view_title");
+        if (el.copyContentViewBtn) el.copyContentViewBtn.textContent = t("copy_btn");
+        if (el.closeContentViewBtn) el.closeContentViewBtn.textContent = t("close_btn");
     }
 
     function hasBaseConfig() {
@@ -1274,6 +1293,85 @@
         openModal(el.todoViewModal);
     }
 
+    function closeContentViewModal() {
+        state.viewingContentId = null;
+        if (el.contentViewBody) {
+            el.contentViewBody.innerHTML = "";
+        }
+        closeModal(el.contentViewModal);
+    }
+
+    function getContentPreview(content) {
+        const raw = String(content || "").replace(/\r/g, "");
+        const lines = raw
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0);
+        if (!lines.length) return "";
+        const firstLine = lines[0];
+        const maxLength = 120;
+        if (firstLine.length > maxLength) {
+            return `${firstLine.slice(0, maxLength).trimEnd()}...`;
+        }
+        if (lines.length > 1) {
+            return `${firstLine}...`;
+        }
+        return firstLine;
+    }
+
+    function renderContentViewModal() {
+        if (!state.viewingContentId || !el.contentViewBody) return;
+        const item = state.items.find((row) => row.id === state.viewingContentId && (row.type === "text" || row.type === "link"));
+        if (!item) {
+            closeContentViewModal();
+            return;
+        }
+
+        if (el.contentViewTitle) {
+            el.contentViewTitle.textContent = getDisplayTitle(item) || t("content_view_title");
+        }
+
+        el.contentViewBody.innerHTML = "";
+        const content = String(item.content || "");
+        if (item.type === "link") {
+            const links = content
+                .split("\n")
+                .map((line) => line.trim())
+                .filter(Boolean);
+            const list = document.createElement("ul");
+            list.className = "content-view-links";
+            links.forEach((link) => {
+                const li = document.createElement("li");
+                try {
+                    new URL(link);
+                    const anchor = document.createElement("a");
+                    anchor.className = "content-view-link";
+                    anchor.href = link;
+                    anchor.target = "_blank";
+                    anchor.rel = "noopener noreferrer";
+                    anchor.textContent = link;
+                    li.appendChild(anchor);
+                } catch {
+                    li.textContent = link;
+                }
+                list.appendChild(li);
+            });
+            el.contentViewBody.appendChild(list);
+            return;
+        }
+
+        const pre = document.createElement("pre");
+        pre.className = "content-view-text";
+        pre.textContent = content;
+        el.contentViewBody.appendChild(pre);
+    }
+
+    function openContentViewModal(item) {
+        state.viewingContentId = item.id;
+        renderContentViewModal();
+        openModal(el.contentViewModal);
+    }
+
     function createCard(item) {
         const card = document.createElement("article");
         card.className = "snippet-item";
@@ -1299,11 +1397,12 @@
 
         const content = document.createElement("div");
         content.className = "snippet-content";
-        if (item.type === "link" && state.config.linkPreviewEnabled === false) {
-            content.textContent = t("link_preview_disabled");
-        } else if (item.type === "todo") {
+        if (item.type === "todo") {
             content.classList.add("todo-content");
             content.appendChild(createTodoListElement(item));
+        } else if (item.type === "text" || item.type === "link") {
+            content.classList.add("snippet-content-preview");
+            content.textContent = getContentPreview(item.content);
         } else {
             content.textContent = item.content;
         }
@@ -1354,6 +1453,15 @@
                 openTodoViewModal(item);
             });
             actions.appendChild(openTodoBtn);
+        }
+
+        if (item.type === "text" || item.type === "link") {
+            const showBtn = document.createElement("button");
+            showBtn.className = "btn btn-small btn-primary";
+            showBtn.type = "button";
+            showBtn.textContent = t("show_btn");
+            showBtn.addEventListener("click", () => openContentViewModal(item));
+            actions.appendChild(showBtn);
         }
 
         const favBtn = document.createElement("button");
@@ -1911,6 +2019,21 @@
         if (el.closeTodoViewModalBtn) {
             el.closeTodoViewModalBtn.addEventListener("click", () => closeTodoViewModal());
         }
+        if (el.closeContentViewModalBtn) {
+            el.closeContentViewModalBtn.addEventListener("click", () => closeContentViewModal());
+        }
+        if (el.closeContentViewBtn) {
+            el.closeContentViewBtn.addEventListener("click", () => closeContentViewModal());
+        }
+        if (el.copyContentViewBtn) {
+            el.copyContentViewBtn.addEventListener("click", async () => {
+                if (!state.viewingContentId) return;
+                const item = state.items.find((row) => row.id === state.viewingContentId);
+                if (!item) return;
+                const copied = await copyToClipboard(item.content || "");
+                showToast(copied ? t("toast_copy_success") : t("toast_copy_error"));
+            });
+        }
         if (el.sortBtn) {
             el.sortBtn.addEventListener("click", () => {
                 state.sortAsc = !state.sortAsc;
@@ -2069,7 +2192,7 @@
             });
         });
 
-        [el.settingsModal, el.addModal, el.todoViewModal].forEach((modal) => {
+        [el.settingsModal, el.addModal, el.todoViewModal, el.contentViewModal].forEach((modal) => {
             if (!modal) return;
             modal.addEventListener("click", (event) => {
                 if (event.target === modal) {
@@ -2079,6 +2202,9 @@
                     }
                     if (modal === el.todoViewModal) {
                         closeTodoViewModal();
+                    }
+                    if (modal === el.contentViewModal) {
+                        closeContentViewModal();
                     }
                 }
             });
@@ -2107,6 +2233,7 @@
         closeModal(el.settingsModal);
         closeModal(el.addModal);
         closeModal(el.todoViewModal);
+        closeModal(el.contentViewModal);
 
         const media = window.matchMedia ? window.matchMedia("(display-mode: standalone)") : null;
         if (media && media.addEventListener) {

@@ -76,6 +76,9 @@ const translations = {
         'open_button': '🔗 Abrir',
         'open_todo_button': '✅ Abrir To-Do',
         'open_all_button': '🔗 Abrir todos',
+        'show_button': '👁️ Mostrar',
+        'content_view_title': 'Conteúdo completo',
+        'close_button': 'Fechar',
         'no_title': 'Sem título',
         'created_at': 'Criado em:',
         
@@ -247,6 +250,9 @@ const translations = {
         'open_button': '🔗 Open',
         'open_todo_button': '✅ Open To-Do',
         'open_all_button': '🔗 Open all',
+        'show_button': '👁️ Show',
+        'content_view_title': 'Full content',
+        'close_button': 'Close',
         'no_title': 'No title',
         'created_at': 'Created at:',
         
@@ -418,6 +424,9 @@ const translations = {
         'open_button': '🔗 Ouvrir',
         'open_todo_button': '✅ Ouvrir To-Do',
         'open_all_button': '🔗 Ouvrir tous',
+        'show_button': '👁️ Afficher',
+        'content_view_title': 'Contenu complet',
+        'close_button': 'Fermer',
         'no_title': 'Sans titre',
         'created_at': 'Créé le :',
         

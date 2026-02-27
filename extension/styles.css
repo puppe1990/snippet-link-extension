@@ -2006,3 +2006,62 @@ body {
     font-size: 13px !important;
     padding: 0 18px !important;
 }
+
+.snippet-content-preview {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.snippet-preview-text {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.show-content-btn {
+    background: linear-gradient(135deg, #5466ff 0%, #394cda 100%) !important;
+    color: #fff !important;
+}
+
+.content-view-modal-content {
+    max-width: 560px;
+}
+
+.content-view-body {
+    max-height: 320px;
+    overflow: auto;
+}
+
+.content-view-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #2a3859;
+    background: #f7f9ff;
+    border: 1px solid #dce6f8;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.content-view-list {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 8px;
+}
+
+.content-view-link {
+    color: #2f63d8;
+    word-break: break-all;
+    text-decoration: none;
+}
+
+.content-view-link:hover {
+    text-decoration: underline;
+}

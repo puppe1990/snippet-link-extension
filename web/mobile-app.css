@@ -600,6 +600,12 @@ body.is-pro .header {
     word-break: break-word;
 }
 
+.snippet-content.snippet-content-preview {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .snippet-content.todo-content {
     word-break: normal;
 }
@@ -708,6 +714,46 @@ body.is-pro .header {
     background: #f8faff;
     padding: 10px;
     margin-bottom: 8px;
+}
+
+.content-view-panel .row {
+    margin-top: 12px;
+}
+
+.content-view-body {
+    margin-top: 6px;
+    max-height: 52vh;
+    overflow: auto;
+}
+
+.content-view-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #2c3f63;
+    background: #f7f9ff;
+    border: 1px solid #dbe5f6;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.content-view-links {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 8px;
+}
+
+.content-view-link {
+    color: #2e63d9;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.content-view-link:hover {
+    text-decoration: underline;
 }
 
 .todo-builder-item {
