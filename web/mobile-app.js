@@ -565,29 +565,36 @@
         clearTimeout(setQuickSyncFeedback._timeout);
         el.quickSyncBtn.classList.remove("is-loading", "is-success", "is-error", "is-locked");
 
+        const setCompactQuickSyncLabel = (icon, textKey) => {
+            const label = t(textKey);
+            el.quickSyncBtn.textContent = icon;
+            el.quickSyncBtn.title = label;
+            el.quickSyncBtn.setAttribute("aria-label", label);
+        };
+
         if (status === "loading") {
             el.quickSyncBtn.classList.add("is-loading");
-            el.quickSyncBtn.textContent = t("quick_sync_loading");
+            setCompactQuickSyncLabel("☁", "quick_sync_loading");
             return;
         }
         if (status === "success") {
             el.quickSyncBtn.classList.add("is-success");
-            el.quickSyncBtn.textContent = t("quick_sync_success");
+            setCompactQuickSyncLabel("✓", "quick_sync_success");
         } else if (status === "locked") {
             el.quickSyncBtn.classList.add("is-locked");
-            el.quickSyncBtn.textContent = t("quick_sync_locked");
+            setCompactQuickSyncLabel("🔒", "quick_sync_locked");
         } else if (status === "error") {
             el.quickSyncBtn.classList.add("is-error");
-            el.quickSyncBtn.textContent = t("quick_sync_error");
+            setCompactQuickSyncLabel("⚠", "quick_sync_error");
         } else {
-            el.quickSyncBtn.textContent = t("quick_sync_btn");
+            setCompactQuickSyncLabel("☁", "quick_sync_btn");
             return;
         }
 
         setQuickSyncFeedback._timeout = setTimeout(() => {
             if (!el.quickSyncBtn) return;
             el.quickSyncBtn.classList.remove("is-loading", "is-success", "is-error", "is-locked");
-            el.quickSyncBtn.textContent = t("quick_sync_btn");
+            setCompactQuickSyncLabel("☁", "quick_sync_btn");
         }, 2300);
     }
 
@@ -814,7 +821,9 @@
             el.syncBtn.textContent = t("sync_btn");
         }
         if (el.quickSyncBtn && !el.quickSyncBtn.disabled) {
-            el.quickSyncBtn.textContent = t("quick_sync_btn");
+            el.quickSyncBtn.textContent = "☁";
+            el.quickSyncBtn.title = t("quick_sync_btn");
+            el.quickSyncBtn.setAttribute("aria-label", t("quick_sync_btn"));
         }
         const initialSyncLabels = Object.values(i18n).map((dict) => dict.sync_status_initial);
         if (el.syncStatus && (!el.syncStatus.textContent || initialSyncLabels.includes(el.syncStatus.textContent.trim()))) {

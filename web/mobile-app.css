@@ -38,14 +38,21 @@ body {
 
 body.is-pro {
     background:
-        radial-gradient(1200px 620px at -12% -16%, #f8d36b 0%, transparent 46%),
-        radial-gradient(900px 560px at 108% 8%, #5bc18f 0%, transparent 48%),
-        linear-gradient(162deg, #152a4c 0%, #213d6b 42%, #1e4f6f 100%);
+        radial-gradient(1200px 620px at -12% -16%, #f4cf6b 0%, transparent 46%),
+        radial-gradient(900px 560px at 108% 8%, #7f5ae8 0%, transparent 48%),
+        linear-gradient(162deg, #101d3a 0%, #1d3159 42%, #173a57 100%);
 }
 
 body.is-pro .header {
-    background: linear-gradient(135deg, rgba(33, 63, 116, 0.82) 0%, rgba(35, 104, 92, 0.78) 100%);
-    box-shadow: 0 22px 42px rgba(9, 28, 44, 0.42);
+    background: linear-gradient(135deg, rgba(29, 54, 102, 0.88) 0%, rgba(27, 93, 106, 0.82) 100%);
+    border-color: rgba(248, 213, 122, 0.48);
+    box-shadow: 0 22px 42px rgba(8, 24, 42, 0.48);
+}
+
+body.is-pro .billing-card {
+    background: linear-gradient(135deg, #fff5d9 0%, #f7db9a 100%);
+    border-color: #e2b654;
+    box-shadow: 0 14px 26px rgba(120, 84, 21, 0.18);
 }
 
 .container {
@@ -625,10 +632,43 @@ body.is-pro .header {
     .header {
         border-radius: 28px;
         padding: 18px;
+        align-items: center;
     }
 
     .header h1 {
-        font-size: 50px;
+        font-size: clamp(44px, 4.2vw, 64px);
+    }
+
+    .header-actions {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .action-refresh,
+    .action-sync,
+    .action-config,
+    .action-new,
+    .action-sort {
+        grid-column: auto;
+        grid-row: auto;
+    }
+
+    .action-refresh,
+    .action-sync,
+    .action-config {
+        width: 84px;
+        min-width: 84px;
+        padding: 0;
+    }
+
+    .action-new,
+    .action-sort {
+        width: 190px;
+        min-width: 190px;
+        padding: 0 22px;
     }
 
     .action-tile {

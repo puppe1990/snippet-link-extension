@@ -641,6 +641,7 @@ class SnippetManager {
         const banner = document.getElementById('proPaywallBanner');
         const hasSession = Boolean(this.cloudAuthToken);
         const shouldShowBanner = hasSession && !this.entitled;
+        const isPremium = hasSession && this.entitled;
 
         if (billingStatus) {
             billingStatus.textContent = statusLine;
@@ -648,6 +649,7 @@ class SnippetManager {
         if (banner) {
             banner.classList.toggle('hidden', !shouldShowBanner);
         }
+        document.body.classList.toggle('is-pro', isPremium);
     }
 
     async persistBillingState() {
